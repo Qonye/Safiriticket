@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Quotation</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; }
+    .container { max-width: 700px; margin: 32px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(35,41,70,0.09); padding: 32px 40px 24px 40px; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .logo { height: 60px; }
+    .quote-title { font-size: 2rem; color: #232946; margin: 0; }
+    .section { margin: 24px 0; }
+    .details-table { width: 100%; margin-bottom: 12px; }
+    .details-table td { padding: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border: 1px solid #ddd; padding: 10px; }
+    th { background: #f4f6fa; }
+    .total { text-align: right; font-size: 1.2em; margin-top: 16px; }
+    .footer { border-top: 1px solid #e0e0e0; margin-top: 32px; padding-top: 16px; color: #888; font-size: 0.98em; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="YOUR_LOGO_URL" alt="Company Logo" class="logo" />
+      <div class="quote-title">Quotation</div>
+    </div>
+    <div class="section">
+      <table class="details-table">
+        <tr>
+          <td><strong>Client:</strong></td>
+          <td>{{clientName}} ({{clientEmail}})</td>
+        </tr>
+        <tr>
+          <td><strong>Status:</strong></td>
+          <td>{{status}}</td>
+        </tr>
+        <tr>
+          <td><strong>Expires At:</strong></td>
+          <td>{{expiresAt}}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="section">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{items}}
+        </tbody>
+      </table>
+      <div class="total">
+        <strong>Total: ₹{{total}}</strong>
+      </div>
+    </div>
+    <div class="footer">
+      <strong>YOUR COMPANY NAME</strong> &mdash; YOUR COMPANY ADDRESS<br>
+      Email: info@yourcompany.com &nbsp;|&nbsp; Phone: +123-456-7890<br>
+      VAT No: 123456789 &nbsp;|&nbsp; www.yourcompany.com
+    </div>
+  </div>
+</body>
+</html>

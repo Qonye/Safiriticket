@@ -5,7 +5,9 @@ const clientSchema = new mongoose.Schema({
   email: String,
   company: String,
   phone: String,
-  address: String
+  address: String,
+  // Optional: activity tracking
+  lastContacted: Date
 }, { timestamps: true });
 
 export default mongoose.model('Client', clientSchema);

@@ -36,3 +36,301 @@
     transform: rotate(360deg);
   }
 }
+
+.dashboard-root {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f4f6fa;
+}
+
+.sidebar {
+  width: 220px;
+  background: #232946;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 16px 16px 16px;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+}
+
+.sidebar h2 {
+  margin-bottom: 32px;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px 0;
+}
+
+.sidebar nav li {
+  margin-bottom: 16px;
+}
+
+.sidebar nav button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.sidebar nav button:hover {
+  color: #eebbc3;
+}
+
+.sidebar-status {
+  margin-top: auto;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-ok {
+  color: #43d673;
+  font-size: 1.2em;
+}
+
+.status-bad {
+  color: #e63946;
+  font-size: 1.2em;
+}
+
+.main-content {
+  flex: 1;
+  padding: 32px 40px;
+}
+
+.dashboard-overview {
+  margin-bottom: 32px;
+}
+
+.widgets-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 24px;
+}
+
+.widget {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(35,41,70,0.07);
+  padding: 32px 40px;
+  min-width: 180px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  text-align: center;
+  border: 2px solid transparent;
+}
+
+.widget:hover {
+  box-shadow: 0 4px 16px rgba(35,41,70,0.13);
+  border-color: #eebbc3;
+  transform: translateY(-2px) scale(1.03);
+}
+
+.widget-title {
+  font-size: 1.1rem;
+  color: #232946;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.widget-count {
+  font-size: 2.5rem;
+  color: #232946;
+  font-weight: bold;
+}
+
+.dashboard-section {
+  margin-bottom: 48px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(35,41,70,0.06);
+  padding: 32px 24px;
+}
+
+.entity-container {
+  max-width: 700px;
+  margin: 0 auto;
+  background: #f9f9fb;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(35,41,70,0.06);
+  padding: 24px 20px 32px 20px;
+}
+
+.entity-title {
+  font-size: 1.4rem;
+  margin-bottom: 18px;
+  color: #232946;
+  font-weight: 600;
+}
+
+.entity-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+  align-items: center;
+}
+
+.entity-form input,
+.entity-form select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.primary-btn {
+  background: #232946;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 18px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: background 0.2s;
+}
+
+.primary-btn:hover {
+  background: #1a1f3c;
+}
+
+.secondary-btn {
+  background: #eebbc3;
+  color: #232946;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: background 0.2s;
+}
+
+.secondary-btn:hover {
+  background: #f3d1d8;
+}
+
+.edit-btn {
+  background: #43d673;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 0.95rem;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background: #36b85c;
+}
+
+.delete-btn {
+  background: #e63946;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 0.95rem;
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #b71c2b;
+}
+
+.entity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.entity-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #ececec;
+  padding: 12px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.quotation-item-row,
+.invoice-item-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.financial-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(35,41,70,0.06);
+}
+
+.financial-table th, .financial-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ececec;
+  text-align: left;
+}
+
+.financial-table th {
+  background: #f4f6fa;
+  color: #232946;
+  font-weight: 600;
+}
+
+.financial-table tr:last-child td {
+  border-bottom: none;
+}
+
+.preview-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px 32px;
+  box-shadow: 0 2px 12px rgba(35,41,70,0.12);
+  margin: 0 auto;
+  max-width: 500px;
+}
+
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 8px;
+  padding: 32px 40px;
+  box-shadow: 0 2px 12px rgba(35,41,70,0.18);
+  min-width: 350px;
+  max-width: 90vw;
+}
+
+/* REMOVE or RENAME these if you want Bootstrap's styles to apply: */
+
+/* Do NOT redefine Bootstrap classes above! */
