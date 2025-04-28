@@ -4,6 +4,7 @@ import Clients from './Clients';
 import Quotations from './Quotations';
 import Invoices from './Invoices';
 import Financials from './Financials';
+import AdminOrgSettings from './AdminOrgSettings';
 
 function App() {
   const [message, setMessage] = useState('');
@@ -62,6 +63,7 @@ function App() {
             <li><button onClick={() => showSection('quotations')}>Quotations</button></li>
             <li><button onClick={() => showSection('invoices')}>Invoices</button></li>
             <li><button onClick={() => showSection('financials')}>Financials</button></li>
+            <li><button onClick={() => showSection('orgsettings')}>Org Settings</button></li>
           </ul>
         </nav>
         <div className="sidebar-status">
@@ -118,6 +120,11 @@ function App() {
         {activeSection === 'financials' && (
           <section id="financials" className="dashboard-section">
             <Financials />
+          </section>
+        )}
+        {activeSection === 'orgsettings' && (
+          <section id="orgsettings" className="dashboard-section">
+            <AdminOrgSettings />
           </section>
         )}
       </main>

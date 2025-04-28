@@ -20,6 +20,19 @@ import Client from './models/Client.js';
 import Quotation from './models/Quotation.js';
 import Invoice from './models/Invoice.js';
 
+// --- Organization Settings Model ---
+const orgSettingsSchema = new mongoose.Schema({
+  name: String,
+  addresses: [String], // now supports multiple addresses
+  emails: [String],    // now supports multiple emails
+  phones: [String],    // now supports multiple phones
+  vat: String,
+  website: String,
+  logoUrl: String
+}, { collection: 'orgsettings' });
+
+const OrgSettings = mongoose.models.OrgSettings || mongoose.model('OrgSettings', orgSettingsSchema);
+
 // --- Health check route ---
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
@@ -95,13 +108,28 @@ app.delete('/api/quotations/:id', async (req, res) => {
   res.json({ message: 'Quotation deleted' });
 });
 
-// --- PDF Generation for Quotation ---
+const CACHE_DIR = path.join(process.cwd(), 'cache', 'quotations');
+if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
+
+// --- PDF Generation for Quotation (use org settings + cache) ---
 app.post('/api/quotations/:id/pdf', async (req, res) => {
-  const quotation = await Quotation.findById(req.params.id).populate('client');
+  const { id } = req.params;
+  const cacheFile = path.join(CACHE_DIR, `${id}.pdf`);
+
+  // serve from cache if exists
+  if (fs.existsSync(cacheFile)) {
+    return res.sendFile(cacheFile);
+  }
+
+  // otherwise generate
+  const quotation = await Quotation.findById(id).populate('client');
   if (!quotation) return res.status(404).json({ error: 'Quotation not found' });
 
-  // Load template
-  const templatePath = './templates/quotation.html';
+  // Load org settings
+  const org = await OrgSettings.findOne();
+
+  // Use absolute path for template (works in dev and production)
+  const templatePath = path.join(process.cwd(), 'src', 'templates', 'quotation.html');
   let html = fs.readFileSync(templatePath, 'utf8');
 
   // Prepare items HTML
@@ -114,8 +142,20 @@ app.post('/api/quotations/:id/pdf', async (req, res) => {
     </tr>`
   ).join('');
 
+  // Prepare org details HTML
+  const phones = (org?.phones || []).join(' | ');
+  const emails = (org?.emails || []).join(' | ');
+  const addresses = (org?.addresses || []).join(' | ');
+
   // Replace placeholders
   html = html
+    .replace('{{logoUrl}}', org?.logoUrl || '')
+    .replace('{{orgName}}', org?.name || '')
+    .replace('{{orgAddresses}}', addresses)
+    .replace('{{orgEmails}}', emails)
+    .replace('{{orgPhones}}', phones)
+    .replace('{{orgVat}}', org?.vat || '')
+    .replace('{{orgWebsite}}', org?.website || '')
     .replace('{{clientName}}', quotation.client.name)
     .replace('{{clientEmail}}', quotation.client.email)
     .replace('{{status}}', quotation.status)
@@ -123,11 +163,18 @@ app.post('/api/quotations/:id/pdf', async (req, res) => {
     .replace('{{items}}', itemsHtml)
     .replace('{{total}}', quotation.total);
 
-  pdf.create(html).toBuffer((err, buffer) => {
+  pdf.create(html, {
+    format: 'A4',
+    orientation: 'portrait',
+    border: '10mm',
+    height: '297mm'    // enforce single-page height
+  }).toBuffer((err, buffer) => {
     if (err) return res.status(500).json({ error: 'PDF generation failed' });
+    // write cache
+    fs.writeFileSync(cacheFile, buffer);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=quotation.pdf');
-    res.send(buffer);
+    res.end(buffer);
   });
 });
 
@@ -349,22 +396,78 @@ app.get('/api/financials', async (req, res) => {
 // --- Preview Endpoints ---
 app.post('/api/preview/quotation', async (req, res) => {
   const { client, items, total, status, expiresAt } = req.body;
-  const html = `
-    <h1>Quotation Preview</h1>
-    <p>Client: ${client?.name || ''} (${client?.email || ''})</p>
-    <ul>
-      ${items.map(item => `<li>${item.description}: ${item.quantity} x ₹${item.price}</li>`).join('')}
-    </ul>
-    <p>Total: ₹${total}</p>
-    <p>Status: ${status}</p>
-    <p>Expires At: ${expiresAt ? new Date(expiresAt).toLocaleDateString() : ''}</p>
-  `;
-  pdf.create(html).toBuffer((err, buffer) => {
-    if (err) return res.status(500).json({ error: 'PDF generation failed' });
+
+  // Always fetch org settings from DB for up-to-date info
+  const orgSettings = await OrgSettings.findOne();
+
+  // Use correct template path
+  let templatePath = path.join(process.cwd(), 'src', 'templates', 'quotation.html');
+  let html;
+  try {
+    html = fs.readFileSync(templatePath, 'utf8');
+  } catch (e) {
+    try {
+      html = fs.readFileSync(path.join(process.cwd(), 'templates', 'quotation.html'), 'utf8');
+    } catch (e2) {
+      return res.status(500).json({ error: 'Template not found', details: e2.message });
+    }
+  }
+
+  // Prepare items HTML (ensure all fields are filled)
+  const itemsHtml = (items || []).map(item =>
+    `<tr>
+      <td>${item.description || ''}</td>
+      <td>${item.quantity || ''}</td>
+      <td>₹${item.price || ''}</td>
+      <td>₹${item.quantity && item.price ? Number(item.quantity) * Number(item.price) : ''}</td>
+    </tr>`
+  ).join('');
+
+  // Prepare org details HTML
+  const phones = (orgSettings?.phones || []).filter(Boolean).join(' | ');
+  const emails = (orgSettings?.emails || []).filter(Boolean).join(' | ');
+  const addresses = (orgSettings?.addresses || []).filter(Boolean).join(' | ');
+
+  // Replace all placeholders globally
+  html = html.replace(/{{logoUrl}}/g, orgSettings?.logoUrl || '')
+    .replace(/{{orgName}}/g, orgSettings?.name || '')
+    .replace(/{{orgAddresses}}/g, addresses)
+    .replace(/{{orgEmails}}/g, emails)
+    .replace(/{{orgPhones}}/g, phones)
+    .replace(/{{orgVat}}/g, orgSettings?.vat || '')
+    .replace(/{{orgWebsite}}/g, orgSettings?.website || '')
+    .replace(/{{clientName}}/g, client?.name || '')
+    .replace(/{{clientEmail}}/g, client?.email || '')
+    .replace(/{{status}}/g, status || '')
+    .replace(/{{expiresAt}}/g, expiresAt ? new Date(expiresAt).toLocaleDateString() : '')
+    .replace(/{{items}}/g, itemsHtml)
+    .replace(/{{total}}/g, total || '');
+
+  pdf.create(html, { format: 'A4', orientation: 'portrait', border: '10mm' }).toBuffer((err, buffer) => {
+    if (err || !buffer) {
+      return res.status(500).json({ error: 'PDF generation failed' });
+    }
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename=quotation-preview.pdf');
-    res.send(buffer);
+    res.end(buffer);
   });
+});
+
+// --- Organization Settings Endpoints ---
+app.get('/api/orgsettings', async (req, res) => {
+  const settings = await OrgSettings.findOne();
+  res.json(settings || {});
+});
+
+app.put('/api/orgsettings', async (req, res) => {
+  let settings = await OrgSettings.findOne();
+  if (!settings) {
+    settings = new OrgSettings(req.body);
+  } else {
+    Object.assign(settings, req.body);
+  }
+  await settings.save();
+  res.json(settings);
 });
 
 const PORT = process.env.PORT || 5000;
