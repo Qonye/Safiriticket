@@ -142,6 +142,9 @@ window.renderQuotations = function(main) {
                     <button class="save-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Save</button>
                     <button class="cancel-btn" style="background:#b47572;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Cancel</button>
                     <button class="delete-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Delete</button>
+                    <button class="preview-quotation-btn" style="background:#8c241c;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Preview</button>
+                    <button class="download-quotation-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">PDF</button>
+                    <button class="email-quotation-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Email</button>
                   </td>
                 </tr>
               `).join('')}
@@ -231,6 +234,49 @@ window.renderQuotations = function(main) {
           };
         });
 
+        // Preview PDF
+        document.querySelectorAll('.preview-quotation-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            window.open(`http://localhost:5000/api/quotations/${id}/pdf`, '_blank');
+          };
+        });
+
+        // Download PDF
+        document.querySelectorAll('.download-quotation-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            const a = document.createElement('a');
+            a.href = `http://localhost:5000/api/quotations/${id}/pdf`;
+            a.download = 'quotation.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          };
+        });
+
+        // Send via Email
+        document.querySelectorAll('.email-quotation-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            fetch(`http://localhost:5000/api/quotations/${id}/email`, { method: 'POST' })
+              .then(r => r.json())
+              .then(res => {
+                btn.textContent = 'Sent!';
+                setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
+              })
+              .catch(() => {
+                btn.textContent = 'Error';
+                setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
+              });
+          };
+        });
+
         // (Optional) Add more edit fields as needed
       });
   }
@@ -282,3 +328,9 @@ window.renderQuotations = function(main) {
       });
   };
 };
+
+async function previewQuotationPDF(quotation) {
+  const template = await window.loadTemplate('quotation');
+  // ...replace placeholders in template with quotation data...
+  // ...generate PDF or show preview...
+}

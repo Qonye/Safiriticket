@@ -74,11 +74,21 @@ The `.env` file should be placed in the **root of your project**, at:
 Yes, if you are now fully using the vanilla frontend and have confirmed all required features work as expected, you can safely delete the `client` (React frontend) folder.
 
 **Checklist before deleting:**
+
 - All features you need are available and working in the vanilla frontend.
 - You have no custom logic, assets, or data in the React frontend that you still need.
 - You have backups or version control in case you want to restore it later.
 
 **How to delete:**
+
 - Delete the `c:\projects\Safiriticket\client` folder.
 
 > Once deleted, only the vanilla frontend and backend will remain in your project.
+
+# Can I move the templates to the frontend?
+
+Yes, you can now move the `src/templates/quotation.html` and `src/templates/invoice.html` files to your frontend (e.g., `vanilla-frontend/templates/`).  
+- The backend no longer uses these templates.
+- The frontend can load and use them for PDF generation, preview, or download.
+
+**Recommended location:**

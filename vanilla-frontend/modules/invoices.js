@@ -188,6 +188,9 @@ window.renderInvoices = function(main) {
                     <button class="cancel-paid-btn" style="background:#b47572;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Cancel</button>
                     <button class="edit-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit</button>
                     <button class="delete-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Delete</button>
+                    <button class="preview-invoice-btn" style="background:#8c241c;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Preview</button>
+                    <button class="download-invoice-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">PDF</button>
+                    <button class="email-invoice-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Email</button>
                   </td>
                 </tr>
                 `;
@@ -271,6 +274,49 @@ window.renderInvoices = function(main) {
           };
         });
 
+        // Preview PDF
+        document.querySelectorAll('.preview-invoice-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            window.open(`http://localhost:5000/api/invoices/${id}/pdf`, '_blank');
+          };
+        });
+
+        // Download PDF
+        document.querySelectorAll('.download-invoice-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            const a = document.createElement('a');
+            a.href = `http://localhost:5000/api/invoices/${id}/pdf`;
+            a.download = 'invoice.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          };
+        });
+
+        // Send via Email
+        document.querySelectorAll('.email-invoice-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            fetch(`http://localhost:5000/api/invoices/${id}/email`, { method: 'POST' })
+              .then(r => r.json())
+              .then(res => {
+                btn.textContent = 'Sent!';
+                setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
+              })
+              .catch(() => {
+                btn.textContent = 'Error';
+                setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
+              });
+          };
+        });
+
         // (Optional) Add edit functionality for other fields as needed
       });
   }
@@ -350,3 +396,9 @@ window.renderInvoices = function(main) {
     }
   };
 };
+
+async function previewInvoicePDF(invoice) {
+  const template = await window.loadTemplate('invoice');
+  // ...replace placeholders in template with invoice data...
+  // ...generate PDF or show preview...
+}

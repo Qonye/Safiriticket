@@ -13,7 +13,8 @@ const invoiceSchema = new mongoose.Schema({
   status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' },
   dueDate: Date,
   paidAt: Date,
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  number: { type: String, unique: true } // Invoice number, e.g. INV-001
 }, { timestamps: true });
 
 export default mongoose.models.Invoice || mongoose.model('Invoice', invoiceSchema);

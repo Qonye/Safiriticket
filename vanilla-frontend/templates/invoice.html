@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Invoice</title>
+  <style>
+    @page { size: A4 portrait; margin: 10mm; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #f8f9fa;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      min-width: 100vw;
+      position: relative;
+    }
+    .container {
+      max-width: 700px;
+      height: calc(297mm - 20mm);
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(35,41,70,0.09);
+      padding: 40px 40px 80px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+    }
+    .header { display: flex; align-items: center; justify-content: center; margin-bottom: 0; }
+    .logo { height: 60px; display: block; margin: 0 auto 12px auto; }
+    .invoice-title { font-size: 2rem; color: #943c34; margin: 0; letter-spacing: 1px; text-align: center; }
+    .section { margin: 24px 0; }
+    .details-table { width: 100%; margin-bottom: 12px; }
+    .details-table td { padding: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border: 1px solid #e9c7bf; padding: 10px; }
+    th { background: #e9c7bf; color: #943c34; }
+    .total { text-align: right; font-size: 1.2em; margin-top: 16px; color: #e45424; }
+    .footer {
+      text-align: center;
+      max-width: 700px;
+      margin: 20px auto;
+      font-size: 0.98em;
+      color: #8c2c2c;
+      background: transparent;
+    }
+    .accent-bar { height: 6px; width: 100%; background: linear-gradient(90deg, #943c34 0%, #e45424 40%, #ee9f64 100%); border-radius: 4px; margin-bottom: 18px; }
+    .items-table { margin-bottom: 0; }
+    .items-row-table { width: 100%; border-collapse: collapse; }
+    .items-row-table td { border: none; padding: 6px 10px 6px 10px; }
+    .items-row-table tr:not(:last-child) td { border-bottom: 1px solid #e9c7bf; }
+    .items-label { color: #943c34; font-weight: bold; width: 120px; }
+    .watermark {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 400px;
+      height: 400px;
+      opacity: 0.07;
+      z-index: 0;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      user-select: none;
+    }
+    .items-row-table {
+      min-height: 320px;
+      height: 320px;
+      display: block;
+    }
+    .items-row-table tbody {
+      display: block;
+      width: 100%;
+    }
+    .items-row-table tr {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+    .items-row-table .filler-row td {
+      height: 32px;
+      background: #fff;
+      border: none;
+      padding: 0;
+    }
+    .paid-row {
+      color: #2ecc40;
+      font-weight: bold;
+    }
+    .due-row {
+      color: #e45424;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <img
+    src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png"
+    alt="Watermark"
+    class="watermark"
+  />
+  <div class="container">
+    <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Company Logo" class="logo" />
+    <div class="accent-bar"></div>
+    <div class="invoice-title">Invoice <span style="font-size:1.1rem;color:#943c34;">#{{number}}</span></div>
+    <div class="section">
+      <table class="details-table">
+        <tr>
+          <td><strong>Invoice No.:</strong></td>
+          <td>{{number}}</td>
+        </tr>
+        <tr>
+          <td><strong>Client:</strong></td>
+          <td>{{clientName}} ({{clientEmail}})</td>
+        </tr>
+        <tr>
+          <td><strong>Status:</strong></td>
+          <td>{{status}}</td>
+        </tr>
+        <tr>
+          <td><strong>Due Date:</strong></td>
+          <td>{{dueDate}}</td>
+        </tr>
+        <tr>
+          <td><strong>Paid Amount:</strong></td>
+          <td class="paid-row">${{paidAmount}}</td>
+        </tr>
+        <tr>
+          <td><strong>Amount Due:</strong></td>
+          <td class="due-row">${{amountDue}}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="section" style="flex:1;">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+      </table>
+      <table class="items-row-table">
+        <tbody>
+          {{items}}
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="total">
+        <strong>Total: ${{total}}</strong>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <strong>{{orgName}}</strong><br>
+    {{orgAddresses}}<br>
+    Email: {{orgEmails}}<br>
+    Phone: {{orgPhones}}<br>
+    VAT No: {{orgVat}} &nbsp;|&nbsp; {{orgWebsite}}
+  </div>
+</body>
+</html>

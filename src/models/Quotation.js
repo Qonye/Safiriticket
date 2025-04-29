@@ -7,7 +7,8 @@ const quotationSchema = new mongoose.Schema({
   status: { type: String, enum: ['Pending', 'Accepted', 'Declined', 'Expired'], default: 'Pending' },
   expiresAt: Date,
   sentAt: Date,
-  viewedAt: Date // Optional: activity tracking
+  viewedAt: Date, // Optional: activity tracking
+  number: { type: String, unique: true } // Quotation number, e.g. Q-001
 }, { timestamps: true });
 
-export default mongoose.model('Quotation', quotationSchema);
+export default mongoose.models.Quotation || mongoose.model('Quotation', quotationSchema);

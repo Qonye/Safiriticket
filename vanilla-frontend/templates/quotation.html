@@ -103,9 +103,13 @@
   <div class="container">
     <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Company Logo" class="logo" />
     <div class="accent-bar"></div>
-    <div class="quote-title">Quotation</div>
+    <div class="quote-title">Quotation <span style="font-size:1.1rem;color:#8c241c;">#{{number}}</span></div>
     <div class="section">
       <table class="details-table">
+        <tr>
+          <td><strong>Quotation No.:</strong></td>
+          <td>{{number}}</td>
+        </tr>
         <tr>
           <td><strong>Client:</strong></td>
           <td>{{clientName}} ({{clientEmail}})</td>
