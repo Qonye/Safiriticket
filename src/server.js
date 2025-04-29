@@ -11,7 +11,16 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:3000'
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5500' // <-- add this for your live server
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -469,6 +478,14 @@ app.put('/api/orgsettings', async (req, res) => {
   await settings.save();
   res.json(settings);
 });
+
+// Serve vanilla frontend statically (add this before app.listen)
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+app.use('/vanilla', express.static(path.join(__dirname, '../vanilla-frontend')));
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/safiriticket';

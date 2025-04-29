@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SafiriTicket Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <img class="sidebar-logo" src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
+    <h2>Admin</h2>
+    <nav>
+      <ul>
+        <li><button data-section="overview">Overview</button></li>
+        <li><button data-section="clients">Clients</button></li>
+        <li><button data-section="quotations">Quotations</button></li>
+        <li><button data-section="invoices">Invoices</button></li>
+        <li><button data-section="financials">Financials</button></li>
+        <li><button data-section="orgsettings">Org Settings</button></li>
+      </ul>
+    </nav>
+    <div class="sidebar-status" id="sidebar-status"></div>
+  </aside>
+  <main class="main-content" id="main-content" style="width:100%;">
+    <!-- Content will be loaded here -->
+  </main>
+  <script src="modules/clients.js"></script>
+  <script src="modules/quotations.js"></script>
+  <script src="modules/invoices.js"></script>
+
+  <!-- Add other modules here as needed -->
+  <script src="main.js"></script>
+</body>
+</html>

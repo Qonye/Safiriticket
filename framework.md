@@ -62,3 +62,16 @@ Create a system that allows users to generate quotations for clients, send them 
 [Receive Payment (Optional)]
     ↓
 [Mark Invoice as Paid]
+```
+
+## Frontend Usage
+
+You do **not** need to stop your React frontend to use the vanilla frontend, but:
+
+- Only one frontend (React or vanilla) should be open in your browser at a time to avoid confusion.
+- Both frontends can run simultaneously as long as they are served from different folders and ports (or opened as local files).
+- The backend server (`http://localhost:5000`) must be running for either frontend to work.
+
+**Summary:**  
+- You can keep your React frontend running, but close its browser tab if you want to test the vanilla frontend.
+- Make sure your backend is running and accessible.
