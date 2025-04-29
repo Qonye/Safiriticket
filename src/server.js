@@ -6,8 +6,15 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import pdf from 'html-pdf';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-dotenv.config();
+// Initialize __filename and __dirname before using them
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Now you can safely use __dirname for dotenv
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 app.use(cors({
@@ -364,6 +371,12 @@ app.get('/api/invoices', async (req, res) => {
 
 app.post('/api/invoices', async (req, res) => {
   const invoice = new Invoice(req.body);
+  // Ensure paidAmount is set to 0 if not provided
+  if (typeof invoice.paidAmount !== 'number') invoice.paidAmount = 0;
+  // If status is Paid and paidAmount is not set, set paidAmount = total
+  if (invoice.status === 'Paid' && (!invoice.paidAmount || invoice.paidAmount < invoice.total)) {
+    invoice.paidAmount = invoice.total;
+  }
   await invoice.save();
   res.status(201).json(invoice);
 });
@@ -375,8 +388,27 @@ app.get('/api/invoices/:id', async (req, res) => {
 });
 
 app.put('/api/invoices/:id', async (req, res) => {
-  const invoice = await Invoice.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  const update = { ...req.body };
+  // Always update paidAmount if provided
+  if (typeof update.paidAmount !== 'undefined') {
+    update.paidAmount = Number(update.paidAmount) || 0;
+  }
+  // Always update status and paidAmount together if status is Paid
+  if (update.status === 'Paid') {
+    // Always fetch the invoice to get the total
+    const invoice = await Invoice.findById(req.params.id);
+    if (invoice) {
+      // If paidAmount is not provided or less than total, set to total
+      if (typeof update.paidAmount === 'undefined' || update.paidAmount < invoice.total) {
+        update.paidAmount = invoice.total;
+      }
+    }
+  }
+  // Always return the updated invoice with the correct paidAmount
+  const invoice = await Invoice.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+  // Force save to ensure Mongoose hooks run (if any)
+  await invoice.save();
   res.json(invoice);
 });
 
@@ -388,17 +420,41 @@ app.delete('/api/invoices/:id', async (req, res) => {
 
 // --- Financials Summary Endpoint ---
 app.get('/api/financials', async (req, res) => {
+  // Fetch all invoices with up-to-date paidAmount and total
   const invoices = await Invoice.find();
-  const paid = invoices.filter(i => i.status === 'Paid');
-  const unpaid = invoices.filter(i => i.status === 'Unpaid');
-  const overdue = invoices.filter(i => i.status === 'Overdue');
-  const revenue = paid.reduce((sum, i) => sum + (i.total || 0), 0);
+
+  // Calculate revenue breakdowns from actual invoice data
+  let paidRevenue = 0, unpaidRevenue = 0, overdueRevenue = 0;
+  let paid = 0, unpaid = 0, overdue = 0;
+
+  invoices.forEach(i => {
+    const paidAmt = Number(i.paidAmount || 0);
+    const totalAmt = Number(i.total || 0);
+    const dueAmt = Math.max(totalAmt - paidAmt, 0);
+
+    // Count by status
+    if (i.status === 'Paid') paid++;
+    else if (i.status === 'Unpaid') unpaid++;
+    else if (i.status === 'Overdue') overdue++;
+
+    // Revenue analysis (partial payments included)
+    paidRevenue += paidAmt;
+    if (i.status === 'Unpaid') unpaidRevenue += dueAmt;
+    if (i.status === 'Overdue') overdueRevenue += dueAmt;
+  });
+
+  // Total revenue is sum of all paid amounts (partial or full)
+  const revenue = paidRevenue;
+
   res.json({
-    paid: paid.length,
-    unpaid: unpaid.length,
-    overdue: overdue.length,
+    paid,
+    unpaid,
+    overdue,
     revenue,
-    totalInvoices: invoices.length
+    totalInvoices: invoices.length,
+    paidRevenue,
+    unpaidRevenue,
+    overdueRevenue
   });
 });
 
@@ -480,19 +536,25 @@ app.put('/api/orgsettings', async (req, res) => {
 });
 
 // Serve vanilla frontend statically (add this before app.listen)
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 app.use('/vanilla', express.static(path.join(__dirname, '../vanilla-frontend')));
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/safiriticket';
+const MONGO_URI = process.env.MONGO_URI;
+
+// Debug log to verify .env loading
+console.log('Loaded MONGO_URI:', typeof MONGO_URI, MONGO_URI ? '[set]' : '[empty]', MONGO_URI && MONGO_URI.length);
+
+// Check for missing MONGO_URI and throw a clear error
+if (!MONGO_URI || typeof MONGO_URI !== 'string' || !MONGO_URI.trim()) {
+  console.error('ERROR: MONGO_URI is not set or is invalid. Please check your .env file and restart the server.');
+  process.exit(1);
+} else {
+  console.log('MONGO_URI loaded and appears valid.');
+}
 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
-    console.log(`MongoDB connected at ${MONGO_URI}`);
+    console.log('MongoDB connected.');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch(err => {

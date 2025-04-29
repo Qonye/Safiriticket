@@ -64,3 +64,7 @@
 | Quotation Reminder | Few days before expiry |
 | Invoice Sent | After invoice creation |
 | Payment Reminder | Before or after due date |
+
+# Where should the `.env` file be?
+
+The `.env` file should be placed in the **root of your project**, at:

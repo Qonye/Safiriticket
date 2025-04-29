@@ -154,12 +154,18 @@ window.renderInvoices = function(main) {
                 <th style="background:#8c241c;">Client</th>
                 <th style="background:#8c241c;">Status</th>
                 <th style="background:#8c241c;">Total</th>
+                <th style="background:#8c241c;">Paid</th>
+                <th style="background:#8c241c;">Due</th>
                 <th style="background:#8c241c;">Due Date</th>
                 <th style="background:#8c241c;">Actions</th>
               </tr>
             </thead>
             <tbody>
-              ${invoices.map(inv => `
+              ${invoices.map(inv => {
+                const paid = Number(inv.paidAmount || 0);
+                const total = Number(inv.total || 0);
+                const due = Math.max(total - paid, 0).toFixed(2);
+                return `
                 <tr data-id="${inv._id}">
                   <td>${inv.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${inv.client?.email || ''}</span></td>
                   <td>
@@ -169,14 +175,23 @@ window.renderInvoices = function(main) {
                       <option value="Overdue" ${inv.status === 'Overdue' ? 'selected' : ''}>Overdue</option>
                     </select>
                   </td>
-                  <td>$${inv.total || 0}</td>
+                  <td>$${total}</td>
+                  <td>
+                    <span class="paid-label">$${paid}</span>
+                    <input type="number" class="edit-paid" min="0" max="${total}" value="${paid}" style="display:none;width:80px;padding:4px;">
+                  </td>
+                  <td>$${due}</td>
                   <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ''}</td>
                   <td>
+                    <button class="edit-paid-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit Paid</button>
+                    <button class="save-paid-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Save</button>
+                    <button class="cancel-paid-btn" style="background:#b47572;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Cancel</button>
                     <button class="edit-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit</button>
                     <button class="delete-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Delete</button>
                   </td>
                 </tr>
-              `).join('')}
+                `;
+              }).join('')}
             </tbody>
           </table>
         `;
@@ -186,10 +201,56 @@ window.renderInvoices = function(main) {
           sel.onchange = function() {
             const tr = sel.closest('tr');
             const id = tr.getAttribute('data-id');
+            const newStatus = sel.value;
+            // Always send paidAmount when marking as Paid
+            let payload = { status: newStatus };
+            if (newStatus === 'Paid') {
+              // Find the total for this invoice
+              const total = Number(tr.querySelector('td:nth-child(3)').textContent.replace('$', '')) || 0;
+              payload.paidAmount = total;
+            }
             fetch(`http://localhost:5000/api/invoices/${id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: sel.value })
+              body: JSON.stringify(payload)
+            })
+              .then(r => r.json())
+              .then(() => {
+                fetchInvoices();
+              });
+          };
+        });
+
+        // Paid amount edit/save/cancel handlers
+        document.querySelectorAll('.edit-paid-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            tr.querySelector('.paid-label').style.display = 'none';
+            tr.querySelector('.edit-paid').style.display = '';
+            tr.querySelector('.save-paid-btn').style.display = '';
+            tr.querySelector('.cancel-paid-btn').style.display = '';
+            btn.style.display = 'none';
+          };
+        });
+        document.querySelectorAll('.cancel-paid-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            tr.querySelector('.paid-label').style.display = '';
+            tr.querySelector('.edit-paid').style.display = 'none';
+            tr.querySelector('.save-paid-btn').style.display = 'none';
+            tr.querySelector('.edit-paid-btn').style.display = '';
+            btn.style.display = 'none';
+          };
+        });
+        document.querySelectorAll('.save-paid-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            const paidAmount = Number(tr.querySelector('.edit-paid').value) || 0;
+            fetch(`http://localhost:5000/api/invoices/${id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paidAmount })
             })
               .then(r => r.json())
               .then(() => fetchInvoices());
@@ -210,7 +271,7 @@ window.renderInvoices = function(main) {
           };
         });
 
-        // (Optional) Add edit functionality here as needed
+        // (Optional) Add edit functionality for other fields as needed
       });
   }
 
@@ -229,43 +290,63 @@ window.renderInvoices = function(main) {
     const total = updateInvoiceSubtotalsAndTotal();
 
     // Always set client from the select (even if quotation is selected)
-    const clientId = form.client.value;
+    let clientId = form.client.value;
 
-    const data = {
-      client: clientId,
-      status: "Unpaid",
-      dueDate: form.dueDate.value,
-      items,
-      total,
-      quotation: form.quotation.value || undefined
-    };
-    if (!clientId) {
-      document.getElementById('invoice-form-msg').textContent = 'Client is required.';
-      return;
+    // If creating from a quotation, fetch the quotation to get the client if not selected
+    const quotationId = form.quotation.value;
+    if ((!clientId || clientId === "") && quotationId) {
+      fetch(`http://localhost:5000/api/quotations/${quotationId}`)
+        .then(r => r.json())
+        .then(q => {
+          // q.client may be an object or an id string
+          clientId = q.client?._id || q.client || "";
+          if (clientId) {
+            submitInvoice(clientId);
+          } else {
+            document.getElementById('invoice-form-msg').textContent = 'Client is required.';
+          }
+        });
+    } else {
+      submitInvoice(clientId);
     }
-    fetch('http://localhost:5000/api/invoices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-      .then(r => r.json())
-      .then(invoice => {
-        document.getElementById('invoice-form-msg').textContent = 'Invoice added!';
-        form.reset();
-        // Remove all item rows except one
-        const tbody = document.getElementById('invoice-items-tbody');
-        while (tbody.rows.length > 1) tbody.deleteRow(1);
-        tbody.querySelector('.item-desc').value = '';
-        tbody.querySelector('.item-qty').value = 1;
-        tbody.querySelector('.item-price').value = 0;
-        updateInvoiceSubtotalsAndTotal();
-        fetchInvoices();
-        setTimeout(() => {
-          document.getElementById('invoice-form-msg').textContent = '';
-        }, 1500);
+
+    function submitInvoice(clientId) {
+      if (!clientId || clientId === "") {
+        document.getElementById('invoice-form-msg').textContent = 'Client is required.';
+        return;
+      }
+      const data = {
+        client: clientId,
+        status: "Unpaid",
+        dueDate: form.dueDate.value,
+        items,
+        total,
+        quotation: quotationId || undefined
+      };
+      fetch('http://localhost:5000/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       })
-      .catch(() => {
-        document.getElementById('invoice-form-msg').textContent = 'Error adding invoice.';
-      });
+        .then(r => r.json())
+        .then(invoice => {
+          document.getElementById('invoice-form-msg').textContent = 'Invoice added!';
+          form.reset();
+          // Remove all item rows except one
+          const tbody = document.getElementById('invoice-items-tbody');
+          while (tbody.rows.length > 1) tbody.deleteRow(1);
+          tbody.querySelector('.item-desc').value = '';
+          tbody.querySelector('.item-qty').value = 1;
+          tbody.querySelector('.item-price').value = 0;
+          updateInvoiceSubtotalsAndTotal();
+          fetchInvoices();
+          setTimeout(() => {
+            document.getElementById('invoice-form-msg').textContent = '';
+          }, 1500);
+        })
+        .catch(() => {
+          document.getElementById('invoice-form-msg').textContent = 'Error adding invoice.';
+        });
+    }
   };
 };
