@@ -20,12 +20,12 @@
     }
     .container {
       max-width: 700px;
-      height: calc(297mm - 20mm); /* A4 height minus top/bottom margins */
+      min-height: 850px; /* reduced from 1000px */
       margin: 0 auto;
       background: rgba(255, 255, 255, 0.95);
       border-radius: 10px;
       box-shadow: 0 2px 12px rgba(35,41,70,0.09);
-      padding: 40px 40px 80px;
+      padding: 28px 28px 48px; /* reduced padding */
       position: relative;
       z-index: 1;
       display: flex;
@@ -44,13 +44,14 @@
     th { background: #e9c7bf; color: #8c241c; }
     .total { text-align: right; font-size: 1.2em; margin-top: 16px; color: #e45424; }
     .footer {
-      /* remove position:absolute, left, transform */
       text-align: center;
       max-width: 700px;
-      margin: 20px auto;     /* center horizontally */
-      font-size: 0.98em;
+      margin: 20px auto;
+      font-size: 0.58em; /* further reduced */
       color: #8c2c2c;
       background: transparent;
+      line-height: 1.5;
+      letter-spacing: 0.01em;
     }
     .accent-bar { height: 6px; width: 100%; background: linear-gradient(90deg, #eb7b24 0%, #e45424 40%, #ee9f64 100%); border-radius: 4px; margin-bottom: 18px; }
     .items-table { margin-bottom: 0; }
@@ -152,11 +153,16 @@
     </div>
   </div>
   <div class="footer">
-    <strong>{{orgName}}</strong><br>
-    {{orgAddresses}}<br>
-    Email: {{orgEmails}}<br>
-    Phone: {{orgPhones}}<br>
-    VAT No: {{orgVat}} &nbsp;|&nbsp; {{orgWebsite}}
+    <div style="height:3px;width:100%;background:#8c2c2c;margin-bottom:8px;border-radius:2px;"></div>
+    <strong>Safiri Ticket Ltd</strong> |
+    United Kingdom: 25 Cabot Square, E14 4QZ, London |
+    Kenya: Purshottam Place, Chiromo Rd, Nairobi |
+    Direct Line: +254 708 617 889 |
+    United Kingdom Office: +44 7845 446618 |
+    Kenya Office: +254 715 572 312 |
+    Email: joe@safiritickets.com, info@safiritickets.com |
+    Website: www.safiritickets.com
+    <div style="height:3px;width:100%;background:#8c2c2c;margin-top:8px;border-radius:2px;"></div>
   </div>
 </body>
 </html>

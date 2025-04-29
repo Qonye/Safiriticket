@@ -143,6 +143,7 @@ window.renderInvoices = function(main) {
     fetch('http://localhost:5000/api/invoices')
       .then(r => r.json())
       .then(invoices => {
+        window.invoices = invoices; // Store invoices globally
         if (!invoices.length) {
           document.getElementById('invoices-list').innerHTML = '<p>No invoices found.</p>';
           return;
@@ -276,24 +277,27 @@ window.renderInvoices = function(main) {
 
         // Preview PDF
         document.querySelectorAll('.preview-invoice-btn').forEach(btn => {
-          btn.onclick = function() {
+          btn.onclick = async function() {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            window.open(`http://localhost:5000/api/invoices/${id}/pdf`, '_blank');
+            const invoice = window.invoices.find(inv => inv._id === id);
+            if (!invoice) return;
+            const template = await window.loadTemplate('invoice');
+            const html = fillInvoiceTemplate(template, invoice);
+            window.previewPDF(html, { margin: 10, jsPDF: { format: 'a4' } });
           };
         });
 
         // Download PDF
         document.querySelectorAll('.download-invoice-btn').forEach(btn => {
-          btn.onclick = function() {
+          btn.onclick = async function() {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            const a = document.createElement('a');
-            a.href = `http://localhost:5000/api/invoices/${id}/pdf`;
-            a.download = 'invoice.pdf';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const invoice = window.invoices.find(inv => inv._id === id);
+            if (!invoice) return;
+            const template = await window.loadTemplate('invoice');
+            const html = fillInvoiceTemplate(template, invoice);
+            window.downloadPDF(html, `invoice-${invoice.number || invoice._id}.pdf`, { margin: 10, jsPDF: { format: 'a4' } });
           };
         });
 
@@ -401,4 +405,83 @@ async function previewInvoicePDF(invoice) {
   const template = await window.loadTemplate('invoice');
   // ...replace placeholders in template with invoice data...
   // ...generate PDF or show preview...
+}
+
+// Helper to fill template placeholders using the full HTML template (with header/footer)
+function fillInvoiceTemplate(template, invoice) {
+  let html = template;
+  html = html.replace(/{{number}}/g, invoice.number || '');
+  html = html.replace(/{{clientName}}/g, invoice.client?.name || '');
+  html = html.replace(/{{clientEmail}}/g, invoice.client?.email || '');
+  html = html.replace(/{{status}}/g, invoice.status || '');
+  html = html.replace(/{{dueDate}}/g, invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '');
+  html = html.replace(/{{paidAmount}}/g, invoice.paidAmount || 0);
+  html = html.replace(/{{amountDue}}/g, Math.max((invoice.total || 0) - (invoice.paidAmount || 0), 0));
+  html = html.replace(/{{total}}/g, invoice.total || '');
+
+  // Items
+  const itemsHtml = (invoice.items || []).map(item =>
+    `<tr>
+      <td>${item.description || ''}</td>
+      <td>${item.quantity || ''}</td>
+      <td>$${item.price || ''}</td>
+      <td>$${item.quantity && item.price ? Number(item.quantity) * Number(item.price) : ''}</td>
+    </tr>`
+  ).join('');
+  html = html.replace(/{{items}}/g, itemsHtml);
+
+  // Fill org details and logo (header/footer)
+  html = window.fillOrgDetails(html);
+
+  return html;
+}
+
+// When generating the PDF, set html2pdf options to avoid extra pages
+// Example usage in preview/download handlers:
+window.previewPDF(html, {
+  margin: [0, 0, 0, 0], // or [top, right, bottom, left] in mm
+  jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+  html2canvas: { scale: 2 }
+});
+
+window.downloadPDF(html, `invoice-${invoice.number || invoice._id}.pdf`, {
+  margin: [0, 0, 0, 0],
+  jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+  html2canvas: { scale: 2 }
+});
+
+async function getNextInvoiceNumber() {
+  // Fetch all invoices and find the highest number, then increment
+  const res = await fetch('http://localhost:5000/api/invoices');
+  const invoices = await res.json();
+  let max = 0;
+  invoices.forEach(inv => {
+    if (inv.number && typeof inv.number === 'string') {
+      const match = inv.number.match(/(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > max) max = num;
+      }
+    }
+  });
+  return 'INV-' + String(max + 1).padStart(3, '0');
+}
+
+// Example usage in preview or add form:
+async function renderInvoicePreview(invoice) {
+  let number = invoice.number;
+  if (!number) {
+    number = await getNextInvoiceNumber();
+  }
+  const template = await window.loadTemplate('invoice');
+  // Inject the number into the invoice object for template filling
+  const html = window.fillInvoiceTemplate(template, { ...invoice, number });
+  window.previewPDF(html, {
+    margin: [0, 0, 0, 0],
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+    html2canvas: { scale: 2 }
+  });
 }

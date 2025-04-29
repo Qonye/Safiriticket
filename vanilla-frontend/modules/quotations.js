@@ -104,6 +104,7 @@ window.renderQuotations = function(main) {
     fetch('http://localhost:5000/api/quotations')
       .then(r => r.json())
       .then(quotations => {
+        window.quotations = quotations;
         if (!quotations.length) {
           document.getElementById('quotations-list').innerHTML = '<p>No quotations found.</p>';
           return;
@@ -236,24 +237,27 @@ window.renderQuotations = function(main) {
 
         // Preview PDF
         document.querySelectorAll('.preview-quotation-btn').forEach(btn => {
-          btn.onclick = function() {
+          btn.onclick = async function() {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            window.open(`http://localhost:5000/api/quotations/${id}/pdf`, '_blank');
+            const quotation = window.quotations.find(q => q._id === id);
+            if (!quotation) return;
+            const template = await window.loadTemplate('quotation');
+            const html = fillQuotationTemplate(template, quotation);
+            window.previewPDF(html, { margin: 10, jsPDF: { format: 'a4' } });
           };
         });
 
         // Download PDF
         document.querySelectorAll('.download-quotation-btn').forEach(btn => {
-          btn.onclick = function() {
+          btn.onclick = async function() {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            const a = document.createElement('a');
-            a.href = `http://localhost:5000/api/quotations/${id}/pdf`;
-            a.download = 'quotation.pdf';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const quotation = window.quotations.find(q => q._id === id);
+            if (!quotation) return;
+            const template = await window.loadTemplate('quotation');
+            const html = fillQuotationTemplate(template, quotation);
+            window.downloadPDF(html, `quotation-${quotation.number || quotation._id}.pdf`, { margin: 10, jsPDF: { format: 'a4' } });
           };
         });
 
@@ -333,4 +337,65 @@ async function previewQuotationPDF(quotation) {
   const template = await window.loadTemplate('quotation');
   // ...replace placeholders in template with quotation data...
   // ...generate PDF or show preview...
+}
+
+// Helper to fill template placeholders
+function fillQuotationTemplate(template, quotation) {
+  let html = template;
+  html = html.replace(/{{number}}/g, quotation.number || '');
+  html = html.replace(/{{clientName}}/g, quotation.client?.name || '');
+  html = html.replace(/{{clientEmail}}/g, quotation.client?.email || '');
+  html = html.replace(/{{status}}/g, quotation.status || '');
+  html = html.replace(/{{expiresAt}}/g, quotation.expiresAt ? new Date(quotation.expiresAt).toLocaleDateString() : '');
+  html = html.replace(/{{total}}/g, quotation.total || '');
+  // Items
+  const itemsHtml = (quotation.items || []).map(item =>
+    `<tr>
+      <td>${item.description || ''}</td>
+      <td>${item.quantity || ''}</td>
+      <td>₹${item.price || ''}</td>
+      <td>₹${item.quantity && item.price ? Number(item.quantity) * Number(item.price) : ''}</td>
+    </tr>`
+  ).join('');
+  html = html.replace(/{{items}}/g, itemsHtml);
+  // Fill org details and logo
+  html = window.fillOrgDetails(html);
+  return html;
+}
+
+// When rendering the quotation form or preview, do NOT allow manual entry for number.
+// When displaying a new quotation preview, fetch the next number from the backend before rendering.
+
+async function getNextQuotationNumber() {
+  // Fetch all quotations and find the highest number, then increment
+  const res = await fetch('http://localhost:5000/api/quotations');
+  const quotations = await res.json();
+  let max = 0;
+  quotations.forEach(q => {
+    if (q.number && typeof q.number === 'string') {
+      const match = q.number.match(/(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > max) max = num;
+      }
+    }
+  });
+  return 'Q-' + String(max + 1).padStart(3, '0');
+}
+
+// Example usage in preview or add form:
+async function renderQuotationPreview(quotation) {
+  let number = quotation.number;
+  if (!number) {
+    number = await getNextQuotationNumber();
+  }
+  const template = await window.loadTemplate('quotation');
+  // Inject the number into the quotation object for template filling
+  const html = window.fillQuotationTemplate(template, { ...quotation, number });
+  window.previewPDF(html, {
+    margin: [0, 0, 0, 0],
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+    html2canvas: { scale: 2 }
+  });
 }
