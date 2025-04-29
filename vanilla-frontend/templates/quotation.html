@@ -5,12 +5,12 @@
   <title>Quotation</title>
   <style>
     @page { size: A4 portrait; margin: 10mm; }
-    /* Color palette: eb7b24, e9c7bf, e45424, ee9f64, 8c241c, b47572, a45454, 9c4c44, 943c34, 8c2c2c */
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
       background: #f8f9fa;
+      font-size: 0.8em; /* reduce base font size by 20% */
     }
     body {
       font-family: Arial, sans-serif;
@@ -20,61 +20,60 @@
     }
     .container {
       max-width: 700px;
-      min-height: 850px; /* reduced from 1000px */
+      min-height: unset; /* remove min-height to allow content to shrink */
       margin: 0 auto;
       background: rgba(255, 255, 255, 0.95);
       border-radius: 10px;
       box-shadow: 0 2px 12px rgba(35,41,70,0.09);
-      padding: 28px 28px 48px; /* reduced padding */
+      padding: 18px 18px 28px; /* further reduced padding */
       position: relative;
       z-index: 1;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-start; /* avoid stretching */
       box-sizing: border-box;
     }
     .header { display: flex; align-items: center; justify-content: center; margin-bottom: 0; }
-    .logo { height: 60px; display: block; margin: 0 auto 12px auto; }
-    .quote-title { font-size: 2rem; color: #eb7b24; margin: 0; letter-spacing: 1px; text-align: center; }
-    .section { margin: 24px 0; }
-    .details-table { width: 100%; margin-bottom: 12px; }
-    .details-table td { padding: 4px 0; }
-    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-    th, td { border: 1px solid #e9c7bf; padding: 10px; }
-    th { background: #e9c7bf; color: #8c241c; }
-    .total { text-align: right; font-size: 1.2em; margin-top: 16px; color: #e45424; }
+    .logo { height: 48px; display: block; margin: 0 auto 10px auto; } /* reduce logo size */
+    .quote-title { font-size: 1.6rem; color: #eb7b24; margin: 0; letter-spacing: 1px; text-align: center; } /* reduced */
+    .section { margin: 18px 0; } /* reduced */
+    .details-table { width: 100%; margin-bottom: 8px; }
+    .details-table td { padding: 3px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #e9c7bf; padding: 8px; }
+    th { background: #e9c7bf; color: #8c241c; font-size: 0.95em; }
+    .total { text-align: right; font-size: 1em; margin-top: 12px; color: #e45424; }
     .footer {
       text-align: center;
       max-width: 700px;
-      margin: 20px auto;
-      font-size: 0.58em; /* further reduced */
+      margin: 12px auto 0 auto; /* reduce margin */
+      font-size: 0.58em;
       color: #8c2c2c;
       background: transparent;
-      line-height: 1.5;
+      line-height: 1.4;
       letter-spacing: 0.01em;
     }
-    .accent-bar { height: 6px; width: 100%; background: linear-gradient(90deg, #eb7b24 0%, #e45424 40%, #ee9f64 100%); border-radius: 4px; margin-bottom: 18px; }
+    .accent-bar { height: 5px; width: 100%; background: linear-gradient(90deg, #eb7b24 0%, #e45424 40%, #ee9f64 100%); border-radius: 4px; margin-bottom: 12px; }
     .items-table { margin-bottom: 0; }
     .items-row-table { width: 100%; border-collapse: collapse; }
-    .items-row-table td { border: none; padding: 6px 10px 6px 10px; }
+    .items-row-table td { border: none; padding: 5px 8px 5px 8px; }
     .items-row-table tr:not(:last-child) td { border-bottom: 1px solid #e9c7bf; }
     .items-label { color: #8c241c; font-weight: bold; width: 120px; }
-    .watermark {
+    /* .watermark {
       position: fixed;
       top: 50%;
       left: 50%;
-      width: 400px;
-      height: 400px;
+      width: 320px;
+      height: 320px;
       opacity: 0.07;
       z-index: 0;
       transform: translate(-50%, -50%);
       pointer-events: none;
       user-select: none;
-    }
-    /* Ensure table fills vertical space if few items */
+    } */
     .items-row-table {
-      min-height: 320px;
-      height: 320px;
+      min-height: 256px;
+      height: 256px;
       display: block;
     }
     .items-row-table tbody {
@@ -86,9 +85,8 @@
       width: 100%;
       table-layout: fixed;
     }
-    /* Add empty rows to fill space if needed */
     .items-row-table .filler-row td {
-      height: 32px;
+      height: 26px;
       background: #fff;
       border: none;
       padding: 0;
@@ -96,13 +94,8 @@
   </style>
 </head>
 <body>
-  <img
-    src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png"
-    alt="Watermark"
-    class="watermark"
-  />
   <div class="container">
-    <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Company Logo" class="logo" />
+    <img src="logo.png" alt="Company Logo" class="logo" />
     <div class="accent-bar"></div>
     <div class="quote-title">Quotation <span style="font-size:1.1rem;color:#8c241c;">#{{number}}</span></div>
     <div class="section">

@@ -15,13 +15,26 @@ window.generatePDF = async function(html, options = {}) {
 
 window.previewPDF = async function(html, options = {}) {
   // Open PDF in a new tab
-  html2pdf().from(html).set(options).outputPdf('bloburl').then(url => {
+  html2pdf().from(html).set({
+    margin: [0, 0, 0, 0],
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+    html2canvas: { scale: 2, useCORS: true }, // ensure useCORS is set
+    ...options
+  }).outputPdf('bloburl').then(url => {
     window.open(url, '_blank');
   });
 };
 
 window.downloadPDF = async function(html, filename = 'document.pdf', options = {}) {
-  html2pdf().from(html).set({ ...options, filename }).save();
+  html2pdf().from(html).set({
+    margin: [0, 0, 0, 0],
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+    html2canvas: { scale: 2, useCORS: true }, // ensure useCORS is set
+    filename,
+    ...options
+  }).save();
 };
 
 // Helper to fill org details in a template (used by both quotations and invoices)
