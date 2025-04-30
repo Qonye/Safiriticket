@@ -36,13 +36,7 @@ window.renderInvoices = function(main) {
             </tr>
           </thead>
           <tbody id="invoice-items-tbody">
-            <tr>
-              <td><input type="text" class="item-desc" style="width:140px;padding:4px;" required></td>
-              <td><input type="number" class="item-qty" min="1" value="1" style="width:60px;padding:4px;" required></td>
-              <td><input type="number" class="item-price" min="0" step="0.01" value="0" style="width:80px;padding:4px;" required></td>
-              <td class="item-subtotal">0</td>
-              <td><button type="button" class="remove-item-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Remove</button></td>
-            </tr>
+            <!-- The first row will be added by addInvoiceItemRow() -->
           </tbody>
         </table>
         <button type="button" id="add-invoice-item-btn" style="padding:6px 14px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Add Item</button>
@@ -81,7 +75,27 @@ window.renderInvoices = function(main) {
     document.querySelectorAll('#invoice-items-tbody tr').forEach(tr => {
       const qty = Number(tr.querySelector('.item-qty').value) || 0;
       const price = Number(tr.querySelector('.item-price').value) || 0;
-      const subtotal = qty * price;
+      let subtotal = qty * price;
+
+      // If hotel, calculate nights from check-in/check-out
+      const productSelect = tr.querySelector('.item-product');
+      const selected = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
+      const type = selected ? selected.getAttribute('data-type') : null;
+
+      let serviceFee = 0;
+      if (type === 'hotel') {
+        const checkin = tr.querySelector('.item-checkin')?.value;
+        const checkout = tr.querySelector('.item-checkout')?.value;
+        if (checkin && checkout) {
+          const nights = (new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24);
+          subtotal = price * (nights > 0 ? nights : 1);
+        }
+        serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
+      } else {
+        serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
+      }
+
+      subtotal += serviceFee;
       tr.querySelector('.item-subtotal').textContent = subtotal.toFixed(2);
       total += subtotal;
     });
@@ -89,17 +103,76 @@ window.renderInvoices = function(main) {
     return total;
   }
 
-  function addInvoiceItemRow(desc = '', qty = 1, price = 0) {
+  // Helper to render the correct input fields for a selected service type
+  function renderServiceFields(tr, type) {
+    // Remove any previous dynamic fields
+    const dynamic = tr.querySelector('.dynamic-fields');
+    if (dynamic) dynamic.remove();
+
+    // Add fields based on type
+    let html = '';
+    if (type === 'hotel') {
+      html = `
+        <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-hotel-name" placeholder="Hotel Name" style="width:110px;padding:4px;">
+          <input type="date" class="item-checkin" placeholder="Check-in" style="width:110px;padding:4px;">
+          <input type="date" class="item-checkout" placeholder="Check-out" style="width:110px;padding:4px;">
+          <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
+        </div>
+      `;
+    } else if (type === 'flight') {
+      html = `
+        <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-airline" placeholder="Airline" style="width:90px;padding:4px;">
+          <input type="text" class="item-from" placeholder="From" style="width:70px;padding:4px;">
+          <input type="text" class="item-to" placeholder="To" style="width:70px;padding:4px;">
+          <input type="date" class="item-flight-date" placeholder="Date" style="width:110px;padding:4px;">
+          <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
+        </div>
+      `;
+    }
+    // Add more types as needed...
+
+    if (html) {
+      tr.querySelector('td').insertAdjacentHTML('beforeend', html);
+    }
+  }
+
+  async function addInvoiceItemRow(desc = '', qty = 1, price = 0, productId = '', productType = '') {
+    const options = await fetchProductsDropdownOptions();
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" class="item-desc" style="width:140px;padding:4px;" value="${desc}" required></td>
+      <td>
+        <select class="item-product" style="width:140px;padding:4px;" required>
+          <option value="">Select Service</option>
+          ${options}
+        </select>
+        <input type="text" class="item-desc" style="width:120px;padding:4px;" placeholder="Description">
+      </td>
       <td><input type="number" class="item-qty" min="1" value="${qty}" style="width:60px;padding:4px;" required></td>
       <td><input type="number" class="item-price" min="0" step="0.01" value="${price}" style="width:80px;padding:4px;" required></td>
       <td class="item-subtotal">0</td>
       <td><button type="button" class="remove-item-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Remove</button></td>
     `;
     document.getElementById('invoice-items-tbody').appendChild(tr);
+
+    // Show dynamic fields if a type is provided (for edit/restore)
+    if (productType) renderServiceFields(tr, productType);
+
+    // Attach events
     attachInvoiceItemEvents(tr);
+
+    // Service select event: show/hide description and render dynamic fields
+    tr.querySelector('.item-product').addEventListener('change', function() {
+      const selected = this.options[this.selectedIndex];
+      const type = selected.getAttribute('data-type');
+      tr.querySelector('.item-desc').style.display = '';
+      renderServiceFields(tr, type);
+    });
+
+    // Listen for changes in dynamic fields to update subtotal
+    tr.addEventListener('input', updateInvoiceSubtotalsAndTotal);
+
     updateInvoiceSubtotalsAndTotal();
   }
 
@@ -114,6 +187,11 @@ window.renderInvoices = function(main) {
 
   // Attach events to initial row
   document.querySelectorAll('#invoice-items-tbody tr').forEach(attachInvoiceItemEvents);
+
+  // Remove initial static row, always add the first row with service select on page load
+  if (document.getElementById('invoice-items-tbody')) {
+    addInvoiceItemRow();
+  }
 
   document.getElementById('add-invoice-item-btn').onclick = () => addInvoiceItemRow();
 
@@ -331,11 +409,38 @@ window.renderInvoices = function(main) {
     e.preventDefault();
     const form = e.target;
     // Gather items
-    const items = Array.from(document.querySelectorAll('#invoice-items-tbody tr')).map(tr => ({
-      description: tr.querySelector('.item-desc').value.trim(),
-      quantity: Number(tr.querySelector('.item-qty').value),
-      price: Number(tr.querySelector('.item-price').value)
-    })).filter(item => item.description && item.quantity > 0);
+    const items = Array.from(document.querySelectorAll('#invoice-items-tbody tr')).map(tr => {
+      const productSelect = tr.querySelector('.item-product');
+      const selected = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
+      const type = selected ? selected.getAttribute('data-type') : null;
+      let serviceFee = 0;
+      if (type === 'hotel' || type === 'flight') {
+        serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
+      }
+      // Gather dynamic fields
+      const item = {
+        description: tr.querySelector('.item-desc').value.trim(),
+        quantity: Number(tr.querySelector('.item-qty').value),
+        price: Number(tr.querySelector('.item-price').value),
+        serviceFee
+      };
+      // Add dynamic fields for hotel
+      if (type === 'hotel') {
+        item.hotelName = tr.querySelector('.item-hotel-name')?.value || '';
+        item.checkin = tr.querySelector('.item-checkin')?.value || '';
+        item.checkout = tr.querySelector('.item-checkout')?.value || '';
+      }
+      // Add dynamic fields for flight
+      if (type === 'flight') {
+        item.airline = tr.querySelector('.item-airline')?.value || '';
+        item.from = tr.querySelector('.item-from')?.value || '';
+        item.to = tr.querySelector('.item-to')?.value || '';
+        item.flightDate = tr.querySelector('.item-flight-date')?.value || '';
+        item.class = tr.querySelector('.item-class')?.value || '';
+      }
+      // ...add more types as needed...
+      return item;
+    }).filter(item => item.description && item.quantity > 0);
 
     const total = updateInvoiceSubtotalsAndTotal();
 
@@ -484,4 +589,11 @@ async function renderInvoicePreview(invoice) {
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
     html2canvas: { scale: 2 }
   });
+}
+
+// Helper to fetch products/services for dropdowns
+async function fetchProductsDropdownOptions() {
+  const res = await fetch('http://localhost:5000/api/products');
+  const products = await res.json();
+  return products.map(p => `<option value="${p._id}" data-type="${p.type}">${p.name} (${p.type})</option>`).join('');
 }

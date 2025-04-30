@@ -85,18 +85,39 @@ window.fillInvoiceTemplate = function(template, invoice) {
   html = html.replace(/{{paidAmount}}/g, invoice.paidAmount || 0);
   html = html.replace(/{{amountDue}}/g, Math.max((invoice.total || 0) - (invoice.paidAmount || 0), 0));
   html = html.replace(/{{total}}/g, invoice.total || '');
-  // Items
-  const itemsHtml = (invoice.items || []).map(item =>
-    `<tr>
-      <td>${item.description || ''}</td>
-      <td>${item.quantity || ''}</td>
-      <td>$${item.price || ''}</td>
-      <td>$${item.quantity && item.price ? Number(item.quantity) * Number(item.price) : ''}</td>
-    </tr>`
-  ).join('');
+
+  // Items: show description, price, service fee, and total per item in columns
+  const itemsHtml = (invoice.items || []).map(item => {
+    // Compose a descriptive string for each item (for the description column only)
+    let desc = item.description || '';
+    if (item.hotelName) desc += ` | Hotel: ${item.hotelName}`;
+    if (item.checkin) desc += ` | Check-in: ${item.checkin}`;
+    if (item.checkout) desc += ` | Check-out: ${item.checkout}`;
+    if (item.airline) desc += ` | Airline: ${item.airline}`;
+    if (item.from) desc += ` | From: ${item.from}`;
+    if (item.to) desc += ` | To: ${item.to}`;
+    if (item.flightDate) desc += ` | Flight Date: ${item.flightDate}`;
+    if (item.class) desc += ` | Class: ${item.class}`;
+    // Add more fields as needed
+
+    const price = Number(item.price) || 0;
+    const qty = Number(item.quantity) || 0;
+    const serviceFee = Number(item.serviceFee) || 0;
+    const subtotal = (qty * price) + serviceFee;
+
+    return `<tr>
+      <td>${desc}</td>
+      <td>${qty}</td>
+      <td>$${price.toFixed(2)}</td>
+      <td>$${serviceFee.toFixed(2)}</td>
+      <td>$${subtotal.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
   html = html.replace(/{{items}}/g, itemsHtml);
-  // Fill org details and logo
+
+  // Fill org details and logo (header/footer)
   html = window.fillOrgDetails(html);
+
   return html;
 };
 

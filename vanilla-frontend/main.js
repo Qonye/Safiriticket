@@ -5,8 +5,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const status = document.getElementById('sidebar-status');
   const buttons = document.querySelectorAll('.sidebar nav ul li button');
 
+  // Add Services link to sidebar if not present
+  const sidebarNav = document.querySelector('.sidebar nav ul');
+  if (!sidebarNav.querySelector('[data-section="services"]')) {
+    const li = document.createElement('li');
+    li.innerHTML = `<button data-section="services">Services</button>`;
+    sidebarNav.appendChild(li);
+  }
+
   function setActive(section) {
     buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.section === section));
+    // Also handle dynamically added Services button
+    const servicesBtn = document.querySelector('.sidebar nav ul button[data-section="services"]');
+    if (servicesBtn) servicesBtn.classList.toggle('active', section === 'services');
   }
 
   function showOverview() {
@@ -49,11 +60,13 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (section === 'financials' && typeof window.renderFinancials === 'function') window.renderFinancials(main);
     else if (section === 'orgsettings' && typeof window.renderOrgSettings === 'function') window.renderOrgSettings(main);
     else if (section === 'clients' && typeof window.renderClients === 'function') window.renderClients(main);
+    else if (section === 'products' && typeof window.renderProducts === 'function') window.renderProducts(main);
+    else if (section === 'services' && typeof window.renderServices === 'function') window.renderServices(main);
     else main.innerHTML = `<h2>${section.charAt(0).toUpperCase() + section.slice(1)}</h2><p>Section coming soon...</p>`;
   }
 
   // Sidebar navigation
-  buttons.forEach(btn => {
+  document.querySelectorAll('.sidebar nav ul li button').forEach(btn => {
     btn.addEventListener('click', () => showSection(btn.dataset.section));
   });
 

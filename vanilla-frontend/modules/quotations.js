@@ -29,13 +29,7 @@ window.renderQuotations = function(main) {
             </tr>
           </thead>
           <tbody id="items-tbody">
-            <tr>
-              <td><input type="text" class="item-desc" style="width:140px;padding:4px;" required></td>
-              <td><input type="number" class="item-qty" min="1" value="1" style="width:60px;padding:4px;" required></td>
-              <td><input type="number" class="item-price" min="0" step="0.01" value="0" style="width:80px;padding:4px;" required></td>
-              <td class="item-subtotal">0</td>
-              <td><button type="button" class="remove-item-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Remove</button></td>
-            </tr>
+            <!-- The first row will be added by addQuotationItemRow() -->
           </tbody>
         </table>
         <button type="button" id="add-item-btn" style="padding:6px 14px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Add Item</button>
@@ -71,17 +65,73 @@ window.renderQuotations = function(main) {
     return total;
   }
 
-  function addItemRow(desc = '', qty = 1, price = 0) {
+  // Helper to render the correct input fields for a selected service type
+  function renderServiceFields(tr, type) {
+    // Remove any previous dynamic fields
+    const dynamic = tr.querySelector('.dynamic-fields');
+    if (dynamic) dynamic.remove();
+
+    // Add fields based on type
+    let html = '';
+    if (type === 'hotel') {
+      html = `
+        <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-hotel-name" placeholder="Hotel Name" style="width:110px;padding:4px;">
+          <input type="text" class="item-room-type" placeholder="Room Type" style="width:90px;padding:4px;">
+          <input type="date" class="item-checkin" placeholder="Check-in" style="width:110px;padding:4px;">
+          <input type="date" class="item-checkout" placeholder="Check-out" style="width:110px;padding:4px;">
+        </div>
+      `;
+    } else if (type === 'flight') {
+      html = `
+        <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-airline" placeholder="Airline" style="width:90px;padding:4px;">
+          <input type="text" class="item-from" placeholder="From" style="width:70px;padding:4px;">
+          <input type="text" class="item-to" placeholder="To" style="width:70px;padding:4px;">
+          <input type="date" class="item-flight-date" placeholder="Date" style="width:110px;padding:4px;">
+        </div>
+      `;
+    }
+    // Add more types as needed...
+
+    if (html) {
+      tr.querySelector('td').insertAdjacentHTML('beforeend', html);
+    }
+  }
+
+  async function addQuotationItemRow(desc = '', qty = 1, price = 0, productId = '', productType = '') {
+    const options = await fetchProductsDropdownOptions();
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" class="item-desc" style="width:140px;padding:4px;" value="${desc}" required></td>
+      <td>
+        <select class="item-product" style="width:140px;padding:4px;" required>
+          <option value="">Select Service</option>
+          ${options}
+        </select>
+        <input type="text" class="item-desc" style="width:120px;padding:4px;" placeholder="Description">
+      </td>
       <td><input type="number" class="item-qty" min="1" value="${qty}" style="width:60px;padding:4px;" required></td>
       <td><input type="number" class="item-price" min="0" step="0.01" value="${price}" style="width:80px;padding:4px;" required></td>
       <td class="item-subtotal">0</td>
       <td><button type="button" class="remove-item-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Remove</button></td>
     `;
     document.getElementById('items-tbody').appendChild(tr);
+
+    // Show dynamic fields if a type is provided (for edit/restore)
+    if (productType) renderServiceFields(tr, productType);
+
+    // Attach events
     attachItemEvents(tr);
+
+    // Service select event: show/hide description and render dynamic fields
+    tr.querySelector('.item-product').addEventListener('change', function() {
+      const selected = this.options[this.selectedIndex];
+      const type = selected.getAttribute('data-type');
+      // Always show description field
+      tr.querySelector('.item-desc').style.display = '';
+      renderServiceFields(tr, type);
+    });
+
     updateSubtotalsAndTotal();
   }
 
@@ -94,10 +144,10 @@ window.renderQuotations = function(main) {
     });
   }
 
-  // Attach events to initial row
-  document.querySelectorAll('#items-tbody tr').forEach(attachItemEvents);
+  // Always add the first row with service select on page load
+  addQuotationItemRow();
 
-  document.getElementById('add-item-btn').onclick = () => addItemRow();
+  document.getElementById('add-item-btn').onclick = () => addQuotationItemRow();
 
   // --- Quotation CRUD logic ---
   function fetchQuotations() {
@@ -398,4 +448,11 @@ async function renderQuotationPreview(quotation) {
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
     html2canvas: { scale: 2 }
   });
+}
+
+// Helper to fetch products/services for dropdowns
+async function fetchProductsDropdownOptions() {
+  const res = await fetch('http://localhost:5000/api/products');
+  const products = await res.json();
+  return products.map(p => `<option value="${p._id}" data-type="${p.type}">${p.name} (${p.type})</option>`).join('');
 }

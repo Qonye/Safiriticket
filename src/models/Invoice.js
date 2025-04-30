@@ -6,7 +6,8 @@ const invoiceSchema = new mongoose.Schema({
   items: [{
     description: String,
     quantity: Number,
-    price: Number
+    price: Number,
+    serviceFee: { type: Number, default: 0 }, // Add service fee per item
   }],
   total: { type: Number, required: true },
   paidAmount: { type: Number, default: 0 }, // <-- ensure this exists

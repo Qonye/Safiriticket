@@ -32,6 +32,7 @@ app.use(express.json());
 import Client from './models/Client.js';
 import Quotation from './models/Quotation.js';
 import Invoice from './models/Invoice.js';
+import Service from './models/Service.js';
 
 // --- Organization Settings Model ---
 const orgSettingsSchema = new mongoose.Schema({
@@ -284,6 +285,36 @@ app.put('/api/orgsettings', async (req, res) => {
   }
   await settings.save();
   res.json(settings);
+});
+
+// --- Service (Product) CRUD API ---
+app.get('/api/products', async (req, res) => {
+  const services = await Service.find({ active: true });
+  res.json(services);
+});
+
+app.post('/api/products', async (req, res) => {
+  const service = new Service(req.body);
+  await service.save();
+  res.status(201).json(service);
+});
+
+app.get('/api/products/:id', async (req, res) => {
+  const service = await Service.findById(req.params.id);
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  res.json(service);
+});
+
+app.put('/api/products/:id', async (req, res) => {
+  const service = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  res.json(service);
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  const service = await Service.findByIdAndUpdate(req.params.id, { active: false }, { new: true });
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  res.json({ message: 'Service deleted (soft)' });
 });
 
 // Serve vanilla frontend statically (add this before app.listen)
