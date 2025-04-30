@@ -7,15 +7,16 @@ const invoiceSchema = new mongoose.Schema({
     description: String,
     quantity: Number,
     price: Number,
-    serviceFee: { type: Number, default: 0 }, // Add service fee per item
+    serviceFee: { type: Number, default: 0 },
+    // Allow any additional dynamic fields (hotelName, checkin, checkout, airline, etc.)
   }],
   total: { type: Number, required: true },
-  paidAmount: { type: Number, default: 0 }, // <-- ensure this exists
+  paidAmount: { type: Number, default: 0 },
   status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' },
   dueDate: Date,
   paidAt: Date,
   createdAt: { type: Date, default: Date.now },
-  number: { type: String, unique: true } // Invoice number, e.g. INV-001
-}, { timestamps: true });
+  number: { type: String, unique: true }
+}, { timestamps: true, strict: false });
 
 export default mongoose.models.Invoice || mongoose.model('Invoice', invoiceSchema);
