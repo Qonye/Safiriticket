@@ -169,6 +169,14 @@ window.renderInvoices = function(main) {
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
       `;
+    } else if (type === 'transfer') {
+      html = `
+        <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-from" placeholder="From" style="width:90px;padding:4px;">
+          <input type="text" class="item-to" placeholder="To" style="width:90px;padding:4px;">
+          <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
+        </div>
+      `;
     }
     // Add more types as needed...
 
@@ -451,7 +459,7 @@ window.renderInvoices = function(main) {
       const selected = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
       const type = selected ? selected.getAttribute('data-type') : null;
       let serviceFee = 0;
-      if (type === 'hotel' || type === 'flight') {
+      if (type === 'hotel' || type === 'flight' || type === 'transfer') {
         serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
       }
       // Gather dynamic fields
@@ -459,7 +467,8 @@ window.renderInvoices = function(main) {
         description: tr.querySelector('.item-desc').value.trim(),
         quantity: Number(tr.querySelector('.item-qty').value),
         price: Number(tr.querySelector('.item-price').value),
-        serviceFee
+        serviceFee,
+        type // <-- ensure type is set for grouping in PDF
       };
       // Add dynamic fields for hotel
       if (type === 'hotel') {
@@ -474,6 +483,11 @@ window.renderInvoices = function(main) {
         item.to = tr.querySelector('.item-to')?.value || '';
         item.flightDate = tr.querySelector('.item-flight-date')?.value || '';
         item.class = tr.querySelector('.item-class')?.value || '';
+      }
+      // Add dynamic fields for transfer
+      if (type === 'transfer') {
+        item.from = tr.querySelector('.item-from')?.value || '';
+        item.to = tr.querySelector('.item-to')?.value || '';
       }
       // ...add more types as needed...
       return item;

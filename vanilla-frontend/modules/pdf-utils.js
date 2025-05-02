@@ -107,7 +107,180 @@ window.fillQuotationTemplate = function(template, quotation) {
   return html;
 };
 
-// Helper to fill template placeholders for invoices
+// Helper to group items by type and render service-specific tables for invoices
+window.renderInvoiceServiceTables = function(items = [], clientName = '') {
+  if (!items.length) return '';
+
+  // Try to infer type if not present (fallback to description keywords)
+  function inferType(item) {
+    if (item.type) return item.type;
+    if (item.serviceType) return item.serviceType;
+    // Heuristics based on fields or description
+    if (item.airline || /flight/i.test(item.description)) return 'flight';
+    if (item.hotelName || /hotel/i.test(item.description)) return 'hotel';
+    if ((item.from && item.to) || /transfer/i.test(item.description)) return 'transfer';
+    return 'Other';
+  }
+
+  // Group items by type
+  const grouped = {};
+  items.forEach(item => {
+    const type = inferType(item);
+    if (!grouped[type]) grouped[type] = [];
+    grouped[type].push(item);
+  });
+
+  let html = '';
+  let grandTotal = 0;
+
+  // Flights Table
+  if (grouped.flight) {
+    let total = 0;
+    html += `
+      <h3 style="margin-top:32px;margin-bottom:8px;">✈️ Flight</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Travel Dates</th>
+            <th>Airline</th>
+            <th>Route</th>
+            <th>Amount</th>
+            <th>Service Fee</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    grouped.flight.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      html += `
+        <tr>
+          <td>${clientName}</td>
+          <td>${item.flightDate || ''}</td>
+          <td>${item.airline || ''}</td>
+          <td>${item.from || ''}${item.from && item.to ? '-' : ''}${item.to || ''}</td>
+          <td>$${amount.toLocaleString()}</td>
+          <td>$${fee.toLocaleString()}</td>
+          <td>$${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    html += `
+        </tbody>
+      </table>
+      <div style="text-align:right;font-weight:bold;margin-bottom:16px;">Total Flights: $${total.toLocaleString()}</div>
+      <hr>
+    `;
+  }
+
+  // Hotels Table
+  if (grouped.hotel) {
+    let total = 0;
+    html += `
+      <h3 style="margin-top:32px;margin-bottom:8px;">🏨 Hotel</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Stay Dates</th>
+            <th>Hotel</th>
+            <th>Amount per Night</th>
+            <th>No. of Days</th>
+            <th>Service Fee</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    grouped.hotel.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      let nights = 1;
+      let stayDates = '';
+      if (item.checkin && item.checkout) {
+        const d1 = new Date(item.checkin);
+        const d2 = new Date(item.checkout);
+        nights = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)));
+        stayDates = `${item.checkin} – ${item.checkout}`;
+      }
+      const totalRow = (amount * nights) + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      html += `
+        <tr>
+          <td>${clientName}</td>
+          <td>${stayDates}</td>
+          <td>${item.hotelName || ''}</td>
+          <td>$${amount.toLocaleString()}</td>
+          <td>${nights}</td>
+          <td>$${fee.toLocaleString()}</td>
+          <td>$${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    html += `
+        </tbody>
+      </table>
+      <div style="text-align:right;font-weight:bold;margin-bottom:16px;">Total Hotels: $${total.toLocaleString()}</div>
+      <hr>
+    `;
+  }
+
+  // Transfers Table
+  if (grouped.transfer) {
+    let total = 0;
+    html += `
+      <h3 style="margin-top:32px;margin-bottom:8px;">🚐 Transfers</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Amount</th>
+            <th>Service Fee</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    grouped.transfer.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      html += `
+        <tr>
+          <td>${clientName}</td>
+          <td>${item.from || ''}</td>
+          <td>${item.to || ''}</td>
+          <td>$${amount.toLocaleString()}</td>
+          <td>$${fee.toLocaleString()}</td>
+          <td>$${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    html += `
+        </tbody>
+      </table>
+      <div style="text-align:right;font-weight:bold;margin-bottom:16px;">Total Transfers: $${total.toLocaleString()}</div>
+      <hr>
+    `;
+  }
+
+  // Grand Total
+  html += `<div style="text-align:right;font-size:1.1em;font-weight:bold;margin-top:24px;">🧾 Grand Total: $${grandTotal.toLocaleString()}</div>`;
+
+  return html;
+};
+
+// Helper to fill template placeholders for invoices, including service tables
 window.fillInvoiceTemplate = function(template, invoice) {
   let html = template;
   html = html.replace(/{{number}}/g, invoice.number || '');
@@ -119,40 +292,8 @@ window.fillInvoiceTemplate = function(template, invoice) {
   html = html.replace(/{{amountDue}}/g, Math.max((invoice.total || 0) - (invoice.paidAmount || 0), 0));
   html = html.replace(/{{total}}/g, invoice.total || '');
 
-  // Items: show description with all details, price, service fee, and correct subtotal per item in columns
-  const itemsHtml = (invoice.items || []).map(item => {
-    let desc = item.description || '';
-    if (item.hotelName) desc += ` | Hotel: ${item.hotelName}`;
-    if (item.checkin) desc += ` | Check-in: ${item.checkin}`;
-    if (item.checkout) desc += ` | Check-out: ${item.checkout}`;
-    if (item.airline) desc += ` | Airline: ${item.airline}`;
-    if (item.from) desc += ` | From: ${item.from}`;
-    if (item.to) desc += ` | To: ${item.to}`;
-    if (item.flightDate) desc += ` | Flight Date: ${item.flightDate}`;
-    if (item.class) desc += ` | Class: ${item.class}`;
-    // Add more fields as needed
-
-    const price = Number(item.price) || 0;
-    const qty = Number(item.quantity) || 0;
-    const serviceFee = Number(item.serviceFee) || 0;
-    let subtotal = qty * price + serviceFee;
-
-    // Correct subtotal for hotel: multiply price by nights (from checkin/checkout)
-    if (item.checkin && item.checkout) {
-      const nights = (new Date(item.checkout) - new Date(item.checkin)) / (1000 * 60 * 60 * 24);
-      const nightsCount = nights > 0 ? nights : 1;
-      subtotal = (price * nightsCount) + serviceFee;
-    }
-
-    return `<tr>
-      <td>${desc}</td>
-      <td>${qty}</td>
-      <td>$${price.toFixed(2)}</td>
-      <td>$${serviceFee.toFixed(2)}</td>
-      <td>$${subtotal.toFixed(2)}</td>
-    </tr>`;
-  }).join('');
-  html = html.replace(/{{items}}/g, itemsHtml);
+  // Service-specific tables only (no generic table)
+  html = html.replace(/{{serviceTables}}/g, window.renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || ''));
 
   // Fill org details and logo (header/footer)
   html = window.fillOrgDetails(html);

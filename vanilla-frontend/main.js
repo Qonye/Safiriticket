@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     main.innerHTML = `
       <h1>Dashboard Overview</h1>
       <div class="widget-row" id="widget-row"></div>
+      <div id="dashboard-charts-area"></div>
     `;
     // Fetch all data in parallel and then render widgets
     Promise.all([
@@ -49,6 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('widget-clients').onclick = () => showSection('clients');
       document.getElementById('widget-quotations').onclick = () => showSection('quotations');
       document.getElementById('widget-invoices').onclick = () => showSection('invoices');
+      // Render financial charts below widgets
+      if (window.renderFinancialCharts) {
+        window.renderFinancialCharts(document.getElementById('dashboard-charts-area'));
+      }
     });
   }
 
