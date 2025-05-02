@@ -163,3 +163,12 @@ window.fillInvoiceTemplate = function(template, invoice) {
 // Example usage in your frontend modules:
 // const html = await loadTemplate('quotation'); // loads quotation.html
 // const html = await loadTemplate('invoice');   // loads invoice.html
+
+// Preload logo image at app startup for reliable PDF rendering
+(function preloadLogo() {
+  const logoUrl = 'logo.png'; // or use your org logo URL if dynamic
+  const img = new window.Image();
+  img.src = logoUrl;
+  // Optionally, store for later use if needed
+  window._preloadedLogo = img;
+})();

@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import multer from 'multer';
 
 // Initialize __filename and __dirname before using them
 const __filename = fileURLToPath(import.meta.url);
@@ -73,6 +74,25 @@ async function getNextNumber(model, prefix) {
   return `${prefix}${String(next).padStart(3, '0')}`;
 }
 
+// --- Multer setup for file uploads ---
+// Use original file extension for uploaded PDFs
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../uploads/quotations'));
+  },
+  filename: function (req, file, cb) {
+    // Keep original name but ensure uniqueness
+    const ext = path.extname(file.originalname) || '.pdf';
+    const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E6);
+    cb(null, `${base}-${unique}${ext}`);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
+
 // --- Client Routes ---
 app.get('/api/clients', async (req, res) => {
   const clients = await Client.find();
@@ -105,12 +125,27 @@ app.delete('/api/clients/:id', async (req, res) => {
 
 // --- Quotation Routes ---
 app.get('/api/quotations', async (req, res) => {
-  const quotations = await Quotation.find().populate('client');
+  const { client, status } = req.query;
+  const filter = {};
+  if (client) filter.client = client;
+  if (status) filter.status = status;
+  const quotations = await Quotation.find(filter).populate('client');
   res.json(quotations);
 });
 
-app.post('/api/quotations', async (req, res) => {
-  const quotation = new Quotation(req.body);
+app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
+  let data = req.body;
+  // If items is a string (from FormData), parse it
+  if (typeof data.items === 'string') {
+    try { data.items = JSON.parse(data.items); } catch { data.items = []; }
+  }
+  // If a PDF was uploaded, store its path or URL
+  if (req.file) {
+    // You may want to serve files statically or upload to cloud storage
+    data.externalPdfUrl = `/uploads/quotations/${req.file.filename}`;
+    data.isExternal = true;
+  }
+  const quotation = new Quotation(data);
   if (!quotation.number) {
     quotation.number = await getNextNumber(Quotation, 'Q-');
   }
@@ -174,7 +209,11 @@ app.post('/api/quotations/expire', async (req, res) => {
 
 // --- Invoice Routes ---
 app.get('/api/invoices', async (req, res) => {
-  const invoices = await Invoice.find().populate('client').populate('quotation');
+  const { client, status } = req.query;
+  const filter = {};
+  if (client) filter.client = client;
+  if (status) filter.status = status;
+  const invoices = await Invoice.find(filter).populate('client').populate('quotation');
   res.json(invoices);
 });
 
@@ -251,7 +290,7 @@ app.get('/api/financials', async (req, res) => {
 
     // Revenue analysis (partial payments included)
     paidRevenue += paidAmt;
-    if (i.status === 'Unpaid') unpaidRevenue += dueAmt;
+    if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) unpaidRevenue += dueAmt;
     if (i.status === 'Overdue') overdueRevenue += dueAmt;
   });
 
@@ -319,6 +358,9 @@ app.delete('/api/products/:id', async (req, res) => {
 
 // Serve vanilla frontend statically (add this before app.listen)
 app.use('/vanilla', express.static(path.join(__dirname, '../vanilla-frontend')));
+
+// Serve uploaded PDFs statically
+app.use('/uploads/quotations', express.static(path.join(__dirname, '../uploads/quotations')));
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;

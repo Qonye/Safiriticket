@@ -45,6 +45,22 @@ window.renderInvoices = function(main) {
       <button type="submit" form="invoice-form" style="margin-top:14px;padding:8px 18px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Add Invoice</button>
       <div id="invoice-form-msg" style="margin-top:8px;font-size:0.98em;"></div>
     </div>
+    <div style="margin-bottom:18px;display:flex;gap:16px;align-items:center;">
+      <label>Client:
+        <select id="filter-client" style="padding:6px;width:160px;">
+          <option value="">All</option>
+        </select>
+      </label>
+      <label>Status:
+        <select id="filter-status" style="padding:6px;width:120px;">
+          <option value="">All</option>
+          <option value="Unpaid">Unpaid</option>
+          <option value="Paid">Paid</option>
+          <option value="Overdue">Overdue</option>
+        </select>
+      </label>
+      <button id="filter-apply-btn" style="padding:6px 14px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Filter</button>
+    </div>
     <div id="invoices-list">Loading...</div>
   `;
 
@@ -68,6 +84,29 @@ window.renderInvoices = function(main) {
         .map(q => `<option value="${q._id}">#${q._id.slice(-5)} - ${q.client?.name || ''} ($${q.total || 0})</option>`)
         .join('');
     });
+
+  // Populate client filter dropdown
+  fetch('http://localhost:5000/api/clients')
+    .then(r => r.json())
+    .then(clients => {
+      const select = document.getElementById('filter-client');
+      select.innerHTML += clients.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+    });
+
+  // Fetch and render invoices table with filters
+  function fetchFilteredInvoices() {
+    const client = document.getElementById('filter-client').value;
+    const status = document.getElementById('filter-status').value;
+    let url = 'http://localhost:5000/api/invoices?';
+    if (client) url += `client=${encodeURIComponent(client)}&`;
+    if (status) url += `status=${encodeURIComponent(status)}&`;
+    fetchInvoices(url);
+  }
+
+  document.getElementById('filter-apply-btn').onclick = fetchFilteredInvoices;
+
+  // Initial fetch (all)
+  fetchInvoices();
 
   // --- Items logic ---
   function updateInvoiceSubtotalsAndTotal() {
@@ -217,8 +256,8 @@ window.renderInvoices = function(main) {
   });
 
   // --- Invoice CRUD logic ---
-  function fetchInvoices() {
-    fetch('http://localhost:5000/api/invoices')
+  function fetchInvoices(url = 'http://localhost:5000/api/invoices') {
+    fetch(url)
       .then(r => r.json())
       .then(invoices => {
         window.invoices = invoices; // Store invoices globally
@@ -402,8 +441,6 @@ window.renderInvoices = function(main) {
         // (Optional) Add edit functionality for other fields as needed
       });
   }
-
-  fetchInvoices();
 
   document.getElementById('invoice-form').onsubmit = function (e) {
     e.preventDefault();

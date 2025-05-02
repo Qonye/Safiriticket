@@ -2,6 +2,57 @@
 window.renderQuotations = function(main) {
   main.innerHTML = `
     <h2 style="color:#8c241c;">Quotations</h2>
+    <div id="quotation-creator-area"></div>
+    <div style="margin-bottom:18px;display:flex;gap:16px;align-items:center;">
+      <label>Client:
+        <select id="filter-client" style="padding:6px;width:160px;">
+          <option value="">All</option>
+        </select>
+      </label>
+      <label>Status:
+        <select id="filter-status" style="padding:6px;width:120px;">
+          <option value="">All</option>
+          <option value="Pending">Pending</option>
+          <option value="Accepted">Accepted</option>
+          <option value="Declined">Declined</option>
+          <option value="Expired">Expired</option>
+        </select>
+      </label>
+      <button id="filter-apply-btn" style="padding:6px 14px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Filter</button>
+    </div>
+    <div id="quotations-list">Loading...</div>
+  `;
+
+  // Populate client filter dropdown
+  fetch('http://localhost:5000/api/clients')
+    .then(r => r.json())
+    .then(clients => {
+      const select = document.getElementById('filter-client');
+      select.innerHTML += clients.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+    });
+
+  // Show system quotation creator by default
+  renderSystemQuotationForm(document.getElementById('quotation-creator-area'));
+
+  // Fetch and render quotations table with filters
+  function fetchFilteredQuotations() {
+    const client = document.getElementById('filter-client').value;
+    const status = document.getElementById('filter-status').value;
+    let url = 'http://localhost:5000/api/quotations?';
+    if (client) url += `client=${encodeURIComponent(client)}&`;
+    if (status) url += `status=${encodeURIComponent(status)}&`;
+    fetchQuotations(url);
+  }
+
+  document.getElementById('filter-apply-btn').onclick = fetchFilteredQuotations;
+
+  // Initial fetch (all)
+  fetchQuotations();
+};
+
+// --- System Quotation Creator ---
+function renderSystemQuotationForm(container) {
+  container.innerHTML = `
     <div style="margin-bottom:18px;">
       <form id="quotation-form" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
         <div>
@@ -14,6 +65,11 @@ window.renderQuotations = function(main) {
         <div>
           <label>Expires At<br>
             <input type="date" name="expiresAt" style="padding:6px;width:140px;">
+          </label>
+        </div>
+        <div>
+          <label>Attach External PDF (optional)<br>
+            <input type="file" name="pdf" accept="application/pdf">
           </label>
         </div>
       </form>
@@ -38,7 +94,6 @@ window.renderQuotations = function(main) {
       <button type="submit" form="quotation-form" style="margin-top:14px;padding:8px 18px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Add Quotation</button>
       <div id="quotation-form-msg" style="margin-top:8px;font-size:0.98em;"></div>
     </div>
-    <div id="quotations-list">Loading...</div>
   `;
 
   // Populate client dropdown
@@ -149,194 +204,6 @@ window.renderQuotations = function(main) {
 
   document.getElementById('add-item-btn').onclick = () => addQuotationItemRow();
 
-  // --- Quotation CRUD logic ---
-  function fetchQuotations() {
-    fetch('http://localhost:5000/api/quotations')
-      .then(r => r.json())
-      .then(quotations => {
-        window.quotations = quotations;
-        if (!quotations.length) {
-          document.getElementById('quotations-list').innerHTML = '<p>No quotations found.</p>';
-          return;
-        }
-        document.getElementById('quotations-list').innerHTML = `
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th style="background:#8c241c;">Client</th>
-                <th style="background:#8c241c;">Status</th>
-                <th style="background:#8c241c;">Total</th>
-                <th style="background:#8c241c;">Expires At</th>
-                <th style="background:#8c241c;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${quotations.map(q => `
-                <tr data-id="${q._id}">
-                  <td>${q.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${q.client?.email || ''}</span></td>
-                  <td>
-                    <select class="status-select" style="padding:4px 8px;">
-                      <option value="Pending" ${q.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                      <option value="Accepted" ${q.status === 'Accepted' ? 'selected' : ''}>Accepted</option>
-                      <option value="Declined" ${q.status === 'Declined' ? 'selected' : ''}>Declined</option>
-                      <option value="Expired" ${q.status === 'Expired' ? 'selected' : ''}>Expired</option>
-                    </select>
-                  </td>
-                  <td>$${q.total || 0}</td>
-                  <td>
-                    <span class="expires-at-label">${q.expiresAt ? new Date(q.expiresAt).toLocaleDateString() : ''}</span>
-                    <input type="date" class="edit-expires-at" value="${q.expiresAt ? new Date(q.expiresAt).toISOString().slice(0,10) : ''}" style="display:none;padding:4px;">
-                  </td>
-                  <td>
-                    ${q.status === 'Accepted' ? `<button class="create-invoice-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Create Invoice</button>` : ''}
-                    <button class="edit-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit</button>
-                    <button class="save-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Save</button>
-                    <button class="cancel-btn" style="background:#b47572;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Cancel</button>
-                    <button class="delete-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Delete</button>
-                    <button class="preview-quotation-btn" style="background:#8c241c;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Preview</button>
-                    <button class="download-quotation-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">PDF</button>
-                    <button class="email-quotation-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Email</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        `;
-
-        // Status change handler
-        document.querySelectorAll('.status-select').forEach(sel => {
-          sel.onchange = function() {
-            const tr = sel.closest('tr');
-            const id = tr.getAttribute('data-id');
-            fetch(`http://localhost:5000/api/quotations/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: sel.value })
-            })
-              .then(r => r.json())
-              .then(() => fetchQuotations());
-          };
-        });
-
-        // Create Invoice handler
-        document.querySelectorAll('.create-invoice-btn').forEach(btn => {
-          btn.onclick = function() {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            fetch('http://localhost:5000/api/invoices', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ quotation: id })
-            })
-              .then(r => r.json())
-              .then(() => {
-                alert('Invoice created from quotation!');
-              });
-          };
-        });
-
-        // Edit, Save, Cancel handlers for expiresAt
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-          btn.onclick = function() {
-            const tr = btn.closest('tr');
-            tr.querySelector('.expires-at-label').style.display = 'none';
-            tr.querySelector('.edit-expires-at').style.display = '';
-            tr.querySelector('.save-btn').style.display = '';
-            tr.querySelector('.cancel-btn').style.display = '';
-            btn.style.display = 'none';
-          };
-        });
-        document.querySelectorAll('.cancel-btn').forEach(btn => {
-          btn.onclick = function() {
-            const tr = btn.closest('tr');
-            tr.querySelector('.expires-at-label').style.display = '';
-            tr.querySelector('.edit-expires-at').style.display = 'none';
-            tr.querySelector('.save-btn').style.display = 'none';
-            tr.querySelector('.edit-btn').style.display = '';
-            btn.style.display = 'none';
-          };
-        });
-        document.querySelectorAll('.save-btn').forEach(btn => {
-          btn.onclick = function() {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            const expiresAt = tr.querySelector('.edit-expires-at').value;
-            fetch(`http://localhost:5000/api/quotations/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ expiresAt })
-            })
-              .then(r => r.json())
-              .then(() => fetchQuotations());
-          };
-        });
-
-        // Delete handler
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-          btn.onclick = function() {
-            if (!confirm('Delete this quotation?')) return;
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            fetch(`http://localhost:5000/api/quotations/${id}`, {
-              method: 'DELETE'
-            })
-              .then(r => r.json())
-              .then(() => fetchQuotations());
-          };
-        });
-
-        // Preview PDF
-        document.querySelectorAll('.preview-quotation-btn').forEach(btn => {
-          btn.onclick = async function() {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            const quotation = window.quotations.find(q => q._id === id);
-            if (!quotation) return;
-            const template = await window.loadTemplate('quotation');
-            const html = fillQuotationTemplate(template, quotation);
-            window.previewPDF(html, { margin: 10, jsPDF: { format: 'a4' } });
-          };
-        });
-
-        // Download PDF
-        document.querySelectorAll('.download-quotation-btn').forEach(btn => {
-          btn.onclick = async function() {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            const quotation = window.quotations.find(q => q._id === id);
-            if (!quotation) return;
-            const template = await window.loadTemplate('quotation');
-            const html = fillQuotationTemplate(template, quotation);
-            window.downloadPDF(html, `quotation-${quotation.number || quotation._id}.pdf`, { margin: 10, jsPDF: { format: 'a4' } });
-          };
-        });
-
-        // Send via Email
-        document.querySelectorAll('.email-quotation-btn').forEach(btn => {
-          btn.onclick = function() {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
-            fetch(`http://localhost:5000/api/quotations/${id}/email`, { method: 'POST' })
-              .then(r => r.json())
-              .then(res => {
-                btn.textContent = 'Sent!';
-                setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
-              })
-              .catch(() => {
-                btn.textContent = 'Error';
-                setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
-              });
-          };
-        });
-
-        // (Optional) Add more edit fields as needed
-      });
-  }
-
-  fetchQuotations();
-
   document.getElementById('quotation-form').onsubmit = function (e) {
     e.preventDefault();
     const form = e.target;
@@ -349,17 +216,15 @@ window.renderQuotations = function(main) {
 
     const total = updateSubtotalsAndTotal();
 
-    const data = {
-      client: form.client.value,
-      status: "Pending", // Always set to Pending on creation
-      expiresAt: form.expiresAt.value,
-      items,
-      total
-    };
+    // Use FormData to support file upload
+    const data = new FormData(form);
+    data.append('status', 'Pending');
+    data.append('items', JSON.stringify(items));
+    data.append('total', total);
+
     fetch('http://localhost:5000/api/quotations', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: data
     })
       .then(r => r.json())
       .then(quotation => {
@@ -381,7 +246,198 @@ window.renderQuotations = function(main) {
         document.getElementById('quotation-form-msg').textContent = 'Error adding quotation.';
       });
   };
-};
+}
+
+// --- Quotation CRUD logic ---
+function fetchQuotations(url = 'http://localhost:5000/api/quotations') {
+  fetch(url)
+    .then(r => r.json())
+    .then(quotations => {
+      window.quotations = quotations;
+      if (!quotations.length) {
+        document.getElementById('quotations-list').innerHTML = '<p>No quotations found.</p>';
+        return;
+      }
+      document.getElementById('quotations-list').innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="background:#8c241c;">Client</th>
+              <th style="background:#8c241c;">Status</th>
+              <th style="background:#8c241c;">Total</th>
+              <th style="background:#8c241c;">Expires At</th>
+              <th style="background:#8c241c;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${quotations.map(q => `
+              <tr data-id="${q._id}">
+                <td>${q.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${q.client?.email || ''}</span></td>
+                <td>
+                  <select class="status-select" style="padding:4px 8px;">
+                    <option value="Pending" ${q.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                    <option value="Accepted" ${q.status === 'Accepted' ? 'selected' : ''}>Accepted</option>
+                    <option value="Declined" ${q.status === 'Declined' ? 'selected' : ''}>Declined</option>
+                    <option value="Expired" ${q.status === 'Expired' ? 'selected' : ''}>Expired</option>
+                  </select>
+                </td>
+                <td>$${q.total || 0}</td>
+                <td>
+                  <span class="expires-at-label">${q.expiresAt ? new Date(q.expiresAt).toLocaleDateString() : ''}</span>
+                  <input type="date" class="edit-expires-at" value="${q.expiresAt ? new Date(q.expiresAt).toISOString().slice(0,10) : ''}" style="display:none;padding:4px;">
+                </td>
+                <td>
+                  ${q.externalPdfUrl ? `
+                    <a href="${q.externalPdfUrl}" target="_blank" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;text-decoration:none;display:inline-block;">View PDF</a>
+                  ` : `
+                    <button class="preview-quotation-btn" style="background:#8c241c;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Preview</button>
+                  `}
+                  <button class="download-quotation-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">PDF</button>
+                  <button class="email-quotation-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Email</button>
+                  <button class="edit-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit</button>
+                  <button class="save-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Save</button>
+                  <button class="cancel-btn" style="background:#b47572;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Cancel</button>
+                  <button class="delete-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Delete</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // Status change handler
+      document.querySelectorAll('.status-select').forEach(sel => {
+        sel.onchange = function() {
+          const tr = sel.closest('tr');
+          const id = tr.getAttribute('data-id');
+          fetch(`http://localhost:5000/api/quotations/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: sel.value })
+          })
+            .then(r => r.json())
+            .then(() => fetchQuotations());
+        };
+      });
+
+      // Create Invoice handler
+      document.querySelectorAll('.create-invoice-btn').forEach(btn => {
+        btn.onclick = function() {
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          fetch('http://localhost:5000/api/invoices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quotation: id })
+          })
+            .then(r => r.json())
+            .then(() => {
+              alert('Invoice created from quotation!');
+            });
+        };
+      });
+
+      // Edit, Save, Cancel handlers for expiresAt
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.onclick = function() {
+          const tr = btn.closest('tr');
+          tr.querySelector('.expires-at-label').style.display = 'none';
+          tr.querySelector('.edit-expires-at').style.display = '';
+          tr.querySelector('.save-btn').style.display = '';
+          tr.querySelector('.cancel-btn').style.display = '';
+          btn.style.display = 'none';
+        };
+      });
+      document.querySelectorAll('.cancel-btn').forEach(btn => {
+        btn.onclick = function() {
+          const tr = btn.closest('tr');
+          tr.querySelector('.expires-at-label').style.display = '';
+          tr.querySelector('.edit-expires-at').style.display = 'none';
+          tr.querySelector('.save-btn').style.display = 'none';
+          tr.querySelector('.edit-btn').style.display = '';
+          btn.style.display = 'none';
+        };
+      });
+      document.querySelectorAll('.save-btn').forEach(btn => {
+        btn.onclick = function() {
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          const expiresAt = tr.querySelector('.edit-expires-at').value;
+          fetch(`http://localhost:5000/api/quotations/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expiresAt })
+          })
+            .then(r => r.json())
+            .then(() => fetchQuotations());
+        };
+      });
+
+      // Delete handler
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.onclick = function() {
+          if (!confirm('Delete this quotation?')) return;
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          fetch(`http://localhost:5000/api/quotations/${id}`, {
+            method: 'DELETE'
+          })
+            .then(r => r.json())
+            .then(() => fetchQuotations());
+        };
+      });
+
+      // Preview PDF
+      document.querySelectorAll('.preview-quotation-btn').forEach(btn => {
+        btn.onclick = async function() {
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          const quotation = window.quotations.find(q => q._id === id);
+          if (!quotation) return;
+          const template = await window.loadTemplate('quotation');
+          const html = fillQuotationTemplate(template, quotation);
+          window.previewPDF(html, { margin: 10, jsPDF: { format: 'a4' } });
+        };
+      });
+
+      // Download PDF
+      document.querySelectorAll('.download-quotation-btn').forEach(btn => {
+        btn.onclick = async function() {
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          const quotation = window.quotations.find(q => q._id === id);
+          if (!quotation) return;
+          const template = await window.loadTemplate('quotation');
+          const html = fillQuotationTemplate(template, quotation);
+          window.downloadPDF(html, `quotation-${quotation.number || quotation._id}.pdf`, { margin: 10, jsPDF: { format: 'a4' } });
+        };
+      });
+
+      // Send via Email
+      document.querySelectorAll('.email-quotation-btn').forEach(btn => {
+        btn.onclick = function() {
+          const tr = btn.closest('tr');
+          const id = tr.getAttribute('data-id');
+          btn.disabled = true;
+          btn.textContent = 'Sending...';
+          fetch(`http://localhost:5000/api/quotations/${id}/email`, { method: 'POST' })
+            .then(r => r.json())
+            .then(res => {
+              btn.textContent = 'Sent!';
+              setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
+            })
+            .catch(() => {
+              btn.textContent = 'Error';
+              setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
+            });
+        };
+      });
+
+      // (Optional) Add more edit fields as needed
+    });
+}
+
+fetchQuotations();
 
 async function previewQuotationPDF(quotation) {
   const template = await window.loadTemplate('quotation');
