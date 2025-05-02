@@ -13,7 +13,9 @@ const quotationSchema = new mongoose.Schema({
   status: { type: String, enum: ['Pending', 'Accepted', 'Declined', 'Expired'], default: 'Pending' },
   expiresAt: Date,
   createdAt: { type: Date, default: Date.now },
-  number: { type: String, unique: true }
+  number: { type: String, unique: true },
+  externalPdfUrl: { type: String }, // stores Cloudinary PDF URL
+  isExternal: { type: Boolean, default: false } // Optional: mark if has external PDF
 }, { timestamps: true, strict: false });
 
 export default mongoose.models.Quotation || mongoose.model('Quotation', quotationSchema);

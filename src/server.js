@@ -6,6 +6,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import multer from 'multer';
+import cloudinary from 'cloudinary';
+import fs from 'fs';
 
 // Initialize __filename and __dirname before using them
 const __filename = fileURLToPath(import.meta.url);
@@ -13,6 +15,13 @@ const __dirname = dirname(__filename);
 
 // Now you can safely use __dirname for dotenv
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+// --- Cloudinary config (set your credentials in .env) ---
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const app = express();
 app.use(cors({
@@ -139,11 +148,22 @@ app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
   if (typeof data.items === 'string') {
     try { data.items = JSON.parse(data.items); } catch { data.items = []; }
   }
-  // If a PDF was uploaded, store its path or URL
+  // If a PDF was uploaded, upload to Cloudinary and save the URL
   if (req.file) {
-    // You may want to serve files statically or upload to cloud storage
-    data.externalPdfUrl = `/uploads/quotations/${req.file.filename}`;
-    data.isExternal = true;
+    try {
+      const uploadResult = await cloudinary.v2.uploader.upload(req.file.path, {
+        resource_type: 'raw',
+        folder: 'safiriticket/quotations'
+      });
+      data.externalPdfUrl = uploadResult.secure_url;
+      data.isExternal = true;
+      // Remove local file after upload
+      fs.unlink(req.file.path, () => {});
+    } catch (err) {
+      // Clean up local file if upload fails
+      fs.unlink(req.file.path, () => {});
+      return res.status(500).json({ error: 'Failed to upload PDF to Cloudinary', details: err.message });
+    }
   }
   const quotation = new Quotation(data);
   if (!quotation.number) {
