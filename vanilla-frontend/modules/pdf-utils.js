@@ -21,9 +21,9 @@ window.previewPDF = async function(html, options = {}) {
   document.body.appendChild(tempDiv);
   const logo = tempDiv.querySelector('.logo');
   const renderPDF = () => {
-    // Always render the entire tempDiv, not just .container, to ensure footer is included
+    // Use minimal margins to maximize printable area and reduce cutoff
     html2pdf().from(tempDiv).set({
-      margin: [0, 0, 0, 0],
+      margin: [2, 2, 2, 2], // 2mm on all sides
       jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
       html2canvas: { scale: 2, useCORS: true },

@@ -217,4 +217,41 @@ function renderSystemQuotationForm(container) {
     e.preventDefault();
     const form = e.target;
     // Gather items
-    const items = Array.from(document.querySelectorAll('#items-tbody tr')).map(tr
+    const items = Array.from(document.querySelectorAll('#items-tbody tr')).map(tr => {
+      const productSelect = tr.querySelector('.item-product');
+      const selected = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
+      const type = selected ? selected.getAttribute('data-type') : null;
+      let serviceFee = 0;
+      if (type === 'hotel' || type === 'flight' || type === 'transfer') {
+        serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
+      }
+      const item = {
+        description: tr.querySelector('.item-desc').value.trim(),
+        quantity: Number(tr.querySelector('.item-qty').value),
+        price: Number(tr.querySelector('.item-price').value),
+        serviceFee,
+        type // <-- ensure type is set for grouping in PDF
+      };
+      if (type === 'hotel') {
+        item.hotelName = tr.querySelector('.item-hotel-name')?.value || '';
+        item.checkin = tr.querySelector('.item-checkin')?.value || '';
+        item.checkout = tr.querySelector('.item-checkout')?.value || '';
+      }
+      if (type === 'flight') {
+        item.airline = tr.querySelector('.item-airline')?.value || '';
+        item.from = tr.querySelector('.item-from')?.value || '';
+        item.to = tr.querySelector('.item-to')?.value || '';
+        item.flightDate = tr.querySelector('.item-flight-date')?.value || '';
+        item.class = tr.querySelector('.item-class')?.value || '';
+      }
+      if (type === 'transfer') {
+        item.from = tr.querySelector('.item-from')?.value || '';
+        item.to = tr.querySelector('.item-to')?.value || '';
+      }
+      // ...add more types as needed...
+      return item;
+    }).filter(item => item.description && item.quantity > 0);
+
+    // ...existing code...
+  };
+}
