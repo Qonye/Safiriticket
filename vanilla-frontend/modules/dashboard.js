@@ -12,7 +12,7 @@ window.renderFinancialCharts = function(container) {
   `;
 
   // Fetch financials data for status chart
-  fetch('http://localhost:5000/api/financials')
+  fetch(`${window.API_BASE_URL}/api/financials`)
     .then(r => r.json())
     .then(data => {
       // Pie chart for Paid/Unpaid/Overdue revenue
@@ -36,7 +36,7 @@ window.renderFinancialCharts = function(container) {
     });
 
   // Fetch monthly revenue for bar chart
-  fetch('http://localhost:5000/api/invoices')
+  fetch(`${window.API_BASE_URL}/api/invoices`)
     .then(r => r.json())
     .then(invoices => {
       // Group by month

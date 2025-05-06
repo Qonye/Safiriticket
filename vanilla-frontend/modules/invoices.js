@@ -65,7 +65,7 @@ window.renderInvoices = function(main) {
   `;
 
   // Populate client dropdown
-  fetch('http://localhost:5000/api/clients')
+  fetch(`${window.API_BASE_URL}/api/clients`)
     .then(r => r.json())
     .then(clients => {
       const select = document.getElementById('invoice-client-select');
@@ -75,7 +75,7 @@ window.renderInvoices = function(main) {
     });
 
   // Populate quotations dropdown (only accepted quotations)
-  fetch('http://localhost:5000/api/quotations')
+  fetch(`${window.API_BASE_URL}/api/quotations`)
     .then(r => r.json())
     .then(quotations => {
       const select = document.getElementById('invoice-quotation-select');
@@ -86,7 +86,7 @@ window.renderInvoices = function(main) {
     });
 
   // Populate client filter dropdown
-  fetch('http://localhost:5000/api/clients')
+  fetch(`${window.API_BASE_URL}/api/clients`)
     .then(r => r.json())
     .then(clients => {
       const select = document.getElementById('filter-client');
@@ -97,7 +97,7 @@ window.renderInvoices = function(main) {
   function fetchFilteredInvoices() {
     const client = document.getElementById('filter-client').value;
     const status = document.getElementById('filter-status').value;
-    let url = 'http://localhost:5000/api/invoices?';
+    let url = `${window.API_BASE_URL}/api/invoices?`;
     if (client) url += `client=${encodeURIComponent(client)}&`;
     if (status) url += `status=${encodeURIComponent(status)}&`;
     fetchInvoices(url);
@@ -246,7 +246,7 @@ window.renderInvoices = function(main) {
   document.getElementById('invoice-quotation-select').addEventListener('change', function() {
     const qid = this.value;
     if (!qid) return;
-    fetch(`http://localhost:5000/api/quotations/${qid}`)
+    fetch(`${window.API_BASE_URL}/api/quotations/${qid}`)
       .then(r => r.json())
       .then(q => {
         // Set client
@@ -264,7 +264,7 @@ window.renderInvoices = function(main) {
   });
 
   // --- Invoice CRUD logic ---
-  function fetchInvoices(url = 'http://localhost:5000/api/invoices') {
+  function fetchInvoices(url = `${window.API_BASE_URL}/api/invoices`) {
     fetch(url)
       .then(r => r.json())
       .then(invoices => {
@@ -340,7 +340,7 @@ window.renderInvoices = function(main) {
               const total = Number(tr.querySelector('td:nth-child(3)').textContent.replace('$', '')) || 0;
               payload.paidAmount = total;
             }
-            fetch(`http://localhost:5000/api/invoices/${id}`, {
+            fetch(`${window.API_BASE_URL}/api/invoices/${id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -378,7 +378,7 @@ window.renderInvoices = function(main) {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             const paidAmount = Number(tr.querySelector('.edit-paid').value) || 0;
-            fetch(`http://localhost:5000/api/invoices/${id}`, {
+            fetch(`${window.API_BASE_URL}/api/invoices/${id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paidAmount })
@@ -394,7 +394,7 @@ window.renderInvoices = function(main) {
             if (!confirm('Delete this invoice?')) return;
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            fetch(`http://localhost:5000/api/invoices/${id}`, {
+            fetch(`${window.API_BASE_URL}/api/invoices/${id}`, {
               method: 'DELETE'
             })
               .then(r => r.json())
@@ -435,7 +435,7 @@ window.renderInvoices = function(main) {
             const id = tr.getAttribute('data-id');
             btn.disabled = true;
             btn.textContent = 'Sending...';
-            fetch(`http://localhost:5000/api/invoices/${id}/email`, { method: 'POST' })
+            fetch(`${window.API_BASE_URL}/api/invoices/${id}/email`, { method: 'POST' })
               .then(r => r.json())
               .then(res => {
                 btn.textContent = 'Sent!';
@@ -503,7 +503,7 @@ window.renderInvoices = function(main) {
     // If creating from a quotation, fetch the quotation to get the client if not selected
     const quotationId = form.quotation.value;
     if ((!clientId || clientId === "") && quotationId) {
-      fetch(`http://localhost:5000/api/quotations/${quotationId}`)
+      fetch(`${window.API_BASE_URL}/api/quotations/${quotationId}`)
         .then(r => r.json())
         .then(q => {
           // q.client may be an object or an id string
@@ -531,7 +531,7 @@ window.renderInvoices = function(main) {
         total,
         quotation: quotationId || undefined
       };
-      fetch('http://localhost:5000/api/invoices', {
+      fetch(`${window.API_BASE_URL}/api/invoices`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -610,7 +610,7 @@ window.downloadPDF(html, `invoice-${invoice.number || invoice._id}.pdf`, {
 
 async function getNextInvoiceNumber() {
   // Fetch all invoices and find the highest number, then increment
-  const res = await fetch('http://localhost:5000/api/invoices');
+  const res = await fetch(`${window.API_BASE_URL}/api/invoices`);
   const invoices = await res.json();
   let max = 0;
   invoices.forEach(inv => {
@@ -644,7 +644,7 @@ async function renderInvoicePreview(invoice) {
 
 // Helper to fetch products/services for dropdowns
 async function fetchProductsDropdownOptions() {
-  const res = await fetch('http://localhost:5000/api/products');
+  const res = await fetch(`${window.API_BASE_URL}/api/products`);
   const products = await res.json();
   return products.map(p => `<option value="${p._id}" data-type="${p.type}">${p.name} (${p.type})</option>`).join('');
 }

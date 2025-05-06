@@ -40,7 +40,7 @@ window.renderFinancials = function(main) {
   }
 
   function fetchFinancials() {
-    fetch('http://localhost:5000/api/financials')
+    fetch(`${window.API_BASE_URL}/api/financials`)
       .then(r => r.json())
       .then(data => {
         document.getElementById('financials-summary').innerHTML = `
@@ -67,7 +67,7 @@ window.renderFinancials = function(main) {
         renderCharts(data);
       });
 
-    fetch('http://localhost:5000/api/invoices')
+      fetch(`${window.API_BASE_URL}/api/invoices`)
       .then(r => r.json())
       .then(invoices => {
         if (!invoices.length) {

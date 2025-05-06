@@ -33,7 +33,7 @@ app.use(cors({
     'http://127.0.0.1:5500', // Live server via IP
     'http://localhost:5500',  // Live server via localhost
     'http://localhost:5501',  // Live server default port via localhost
-    'http://127.0.0.1:5501' // Live server default port via IP
+    'http://127.0.0.1:5501', // Live server default port via IP
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

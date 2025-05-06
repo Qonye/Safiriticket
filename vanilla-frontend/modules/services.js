@@ -36,7 +36,7 @@ window.renderServices = function(main) {
   `;
 
   function fetchServices() {
-    fetch('http://localhost:5000/api/products')
+    fetch(`${window.API_BASE_URL}/api/products`)
       .then(r => r.json())
       .then(services => {
         if (!services.length) {
@@ -74,7 +74,7 @@ window.renderServices = function(main) {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             if (!confirm('Delete this service?')) return;
-            fetch(`http://localhost:5000/api/products/${id}`, {
+            fetch(`${window.API_BASE_URL}/api/products/${id}`, {
               method: 'DELETE'
             })
               .then(r => r.json())
@@ -86,7 +86,7 @@ window.renderServices = function(main) {
           btn.onclick = function() {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            fetch(`http://localhost:5000/api/products/${id}`)
+            fetch(`${window.API_BASE_URL}/api/products/${id}`)
               .then(r => r.json())
               .then(service => {
                 document.querySelector('#service-id').value = service._id;
@@ -115,7 +115,7 @@ window.renderServices = function(main) {
       type: form.type.value,
       description: form.description.value.trim()
     };
-    let url = 'http://localhost:5000/api/products';
+    let url = `${window.API_BASE_URL}/api/products`;
     let method = 'POST';
     if (id) {
       url += `/${id}`;
@@ -160,7 +160,7 @@ window.renderServices = function(main) {
         { key: "total", label: "Total", inputType: "number", required: true }
       ]
     };
-    fetch('http://localhost:5000/api/products', {
+    fetch(`${window.API_BASE_URL}/api/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)

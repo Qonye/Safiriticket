@@ -24,7 +24,7 @@ window.renderQuotations = function(main) {
   `;
 
   // Populate client filter dropdown
-  fetch('http://localhost:5000/api/clients')
+  fetch(`${window.API_BASE_URL}/api/clients`)
     .then(r => r.json())
     .then(clients => {
       const select = document.getElementById('filter-client');
@@ -38,7 +38,7 @@ window.renderQuotations = function(main) {
   function fetchFilteredQuotations() {
     const client = document.getElementById('filter-client').value;
     const status = document.getElementById('filter-status').value;
-    let url = 'http://localhost:5000/api/quotations?';
+    let url = `${window.API_BASE_URL}/api/quotations?`;
     if (client) url += `client=${encodeURIComponent(client)}&`;
     if (status) url += `status=${encodeURIComponent(status)}&`;
     fetchQuotations(url);
@@ -97,7 +97,7 @@ function renderSystemQuotationForm(container) {
   `;
 
   // Populate client dropdown
-  fetch('http://localhost:5000/api/clients')
+  fetch(`${window.API_BASE_URL}/api/clients`)
     .then(r => r.json())
     .then(clients => {
       const select = document.getElementById('quotation-client-select');
