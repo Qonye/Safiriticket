@@ -28,9 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     // Fetch all data in parallel and then render widgets
     Promise.all([
-      fetch('http://localhost:5000/api/clients').then(r => r.json()),
-      fetch('http://localhost:5000/api/quotations').then(r => r.json()),
-      fetch('http://localhost:5000/api/invoices').then(r => r.json())
+      fetch(window.API_BASE_URL + '/api/clients').then(r => r.json()),
+      fetch(window.API_BASE_URL + '/api/quotations').then(r => r.json()),
+      fetch(window.API_BASE_URL + '/api/invoices').then(r => r.json())
     ]).then(([clients, quotations, invoices]) => {
       const widgetRow = document.getElementById('widget-row');
       widgetRow.innerHTML = `
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Health check
-  fetch('http://localhost:5000/api/health', { mode: 'cors' })
+  fetch(window.API_BASE_URL + '/api/health', { mode: 'cors' })
     .then(res => {
       if (!res.ok) throw new Error('Network response was not ok');
       return res.json();
