@@ -216,42 +216,107 @@ function renderSystemQuotationForm(container) {
   document.getElementById('quotation-form').onsubmit = function (e) {
     e.preventDefault();
     const form = e.target;
+    const quotationMsg = document.getElementById('quotation-form-msg');
+    quotationMsg.textContent = 'Submitting...';
+
     // Gather items
     const items = Array.from(document.querySelectorAll('#items-tbody tr')).map(tr => {
       const productSelect = tr.querySelector('.item-product');
-      const selected = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
-      const type = selected ? selected.getAttribute('data-type') : null;
+      const selectedOption = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
+      const type = selectedOption ? selectedOption.getAttribute('data-type') : 'other'; // Default type if not specified
+
       let serviceFee = 0;
-      if (type === 'hotel' || type === 'flight' || type === 'transfer') {
-        serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
+      const serviceFeeInput = tr.querySelector('.item-service-fee');
+      if (serviceFeeInput) {
+        serviceFee = Number(serviceFeeInput.value) || 0;
       }
+
       const item = {
         description: tr.querySelector('.item-desc').value.trim(),
         quantity: Number(tr.querySelector('.item-qty').value),
         price: Number(tr.querySelector('.item-price').value),
-        serviceFee,
-        type // <-- ensure type is set for grouping in PDF
+        serviceFee: serviceFee,
+        type: type
       };
+
+      // Add service-specific fields
       if (type === 'hotel') {
-        item.hotelName = tr.querySelector('.item-hotel-name')?.value || '';
+        item.hotelName = tr.querySelector('.item-hotel-name')?.value.trim() || '';
         item.checkin = tr.querySelector('.item-checkin')?.value || '';
         item.checkout = tr.querySelector('.item-checkout')?.value || '';
-      }
-      if (type === 'flight') {
-        item.airline = tr.querySelector('.item-airline')?.value || '';
-        item.from = tr.querySelector('.item-from')?.value || '';
-        item.to = tr.querySelector('.item-to')?.value || '';
+      } else if (type === 'flight') {
+        item.airline = tr.querySelector('.item-airline')?.value.trim() || '';
+        item.from = tr.querySelector('.item-from')?.value.trim() || '';
+        item.to = tr.querySelector('.item-to')?.value.trim() || '';
         item.flightDate = tr.querySelector('.item-flight-date')?.value || '';
-        item.class = tr.querySelector('.item-class')?.value || '';
+        item.class = tr.querySelector('.item-class')?.value.trim() || ''; // Assuming .item-class exists for flights
+      } else if (type === 'transfer') {
+        item.from = tr.querySelector('.item-from')?.value.trim() || '';
+        item.to = tr.querySelector('.item-to')?.value.trim() || '';
       }
-      if (type === 'transfer') {
-        item.from = tr.querySelector('.item-from')?.value || '';
-        item.to = tr.querySelector('.item-to')?.value || '';
-      }
-      // ...add more types as needed...
+      // Add more types as needed...
       return item;
-    }).filter(item => item.description && item.quantity > 0);
+    }).filter(item => (item.description || item.type !== 'other') && item.quantity > 0 && item.price >= 0);
 
-    // ...existing code...
+    if (items.length === 0 && !form.pdf.files[0]) {
+      quotationMsg.textContent = 'Please add at least one item or attach a PDF.';
+      return;
+    }
+
+    const total = updateSubtotalsAndTotal(); // Get the calculated total
+
+    const clientId = form.client.value;
+    const expiresAt = form.expiresAt.value;
+    const pdfFile = form.pdf.files[0];
+
+    let payload;
+    const headers = {};
+
+    if (pdfFile) {
+      payload = new FormData();
+      payload.append('client', clientId);
+      if (expiresAt) payload.append('expiresAt', expiresAt);
+      payload.append('items', JSON.stringify(items)); // Server expects items as JSON string with FormData
+      payload.append('total', total);
+      payload.append('pdf', pdfFile);
+      payload.append('isExternal', 'true'); // Indicate that an external PDF is being uploaded
+      // FormData sets Content-Type automatically
+    } else {
+      payload = JSON.stringify({
+        client: clientId,
+        expiresAt: expiresAt || null,
+        items: items,
+        total: total,
+        isExternal: false
+      });
+      headers['Content-Type'] = 'application/json';
+    }
+
+    fetch(`${window.API_BASE_URL}/api/quotations`, {
+      method: 'POST',
+      headers: headers,
+      body: payload
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => { throw err; });
+      }
+      return response.json();
+    })
+    .then(newQuotation => {
+      quotationMsg.textContent = 'Quotation added successfully!';
+      form.reset();
+      document.getElementById('items-tbody').innerHTML = ''; // Clear items table
+      addQuotationItemRow(); // Add back the initial empty row
+      updateSubtotalsAndTotal(); // Reset total display
+      fetchFilteredQuotations(); // Refresh the list of quotations
+      setTimeout(() => {
+        quotationMsg.textContent = '';
+      }, 2000);
+    })
+    .catch(error => {
+      console.error('Error adding quotation:', error);
+      quotationMsg.textContent = `Error: ${error.error || 'Could not add quotation.'}`;
+    });
   };
 }
