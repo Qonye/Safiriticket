@@ -160,20 +160,20 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
       grandTotal += totalRow;
       html += `
         <tr>
-          <td>${clientName}</td>
-          <td>${item.flightDate || ''}</td>
-          <td>${item.airline || ''}</td>
-          <td>${item.from || ''}${item.from && item.to ? '-' : ''}${item.to || ''}</td>
-          <td>$${amount.toLocaleString()}</td>
-          <td>$${fee.toLocaleString()}</td>
-          <td>$${totalRow.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${clientName}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.flightDate || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.airline || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.from || ''}${item.from && item.to ? '-' : ''}${item.to || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     html += `
         </tbody>
       </table>
-      <div style="text-align:right;font-weight:bold;margin-bottom:16px;">Total Flights: $${total.toLocaleString()}</div>
+      <div style="text-align:right;font-weight:bold;margin-bottom:16px;font-family: Montserrat, sans-serif; font-size: 1.05em;">Total Flights: $${total.toLocaleString()}</div>
       <hr>
     `;
   }
@@ -213,20 +213,20 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
       grandTotal += totalRow;
       html += `
         <tr>
-          <td>${clientName}</td>
-          <td>${stayDates}</td>
-          <td>${item.hotelName || ''}</td>
-          <td>$${amount.toLocaleString()}</td>
-          <td>${nights}</td>
-          <td>$${fee.toLocaleString()}</td>
-          <td>$${totalRow.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${clientName}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${stayDates}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.hotelName || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${nights}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     html += `
         </tbody>
       </table>
-      <div style="text-align:right;font-weight:bold;margin-bottom:16px;">Total Hotels: $${total.toLocaleString()}</div>
+      <div style="text-align:right;font-weight:bold;margin-bottom:16px;font-family: Montserrat, sans-serif; font-size: 1.05em;">Total Hotels: $${total.toLocaleString()}</div>
       <hr>
     `;
   }
@@ -257,25 +257,25 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
       grandTotal += totalRow;
       html += `
         <tr>
-          <td>${clientName}</td>
-          <td>${item.from || ''}</td>
-          <td>${item.to || ''}</td>
-          <td>$${amount.toLocaleString()}</td>
-          <td>$${fee.toLocaleString()}</td>
-          <td>$${totalRow.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${clientName}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.from || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.to || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     html += `
         </tbody>
       </table>
-      <div style="text-align:right;font-weight:bold;margin-bottom:16px;">Total Transfers: $${total.toLocaleString()}</div>
+      <div style="text-align:right;font-weight:bold;margin-bottom:16px;font-family: Montserrat, sans-serif; font-size: 1.05em;">Total Transfers: $${total.toLocaleString()}</div>
       <hr>
     `;
   }
 
   // Grand Total
-  html += `<div style="text-align:right;font-size:1.1em;font-weight:bold;margin-top:24px;">🧾 Grand Total: $${grandTotal.toLocaleString()}</div>`;
+  html += `<div style="text-align:right;font-size:1.1em;font-weight:bold;margin-top:24px;font-family: Montserrat, sans-serif; font-size: 1.1em;">🧾 Grand Total: $${grandTotal.toLocaleString()}</div>`;
 
   return html;
 };
