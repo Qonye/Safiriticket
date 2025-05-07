@@ -87,21 +87,9 @@ async function getNextNumber(model, prefix) {
 }
 
 // --- Multer setup for file uploads ---
-// Use original file extension for uploaded PDFs
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads/quotations'));
-  },
-  filename: function (req, file, cb) {
-    // Keep original name but ensure uniqueness
-    const ext = path.extname(file.originalname) || '.pdf';
-    const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1E6);
-    cb(null, `${base}-${unique}${ext}`);
-  }
-});
+// Use memory storage so files are not saved to disk
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
@@ -154,20 +142,35 @@ app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
   // If a PDF was uploaded, upload to Cloudinary and save the URL
   if (req.file) {
     try {
-      const uploadResult = await cloudinary.v2.uploader.upload(req.file.path, {
-        resource_type: 'raw',
-        folder: 'safiriticket/quotations'
-      });
-      data.externalPdfUrl = uploadResult.secure_url;
-      data.isExternal = true;
-      // Remove local file after upload
-      fs.unlink(req.file.path, () => {});
+      // Upload buffer directly to Cloudinary
+      const uploadResult = await cloudinary.v2.uploader.upload_stream(
+        {
+          resource_type: 'raw',
+          folder: 'safiriticket/quotations',
+          filename_override: req.file.originalname
+        },
+        async (error, result) => {
+          if (error) {
+            return res.status(500).json({ error: 'Failed to upload PDF to Cloudinary', details: error.message });
+          }
+          data.externalPdfUrl = result.secure_url;
+          data.isExternal = true;
+          const quotation = new Quotation(data);
+          if (!quotation.number) {
+            quotation.number = await getNextNumber(Quotation, 'Q-');
+          }
+          await quotation.save();
+          res.status(201).json(quotation);
+        }
+      );
+      // Pipe the buffer to Cloudinary
+      uploadResult.end(req.file.buffer);
+      return; // prevent further execution
     } catch (err) {
-      // Clean up local file if upload fails
-      fs.unlink(req.file.path, () => {});
       return res.status(500).json({ error: 'Failed to upload PDF to Cloudinary', details: err.message });
     }
   }
+  // ...existing code for non-PDF case...
   const quotation = new Quotation(data);
   if (!quotation.number) {
     quotation.number = await getNextNumber(Quotation, 'Q-');
