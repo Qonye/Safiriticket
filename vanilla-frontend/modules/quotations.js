@@ -32,7 +32,7 @@ window.renderQuotations = function(main) {
     });
 
   // Show system quotation creator by default
-  renderSystemQuotationForm(document.getElementById('quotation-creator-area'));
+  renderSystemQuotationForm(document.getElementById('quotation-creator-area'), fetchFilteredQuotations);
 
   // Fetch and render quotations table with filters
   function fetchFilteredQuotations() {
@@ -48,10 +48,188 @@ window.renderQuotations = function(main) {
 
   // Initial fetch (all)
   fetchQuotations();
+  
+  // Fetch and render quotations table with filters
+  function fetchQuotations(url = `${window.API_BASE_URL}/api/quotations`) {
+    const listDiv = document.getElementById('quotations-list');
+    listDiv.textContent = 'Loading...';
+    fetch(url)
+      .then(r => r.json())
+      .then(quotations => {
+        if (!Array.isArray(quotations) || quotations.length === 0) {
+          listDiv.textContent = 'No quotations found.';
+          return;
+        }
+        // Render a table of quotations with actions
+        listDiv.innerHTML = `
+          <style>
+            .data-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 18px;
+              font-size: 1em;
+              background: #fff;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            }
+            .data-table th {
+              background: #8c241c;
+              color: #fff;
+              padding: 10px 8px;
+              font-weight: 600;
+              border-bottom: 2px solid #7a1f18;
+              text-align: left;
+            }
+            .data-table td {
+              padding: 9px 8px;
+              border-bottom: 1px solid #eee;
+              vertical-align: middle;
+            }
+            .data-table tr:nth-child(even) {
+              background: #f9f6f5;
+            }
+            .data-table tr:hover {
+              background: #f3e7e6;
+            }
+            .data-table select, .data-table button, .data-table a {
+              font-size: 1em;
+            }
+            .data-table .q-status-select {
+              padding: 4px 8px;
+              border-radius: 4px;
+              border: 1px solid #ccc;
+              background: #fff;
+              color: #8c241c;
+              font-weight: 500;
+            }
+            .data-table .q-view-btn,
+            .data-table .q-delete-btn {
+              background: none;
+              border: none;
+              cursor: pointer;
+              font-size: 1.1em;
+              padding: 2px 6px;
+              border-radius: 4px;
+              transition: background 0.2s;
+            }
+            .data-table .q-view-btn:hover {
+              background: #e5cfcf;
+            }
+            .data-table .q-delete-btn:hover {
+              background: #fbeaea;
+              color: #b71c1c;
+            }
+            .data-table a[download] {
+              color: #8c241c;
+              text-decoration: none;
+              font-size: 1.1em;
+            }
+            .data-table a[download]:hover {
+              text-decoration: underline;
+              background: #f3e7e6;
+            }
+          </style>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Number</th>
+                <th>Client</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Expires At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${quotations.map(q => `
+                <tr data-id="${q._id}">
+                  <td>${q.number || ''}</td>
+                  <td>${q.client?.name || ''}</td>
+                  <td>
+                    <select class="q-status-select" data-current="${q.status}">
+                      ${['Pending','Accepted','Declined','Expired'].map(status =>
+                        `<option value="${status}"${q.status===status?' selected':''}>${status}</option>`
+                      ).join('')}
+                    </select>
+                  </td>
+                  <td>$${q.total?.toFixed ? q.total.toFixed(2) : q.total || 0}</td>
+                  <td>${q.expiresAt ? new Date(q.expiresAt).toLocaleDateString() : ''}</td>
+                  <td>
+                    <button class="q-view-btn" title="View">👁️</button>
+                    ${q.isExternal && q.externalPdfUrl ? `
+                      <a href="${q.externalPdfUrl}" target="_blank" download style="margin-left:4px;" title="Download PDF">📄</a>
+                    ` : ''}
+                    <button class="q-delete-btn" title="Delete" style="margin-left:4px;">🗑️</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+        // Attach status change handler
+        listDiv.querySelectorAll('.q-status-select').forEach(select => {
+          select.onchange = function() {
+            const tr = select.closest('tr');
+            const id = tr.dataset.id;
+            const newStatus = select.value;
+            // Only update if changed
+            if (select.dataset.current !== newStatus) {
+              fetch(`${window.API_BASE_URL}/api/quotations/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+              })
+              .then(r => r.json())
+              .then(() => fetchQuotations(url));
+            }
+          };
+        });
+
+        // Attach action handlers
+        listDiv.querySelectorAll('.q-accept-btn').forEach(btn => {
+          btn.onclick = function() {
+            const id = btn.closest('tr').dataset.id;
+            fetch(`${window.API_BASE_URL}/api/quotations/${id}/accept`, { method: 'POST' })
+              .then(r => r.json())
+              .then(() => fetchQuotations(url));
+          };
+        });
+        listDiv.querySelectorAll('.q-decline-btn').forEach(btn => {
+          btn.onclick = function() {
+            const id = btn.closest('tr').dataset.id;
+            fetch(`${window.API_BASE_URL}/api/quotations/${id}/decline`, { method: 'POST' })
+              .then(r => r.json())
+              .then(() => fetchQuotations(url));
+          };
+        });
+        listDiv.querySelectorAll('.q-delete-btn').forEach(btn => {
+          btn.onclick = function() {
+            const id = btn.closest('tr').dataset.id;
+            if (confirm('Delete this quotation?')) {
+              fetch(`${window.API_BASE_URL}/api/quotations/${id}`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(() => fetchQuotations(url));
+            }
+          };
+        });
+        listDiv.querySelectorAll('.q-view-btn').forEach(btn => {
+          btn.onclick = function() {
+            const id = btn.closest('tr').dataset.id;
+            viewQuotationModal(id);
+          };
+        });
+      })
+      .catch(err => {
+        listDiv.textContent = 'Failed to load quotations.';
+        console.error('Error loading quotations:', err);
+      });
+  }
 };
 
 // --- System Quotation Creator ---
-function renderSystemQuotationForm(container) {
+function renderSystemQuotationForm(container, onQuotationAdded) {
   container.innerHTML = `
     <div style="margin-bottom:18px;">
       <form id="quotation-form" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
@@ -112,7 +290,45 @@ function renderSystemQuotationForm(container) {
     document.querySelectorAll('#items-tbody tr').forEach(tr => {
       const qty = Number(tr.querySelector('.item-qty').value) || 0;
       const price = Number(tr.querySelector('.item-price').value) || 0;
-      const subtotal = qty * price;
+      let subtotal = 0;
+      let serviceFee = 0;
+      const serviceFeeInput = tr.querySelector('.item-service-fee');
+      if (serviceFeeInput) {
+        serviceFee = Number(serviceFeeInput.value) || 0;
+      }
+
+      // Check if this is a hotel/accommodation row
+      const productSelect = tr.querySelector('.item-product');
+      const selectedOption = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
+      const type = selectedOption ? selectedOption.getAttribute('data-type') : 'other';
+
+      if (type === 'hotel') {
+        // Calculate number of nights
+        const checkin = tr.querySelector('.item-checkin')?.value;
+        const checkout = tr.querySelector('.item-checkout')?.value;
+        let nights = 1;
+        if (checkin && checkout) {
+          const inDate = new Date(checkin);
+          const outDate = new Date(checkout);
+          nights = Math.max(1, Math.round((outDate - inDate) / (1000 * 60 * 60 * 24)));
+        }
+        subtotal = (qty * price * nights) + serviceFee;
+        // Optionally, show nights in the UI
+        let nightsSpan = tr.querySelector('.item-nights-span');
+        if (!nightsSpan) {
+          nightsSpan = document.createElement('span');
+          nightsSpan.className = 'item-nights-span';
+          nightsSpan.style = 'margin-left:8px;color:#8c241c;font-size:0.95em;';
+          tr.querySelector('.item-price').parentNode.appendChild(nightsSpan);
+        }
+        nightsSpan.textContent = checkin && checkout ? `(${nights} night${nights > 1 ? 's' : ''})` : '';
+      } else {
+        subtotal = (qty * price) + serviceFee;
+        // Remove nights span if not hotel
+        const nightsSpan = tr.querySelector('.item-nights-span');
+        if (nightsSpan) nightsSpan.remove();
+      }
+
       tr.querySelector('.item-subtotal').textContent = subtotal.toFixed(2);
       total += subtotal;
     });
@@ -223,7 +439,7 @@ function renderSystemQuotationForm(container) {
     const items = Array.from(document.querySelectorAll('#items-tbody tr')).map(tr => {
       const productSelect = tr.querySelector('.item-product');
       const selectedOption = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
-      const type = selectedOption ? selectedOption.getAttribute('data-type') : 'other'; // Default type if not specified
+      const type = selectedOption ? selectedOption.getAttribute('data-type') : 'other';
 
       let serviceFee = 0;
       const serviceFeeInput = tr.querySelector('.item-service-fee');
@@ -231,40 +447,52 @@ function renderSystemQuotationForm(container) {
         serviceFee = Number(serviceFeeInput.value) || 0;
       }
 
+      // Always include required fields for the model
       const item = {
         description: tr.querySelector('.item-desc').value.trim(),
         quantity: Number(tr.querySelector('.item-qty').value),
         price: Number(tr.querySelector('.item-price').value),
-        serviceFee: serviceFee,
-        type: type
+        serviceFee: serviceFee
       };
 
-      // Add service-specific fields
+      // Add dynamic fields only if they have a value
       if (type === 'hotel') {
-        item.hotelName = tr.querySelector('.item-hotel-name')?.value.trim() || '';
-        item.checkin = tr.querySelector('.item-checkin')?.value || '';
-        item.checkout = tr.querySelector('.item-checkout')?.value || '';
+        const hotelName = tr.querySelector('.item-hotel-name')?.value.trim();
+        const checkin = tr.querySelector('.item-checkin')?.value;
+        const checkout = tr.querySelector('.item-checkout')?.value;
+        if (hotelName) item.hotelName = hotelName;
+        if (checkin) item.checkin = checkin;
+        if (checkout) item.checkout = checkout;
       } else if (type === 'flight') {
-        item.airline = tr.querySelector('.item-airline')?.value.trim() || '';
-        item.from = tr.querySelector('.item-from')?.value.trim() || '';
-        item.to = tr.querySelector('.item-to')?.value.trim() || '';
-        item.flightDate = tr.querySelector('.item-flight-date')?.value || '';
-        item.class = tr.querySelector('.item-class')?.value.trim() || ''; // Assuming .item-class exists for flights
+        const airline = tr.querySelector('.item-airline')?.value.trim();
+        const from = tr.querySelector('.item-from')?.value.trim();
+        const to = tr.querySelector('.item-to')?.value.trim();
+        const flightDate = tr.querySelector('.item-flight-date')?.value;
+        const flightClass = tr.querySelector('.item-class')?.value.trim();
+        if (airline) item.airline = airline;
+        if (from) item.from = from;
+        if (to) item.to = to;
+        if (flightDate) item.flightDate = flightDate;
+        if (flightClass) item.class = flightClass;
       } else if (type === 'transfer') {
-        item.from = tr.querySelector('.item-from')?.value.trim() || '';
-        item.to = tr.querySelector('.item-to')?.value.trim() || '';
+        const from = tr.querySelector('.item-from')?.value.trim();
+        const to = tr.querySelector('.item-to')?.value.trim();
+        if (from) item.from = from;
+        if (to) item.to = to;
       }
-      // Add more types as needed...
+      // ...add more types as needed...
+
       return item;
-    }).filter(item => (item.description || item.type !== 'other') && item.quantity > 0 && item.price >= 0);
+    }).filter(item =>
+      item.description && item.quantity > 0 && item.price >= 0
+    );
 
     if (items.length === 0 && !form.pdf.files[0]) {
       quotationMsg.textContent = 'Please add at least one item or attach a PDF.';
       return;
     }
 
-    const total = updateSubtotalsAndTotal(); // Get the calculated total
-
+    const total = updateSubtotalsAndTotal();
     const clientId = form.client.value;
     const expiresAt = form.expiresAt.value;
     const pdfFile = form.pdf.files[0];
@@ -276,11 +504,15 @@ function renderSystemQuotationForm(container) {
       payload = new FormData();
       payload.append('client', clientId);
       if (expiresAt) payload.append('expiresAt', expiresAt);
-      payload.append('items', JSON.stringify(items)); // Server expects items as JSON string with FormData
+      // Always send items as a JSON string, even if empty, to match backend expectations
+      payload.append('items', JSON.stringify(items.length ? items : []));
       payload.append('total', total);
-      payload.append('pdf', pdfFile);
-      payload.append('isExternal', 'true'); // Indicate that an external PDF is being uploaded
-      // FormData sets Content-Type automatically
+      // Always include the filename for Cloudinary compatibility
+      payload.append('pdf', pdfFile, pdfFile.name);
+      payload.append('isExternal', 'true');
+      // --- Fix: Remove Content-Type header if present ---
+      // If you previously set headers['Content-Type'], remove it here:
+      // delete headers['Content-Type'];
     } else {
       payload = JSON.stringify({
         client: clientId,
@@ -294,7 +526,8 @@ function renderSystemQuotationForm(container) {
 
     fetch(`${window.API_BASE_URL}/api/quotations`, {
       method: 'POST',
-      headers: headers,
+      // Only set headers if not using FormData
+      headers: pdfFile ? undefined : headers,
       body: payload
     })
     .then(response => {
@@ -306,17 +539,78 @@ function renderSystemQuotationForm(container) {
     .then(newQuotation => {
       quotationMsg.textContent = 'Quotation added successfully!';
       form.reset();
-      document.getElementById('items-tbody').innerHTML = ''; // Clear items table
-      addQuotationItemRow(); // Add back the initial empty row
-      updateSubtotalsAndTotal(); // Reset total display
-      fetchFilteredQuotations(); // Refresh the list of quotations
+      document.getElementById('items-tbody').innerHTML = '';
+      addQuotationItemRow();
+      updateSubtotalsAndTotal();
+      if (typeof onQuotationAdded === 'function') onQuotationAdded();
       setTimeout(() => {
         quotationMsg.textContent = '';
       }, 2000);
     })
     .catch(error => {
       console.error('Error adding quotation:', error);
-      quotationMsg.textContent = `Error: ${error.error || 'Could not add quotation.'}`;
+      let msg = 'Could not add quotation.';
+      if (typeof error === 'object' && error !== null) {
+        if (error.error) msg = error.error;
+        if (error.details) msg += ` (${error.details})`;
+      } else if (typeof error === 'string') {
+        msg = error;
+      }
+      quotationMsg.textContent = `Error: ${msg}`;
     });
   };
+}
+
+// --- View Quotation Modal ---
+function viewQuotationModal(id) {
+  fetch(`${window.API_BASE_URL}/api/quotations/${id}`)
+    .then(r => r.json())
+    .then(q => {
+      // Simple modal implementation
+      let modal = document.getElementById('quotation-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'quotation-modal';
+        modal.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:9999;';
+        document.body.appendChild(modal);
+      }
+      modal.innerHTML = `
+        <div style="background:#fff;padding:24px;max-width:600px;width:95vw;border-radius:8px;position:relative;">
+          <button id="q-modal-close" style="position:absolute;top:8px;right:8px;font-size:1.2em;">✖</button>
+          <h3>Quotation ${q.number || ''}</h3>
+          <div><b>Client:</b> ${q.client?.name || ''}</div>
+          <div><b>Status:</b> ${q.status || ''}</div>
+          <div><b>Total:</b> $${q.total?.toFixed ? q.total.toFixed(2) : q.total || 0}</div>
+          <div><b>Expires At:</b> ${q.expiresAt ? new Date(q.expiresAt).toLocaleDateString() : ''}</div>
+          <div style="margin:10px 0;">
+            <b>Items:</b>
+            <ul>
+              ${(q.items || []).map(item => `
+                <li>
+                  <b>${item.description || ''}</b>
+                  (${item.quantity} x $${item.price})
+                  ${typeof item.serviceFee === 'number' && item.serviceFee > 0 ? `, Service Fee: $${item.serviceFee}` : ''}
+                  ${item.hotelName ? `, Hotel: ${item.hotelName}` : ''}
+                  ${item.checkin ? `, Check-in: ${item.checkin}` : ''}
+                  ${item.checkout ? `, Check-out: ${item.checkout}` : ''}
+                  ${item.airline ? `, Airline: ${item.airline}` : ''}
+                  ${item.from ? `, From: ${item.from}` : ''}
+                  ${item.to ? `, To: ${item.to}` : ''}
+                  ${item.flightDate ? `, Flight Date: ${item.flightDate}` : ''}
+                  ${item.class ? `, Class: ${item.class}` : ''}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+          ${q.isExternal && q.externalPdfUrl ? `
+            <div>
+              <a href="${q.externalPdfUrl}" target="_blank" download style="color:#8c241c;">Download/View PDF</a>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      modal.onclick = e => {
+        if (e.target === modal || e.target.id === 'q-modal-close') modal.remove();
+      };
+    });
 }
