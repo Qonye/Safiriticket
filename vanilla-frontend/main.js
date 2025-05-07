@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const main = document.getElementById('main-content');
   const status = document.getElementById('sidebar-status');
   const buttons = document.querySelectorAll('.sidebar nav ul li button');
+  const sidebar = document.querySelector('.sidebar');
+  const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
 
   // Add Services link to sidebar if not present
   const sidebarNav = document.querySelector('.sidebar nav ul');
@@ -98,4 +100,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Remove this line to avoid double call:
   // showSection('overview');
+
+  function closeSidebarOnMobile() {
+    if (window.innerWidth <= 900) {
+      sidebar.classList.add('sidebar-collapsed');
+    }
+  }
+  function openSidebarOnMobile() {
+    sidebar.classList.remove('sidebar-collapsed');
+  }
+
+  // Toggle sidebar on button click
+  sidebarToggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('sidebar-collapsed');
+  });
+
+  // Close sidebar when clicking outside on mobile
+  document.addEventListener('click', (e) => {
+    if (
+      window.innerWidth <= 900 &&
+      !sidebar.contains(e.target) &&
+      !sidebarToggleBtn.contains(e.target)
+    ) {
+      sidebar.classList.add('sidebar-collapsed');
+    }
+  });
+
+  // Open sidebar when resizing to desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) {
+      sidebar.classList.remove('sidebar-collapsed');
+    }
+  });
+
+  // Start with sidebar collapsed on mobile
+  if (window.innerWidth <= 900) {
+    sidebar.classList.add('sidebar-collapsed');
+  }
 });
