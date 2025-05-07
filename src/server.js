@@ -8,12 +8,20 @@ import { dirname } from 'path';
 import multer from 'multer';
 import cloudinary from 'cloudinary';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { authenticate, requireRole } from './middleware/auth.js';
+import User from './models/User.js';
+
+// Optional: If you want to add auth later, import these here
+// import bcrypt from 'bcryptjs';
+// import { authenticate, requireRole } from './middleware/auth.js';
+// import jwt from 'jsonwebtoken';
+// import User from './models/User.js';
 
 // Initialize __filename and __dirname before using them
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// Now you can safely use __dirname for dotenv
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // --- Cloudinary config (set your credentials in .env) ---
@@ -30,10 +38,10 @@ app.use(cors({
     'https://safiritickets.netlify.app',
     'http://127.0.0.1:5000',
     'http://127.0.0.1:3000',
-    'http://127.0.0.1:5500', // Live server via IP
-    'http://localhost:5500',  // Live server via localhost
-    'http://localhost:5501',  // Live server default port via localhost
-    'http://127.0.0.1:5501', // Live server default port via IP
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'http://localhost:5501',
+    'http://127.0.0.1:5501'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -50,9 +58,9 @@ import Service from './models/Service.js';
 // --- Organization Settings Model ---
 const orgSettingsSchema = new mongoose.Schema({
   name: String,
-  addresses: [String], // now supports multiple addresses
-  emails: [String],    // now supports multiple emails
-  phones: [String],    // now supports multiple phones
+  addresses: [String],
+  emails: [String],
+  phones: [String],
   vat: String,
   website: String,
   logoUrl: String
@@ -65,15 +73,56 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-// --- Admin Authentication Middleware ---
-function adminAuth(req, res, next) {
-  // TODO: Implement real authentication (e.g., JWT, session)
-  // For now, allow all requests
-  next();
-}
+// --- Auth Endpoints (public) ---
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  console.log('[AUTH] Login attempt:', username);
+  if (!username || !password) {
+    console.log('[AUTH] Missing username or password');
+    return res.status(400).json({ error: 'Username and password required' });
+  }
+  const user = await User.findOne({ username });
+  if (!user) {
+    console.log('[AUTH] User not found:', username);
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  const passwordOk = await bcrypt.compare(password, user.passwordHash);
+  if (!passwordOk) {
+    console.log('[AUTH] Invalid password for:', username);
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  // --- Fix: Log and show JWT_SECRET value for debugging ---
+  if (!process.env.JWT_SECRET) {
+    console.log('[AUTH] JWT_SECRET missing. Current value:', process.env.JWT_SECRET);
+    return res.status(500).json({ error: 'Server misconfiguration: JWT_SECRET missing' });
+  }
+  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  console.log('[AUTH] Login success:', username);
+  res.json({ token, user: { id: user._id, username: user.username, role: user.role } });
+});
 
-// Apply to all admin routes
-app.use('/api', adminAuth);
+// Example: Only superadmins can create users
+app.post('/api/users', authenticate, requireRole('superadmin'), async (req, res) => {
+  const { username, password, role, name, email } = req.body;
+  if (!username || !password || !role) {
+    return res.status(400).json({ error: 'username, password, and role required' });
+  }
+  const existing = await User.findOne({ username });
+  if (existing) {
+    return res.status(409).json({ error: 'Username already exists' });
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = new User({ username, passwordHash, role, name, email });
+  await user.save();
+  res.status(201).json({ id: user._id, username: user.username, role: user.role });
+});
+
+// --- Protect all other /api routes ---
+app.use('/api', (req, res, next) => {
+  // Allow /api/login and /api/users (already handled above) to be public or superadmin-only
+  if (req.path === '/login' || (req.path === '/users' && req.method === 'POST')) return next();
+  return authenticate(req, res, next);
+});
 
 // Helper to get next sequential number for quotations/invoices
 async function getNextNumber(model, prefix) {
@@ -87,7 +136,6 @@ async function getNextNumber(model, prefix) {
 }
 
 // --- Multer setup for file uploads ---
-// Use memory storage so files are not saved to disk
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }
@@ -135,15 +183,12 @@ app.get('/api/quotations', async (req, res) => {
 
 app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
   let data = req.body;
-  // If items is a string (from FormData), parse it
   if (typeof data.items === 'string') {
     try { data.items = JSON.parse(data.items); } catch { data.items = []; }
   }
-  // If a PDF was uploaded, upload to Cloudinary and save the URL
   if (req.file) {
     try {
-      // Upload buffer directly to Cloudinary
-      const uploadResult = await cloudinary.v2.uploader.upload_stream(
+      const uploadStream = cloudinary.v2.uploader.upload_stream(
         {
           resource_type: 'raw',
           folder: 'safiriticket/quotations',
@@ -163,14 +208,12 @@ app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
           res.status(201).json(quotation);
         }
       );
-      // Pipe the buffer to Cloudinary
-      uploadResult.end(req.file.buffer);
-      return; // prevent further execution
+      uploadStream.end(req.file.buffer);
+      return;
     } catch (err) {
       return res.status(500).json({ error: 'Failed to upload PDF to Cloudinary', details: err.message });
     }
   }
-  // ...existing code for non-PDF case...
   const quotation = new Quotation(data);
   if (!quotation.number) {
     quotation.number = await getNextNumber(Quotation, 'Q-');
@@ -201,7 +244,6 @@ app.delete('/api/quotations/:id', async (req, res) => {
 app.post('/api/quotations/:id/accept', async (req, res) => {
   const quotation = await Quotation.findByIdAndUpdate(req.params.id, { status: 'Accepted' }, { new: true });
   if (!quotation) return res.status(404).json({ error: 'Quotation not found' });
-  // Optionally: create invoice here
   res.json(quotation);
 });
 
@@ -223,7 +265,6 @@ app.post('/api/invoices/:id/mark-paid', async (req, res) => {
 });
 
 // --- Expire Quotations Automatically (cron job stub) ---
-// In production, use node-cron or similar to run this daily
 app.post('/api/quotations/expire', async (req, res) => {
   const now = new Date();
   const result = await Quotation.updateMany(
@@ -243,14 +284,15 @@ app.get('/api/invoices', async (req, res) => {
   res.json(invoices);
 });
 
-app.post('/api/invoices', async (req, res) => {
-  const invoice = new Invoice(req.body);
+app.post('/api/invoices', requireRole(['admin', 'superadmin']), async (req, res) => {
+  const invoice = new Invoice({
+    ...req.body,
+    createdBy: req.user._id // Track who created it
+  });
   if (!invoice.number) {
     invoice.number = await getNextNumber(Invoice, 'INV-');
   }
-  // Ensure paidAmount is set to 0 if not provided
   if (typeof invoice.paidAmount !== 'number') invoice.paidAmount = 0;
-  // If status is Paid and paidAmount is not set, set paidAmount = total
   if (invoice.status === 'Paid' && (!invoice.paidAmount || invoice.paidAmount < invoice.total)) {
     invoice.paidAmount = invoice.total;
   }
@@ -266,25 +308,19 @@ app.get('/api/invoices/:id', async (req, res) => {
 
 app.put('/api/invoices/:id', async (req, res) => {
   const update = { ...req.body };
-  // Always update paidAmount if provided
   if (typeof update.paidAmount !== 'undefined') {
     update.paidAmount = Number(update.paidAmount) || 0;
   }
-  // Always update status and paidAmount together if status is Paid
   if (update.status === 'Paid') {
-    // Always fetch the invoice to get the total
     const invoice = await Invoice.findById(req.params.id);
     if (invoice) {
-      // If paidAmount is not provided or less than total, set to total
       if (typeof update.paidAmount === 'undefined' || update.paidAmount < invoice.total) {
         update.paidAmount = invoice.total;
       }
     }
   }
-  // Always return the updated invoice with the correct paidAmount
   const invoice = await Invoice.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-  // Force save to ensure Mongoose hooks run (if any)
   await invoice.save();
   res.json(invoice);
 });
@@ -297,10 +333,7 @@ app.delete('/api/invoices/:id', async (req, res) => {
 
 // --- Financials Summary Endpoint ---
 app.get('/api/financials', async (req, res) => {
-  // Fetch all invoices with up-to-date paidAmount and total
   const invoices = await Invoice.find();
-
-  // Calculate revenue breakdowns from actual invoice data
   let paidRevenue = 0, unpaidRevenue = 0, overdueRevenue = 0;
   let paid = 0, unpaid = 0, overdue = 0;
 
@@ -309,18 +342,15 @@ app.get('/api/financials', async (req, res) => {
     const totalAmt = Number(i.total || 0);
     const dueAmt = Math.max(totalAmt - paidAmt, 0);
 
-    // Count by status
     if (i.status === 'Paid') paid++;
     else if (i.status === 'Unpaid') unpaid++;
     else if (i.status === 'Overdue') overdue++;
 
-    // Revenue analysis (partial payments included)
     paidRevenue += paidAmt;
     if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) unpaidRevenue += dueAmt;
     if (i.status === 'Overdue') overdueRevenue += dueAmt;
   });
 
-  // Total revenue is sum of all paid amounts (partial or full)
   const revenue = paidRevenue;
 
   res.json({
@@ -382,19 +412,18 @@ app.delete('/api/products/:id', async (req, res) => {
   res.json({ message: 'Service deleted (soft)' });
 });
 
-// Serve vanilla frontend statically (add this before app.listen)
+// Serve vanilla frontend statically
 app.use('/vanilla', express.static(path.join(__dirname, '../vanilla-frontend')));
 
 // Serve uploaded PDFs statically
 app.use('/uploads/quotations', express.static(path.join(__dirname, '../uploads/quotations')));
 
+// --- MongoDB connection and server start ---
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// Debug log to verify .env loading
 console.log('Loaded MONGO_URI:', typeof MONGO_URI, MONGO_URI ? '[set]' : '[empty]', MONGO_URI && MONGO_URI.length);
 
-// Check for missing MONGO_URI and throw a clear error
 if (!MONGO_URI || typeof MONGO_URI !== 'string' || !MONGO_URI.trim()) {
   console.error('ERROR: MONGO_URI is not set or is invalid. Please check your .env file and restart the server.');
   process.exit(1);
