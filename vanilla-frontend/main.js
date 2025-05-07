@@ -84,7 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return res.json();
     })
     .then(data => {
-      status.innerHTML = `<span style="color:${data.status === 'OK' ? '#2ecc40' : '#e45424'};font-weight:bold;">●</span> Backend: ${data.status}`;
+      const backendType = window.API_BASE_URL.includes('localhost')
+        ? 'LOCAL'
+        : 'DEPLOYED';
+      status.innerHTML = `<span style="color:${data.status === 'OK' ? '#2ecc40' : '#e45424'};font-weight:bold;">●</span> Backend: ${data.status} <span style="font-size:0.9em;color:#888;">(${backendType})</span>`;
       if (data.status === 'OK') {
         showSection('overview');
       } else {
@@ -92,7 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
     .catch((err) => {
-      status.innerHTML = `<span style="color:#e45424;font-weight:bold;">●</span> Backend: Not reachable`;
+      const backendType = window.API_BASE_URL.includes('localhost')
+        ? 'LOCAL'
+        : 'DEPLOYED';
+      status.innerHTML = `<span style="color:#e45424;font-weight:bold;">●</span> Backend: Not reachable <span style="font-size:0.9em;color:#888;">(${backendType})</span>`;
       main.innerHTML = `<div style="color:#e45424;font-size:1.2em;text-align:center;margin-top:40px;">Backend not reachable<br>${err.message}</div>`;
       // Debug info
       console.error('Failed to fetch backend:', err);
