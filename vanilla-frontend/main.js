@@ -1,15 +1,6 @@
 // Remove ES module imports, use global functions instead
 
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Auth check ---
-  const token = localStorage.getItem('token');
-  if (!token) {
-    window.location.href = 'login.html';
-    return;
-  }
-
-  // Optional: You can decode and check token expiry here if desired
-
   const main = document.getElementById('main-content');
   const status = document.getElementById('sidebar-status');
   const buttons = document.querySelectorAll('.sidebar nav ul li button');
@@ -146,26 +137,4 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.innerWidth <= 900) {
     sidebar.classList.add('sidebar-collapsed');
   }
-
-  // Logout button logic
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) {
-    logoutBtn.onclick = function () {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = 'login.html';
-    };
-  }
-
-  // --- For all fetch requests, add Authorization header ---
-  // Monkey-patch fetch to always send the token if present
-  const originalFetch = window.fetch;
-  window.fetch = function(url, options = {}) {
-    const token = localStorage.getItem('token');
-    if (token && url.startsWith('/api')) {
-      options.headers = options.headers || {};
-      options.headers['Authorization'] = 'Bearer ' + token;
-    }
-    return originalFetch(url, options);
-  };
 });

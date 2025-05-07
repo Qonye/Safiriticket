@@ -16,8 +16,7 @@ const invoiceSchema = new mongoose.Schema({
   dueDate: Date,
   paidAt: Date,
   createdAt: { type: Date, default: Date.now },
-  number: { type: String, unique: true },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  number: { type: String, unique: true }
 }, { timestamps: true, strict: false });
 
 export default mongoose.models.Invoice || mongoose.model('Invoice', invoiceSchema);
