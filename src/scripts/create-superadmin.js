@@ -9,7 +9,7 @@ import User from '../models/User.js';
 // Setup __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -31,7 +31,7 @@ async function createSuperAdmin() {
 
   const user = new User({
     username,
-    passwordHash,
+    password: passwordHash, // <-- use 'password' not 'passwordHash'
     role: 'superadmin',
     name,
     email

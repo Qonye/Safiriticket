@@ -8,6 +8,9 @@ import { dirname } from 'path';
 import multer from 'multer';
 import cloudinary from 'cloudinary';
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import User from './models/User.js';
 
 // Initialize __filename and __dirname before using them
 const __filename = fileURLToPath(import.meta.url);
@@ -40,6 +43,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// JWT secret
+const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
 // --- Models ---
 import Client from './models/Client.js';
@@ -74,6 +80,63 @@ function adminAuth(req, res, next) {
 
 // Apply to all admin routes
 app.use('/api', adminAuth);
+
+// --- Auth Middleware ---
+function authRequired(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ error: 'No token' });
+  try {
+    const token = auth.split(' ')[1];
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+function superadminRequired(req, res, next) {
+  if (req.user?.role === 'superadmin') return next();
+  res.status(403).json({ error: 'Superadmin only' });
+}
+
+// --- User Endpoints ---
+
+// Login
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = await User.findOne({ username });
+  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  const ok = await bcrypt.compare(password, user.password);
+  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+  const token = jwt.sign({ id: user._id, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+  res.json({ token, name: user.name, role: user.role, username: user.username });
+});
+
+// Create user (superadmin only)
+app.post('/api/users', authRequired, superadminRequired, async (req, res) => {
+  const { username, password, name, role } = req.body;
+  const hash = await bcrypt.hash(password, 10);
+  const user = new User({ username, password: hash, name, role });
+  await user.save();
+  res.json({ success: true });
+});
+
+// List users (superadmin only)
+app.get('/api/users', authRequired, superadminRequired, async (req, res) => {
+  const users = await User.find({}, '-password');
+  res.json(users);
+});
+
+// --- Initial Superadmin Creation (run once if no users) ---
+app.post('/api/setup-superadmin', async (req, res) => {
+  const { username, password, name } = req.body;
+  const exists = await User.findOne({ role: 'superadmin' });
+  if (exists) return res.status(400).json({ error: 'Superadmin exists' });
+  const hash = await bcrypt.hash(password, 10);
+  const user = new User({ username, password: hash, name, role: 'superadmin' });
+  await user.save();
+  res.json({ success: true });
+});
 
 // Helper to get next sequential number for quotations/invoices
 async function getNextNumber(model, prefix) {

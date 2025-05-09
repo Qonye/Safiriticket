@@ -7,25 +7,27 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle Sidebar">&#9776;</button>
-  <aside class="sidebar">
-    <img class="sidebar-logo" src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
-    <h2>Admin</h2>
-    <nav>
-      <ul>
-        <li><button data-section="overview">Overview</button></li>
-        <li><button data-section="clients">Clients</button></li>
-        <li><button data-section="quotations">Quotations</button></li>
-        <li><button data-section="invoices">Invoices</button></li>
-        <li><button data-section="financials">Financials</button></li>
-        <li><button data-section="orgsettings">Org Settings</button></li>
-      </ul>
-    </nav>
-    <div class="sidebar-status" id="sidebar-status"></div>
-  </aside>
-  <main class="main-content" id="main-content" style="width:100%;">
-    <!-- Content will be loaded here -->
-  </main>
+  <div id="app" style="display: flex;">
+    <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle Sidebar">&#9776;</button>
+    <aside class="sidebar">
+      <img class="sidebar-logo" src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
+      <h2>Admin</h2>
+      <nav>
+        <ul>
+          <li><button data-section="overview">Overview</button></li>
+          <li><button data-section="clients">Clients</button></li>
+          <li><button data-section="quotations">Quotations</button></li>
+          <li><button data-section="invoices">Invoices</button></li>
+          <li><button data-section="financials">Financials</button></li>
+          <li><button data-section="orgsettings">Org Settings</button></li>
+        </ul>
+      </nav>
+      <div class="sidebar-status" id="sidebar-status"></div>
+    </aside>
+    <main class="main-content" id="main-content" style="width:100%;">
+      <!-- Content will be loaded here -->
+    </main>
+  </div>
   <script src="config.js"></script>
   <script src="modules/clients.js"></script>
   <script src="modules/quotations.js"></script>

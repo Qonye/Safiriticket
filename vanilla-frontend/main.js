@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.querySelector('.sidebar');
   const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
 
+  // Restore your original app initialization logic here
+
   // Add Services link to sidebar if not present
   const sidebarNav = document.querySelector('.sidebar nav ul');
   if (!sidebarNav.querySelector('[data-section="services"]')) {
