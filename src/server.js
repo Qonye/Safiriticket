@@ -50,6 +50,8 @@ import Client from './models/Client.js';
 import Quotation from './models/Quotation.js';
 import Invoice from './models/Invoice.js';
 import Service from './models/Service.js';
+import Expense from './models/Expense.js';
+import Income from './models/Income.js';
 
 // --- Organization Settings Model ---
 const orgSettingsSchema = new mongoose.Schema({
@@ -331,6 +333,11 @@ app.delete('/api/invoices/:id', async (req, res) => {
   res.json({ message: 'Invoice deleted' });
 });
 
+app.get('/api/invoices/:id/expenses', authRequired, async (req, res) => {
+  const expenses = await Expense.find({ invoice: req.params.id, createdBy: req.user._id });
+  res.json(expenses);
+});
+
 // --- Financials Summary Endpoint ---
 app.get('/api/financials', async (req, res) => {
   // Fetch all invoices with up-to-date paidAmount and total
@@ -416,6 +423,54 @@ app.delete('/api/products/:id', async (req, res) => {
   const service = await Service.findByIdAndUpdate(req.params.id, { active: false }, { new: true });
   if (!service) return res.status(404).json({ error: 'Service not found' });
   res.json({ message: 'Service deleted (soft)' });
+});
+
+// --- Expense Routes ---
+app.get('/api/expenses', authRequired, async (req, res) => {
+  const expenses = await Expense.find({ createdBy: req.user._id });
+  res.json(expenses);
+});
+
+app.post('/api/expenses', authRequired, async (req, res) => {
+  const expense = new Expense({ ...req.body, createdBy: req.user._id });
+  await expense.save();
+  res.status(201).json(expense);
+});
+
+app.put('/api/expenses/:id', authRequired, async (req, res) => {
+  const expense = await Expense.findOneAndUpdate({ _id: req.params.id, createdBy: req.user._id }, req.body, { new: true });
+  if (!expense) return res.status(404).json({ error: 'Expense not found' });
+  res.json(expense);
+});
+
+app.delete('/api/expenses/:id', authRequired, async (req, res) => {
+  const expense = await Expense.findOneAndDelete({ _id: req.params.id, createdBy: req.user._id });
+  if (!expense) return res.status(404).json({ error: 'Expense not found' });
+  res.json({ success: true });
+});
+
+// --- Income Routes ---
+app.get('/api/income', authRequired, async (req, res) => {
+  const income = await Income.find({ createdBy: req.user._id });
+  res.json(income);
+});
+
+app.post('/api/income', authRequired, async (req, res) => {
+  const income = new Income({ ...req.body, createdBy: req.user._id });
+  await income.save();
+  res.status(201).json(income);
+});
+
+app.put('/api/income/:id', authRequired, async (req, res) => {
+  const income = await Income.findOneAndUpdate({ _id: req.params.id, createdBy: req.user._id }, req.body, { new: true });
+  if (!income) return res.status(404).json({ error: 'Income not found' });
+  res.json(income);
+});
+
+app.delete('/api/income/:id', authRequired, async (req, res) => {
+  const income = await Income.findOneAndDelete({ _id: req.params.id, createdBy: req.user._id });
+  if (!income) return res.status(404).json({ error: 'Income not found' });
+  res.json({ success: true });
 });
 
 // Serve vanilla frontend statically (add this before app.listen)

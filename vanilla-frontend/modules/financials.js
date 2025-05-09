@@ -5,6 +5,33 @@ window.renderFinancials = function(main) {
     <div id="financials-summary" style="margin-bottom:32px;">Loading...</div>
     <div class="widget-row" id="financials-widgets"></div>
     <div id="financials-charts" style="margin:32px 0 24px 0;"></div>
+    <div style="display:flex;gap:32px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:320px;">
+        <h3 style="color:#8c241c;">Add Expense</h3>
+        <form id="expense-form">
+          <input type="date" name="date" required style="margin-bottom:8px;width:100%;">
+          <input type="number" name="amount" placeholder="Amount" required min="0" step="0.01" style="margin-bottom:8px;width:100%;">
+          <input type="text" name="category" placeholder="Category" required style="margin-bottom:8px;width:100%;">
+          <input type="text" name="description" placeholder="Description" style="margin-bottom:8px;width:100%;">
+          <select name="invoice" id="expense-invoice-select" style="margin-bottom:8px;width:100%;">
+            <option value="">(Optional) Link to Invoice</option>
+          </select>
+          <button type="submit">Add Expense</button>
+        </form>
+        <div id="expenses-list" style="margin-top:18px;"></div>
+      </div>
+      <div style="flex:1;min-width:320px;">
+        <h3 style="color:#8c241c;">Add Income</h3>
+        <form id="income-form">
+          <input type="date" name="date" required style="margin-bottom:8px;width:100%;">
+          <input type="number" name="amount" placeholder="Amount" required min="0" step="0.01" style="margin-bottom:8px;width:100%;">
+          <input type="text" name="source" placeholder="Source" required style="margin-bottom:8px;width:100%;">
+          <input type="text" name="description" placeholder="Description" style="margin-bottom:8px;width:100%;">
+          <button type="submit">Add Income</button>
+        </form>
+        <div id="income-list" style="margin-top:18px;"></div>
+      </div>
+    </div>
     <div id="financials-details"></div>
     <button id="refresh-financials-btn" style="margin:16px 0;padding:6px 16px;">Refresh</button>
   `;
@@ -69,11 +96,33 @@ window.renderFinancials = function(main) {
 
       fetch(`${window.API_BASE_URL}/api/invoices`)
       .then(r => r.json())
-      .then(invoices => {
+      .then(async invoices => {
         if (!invoices.length) {
           document.getElementById('financials-details').innerHTML = '<p>No invoices found.</p>';
           return;
         }
+        // For each invoice, fetch its expenses and calculate profit
+        const invoiceRows = await Promise.all(invoices.map(async inv => {
+          let expenses = [];
+          try {
+            const res = await fetch(`${window.API_BASE_URL}/api/invoices/${inv._id}/expenses`, { credentials: 'include' });
+            expenses = await res.json();
+          } catch {}
+          const expenseTotal = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+          const profit = (inv.paidAmount || 0) - expenseTotal;
+          return `
+            <tr>
+              <td>${inv.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${inv.client?.email || ''}</span></td>
+              <td>${inv.status}</td>
+              <td>$${inv.total || 0}</td>
+              <td>$${inv.paidAmount || 0}</td>
+              <td>$${((inv.total || 0) - (inv.paidAmount || 0)).toFixed(2)}</td>
+              <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ''}</td>
+              <td>$${expenseTotal.toFixed(2)}</td>
+              <td style="font-weight:bold;color:${profit >= 0 ? '#2ecc40' : '#d63031'};">$${profit.toFixed(2)}</td>
+            </tr>
+          `;
+        }));
         document.getElementById('financials-details').innerHTML = `
           <h3 style="color:#8c241c;">All Invoices</h3>
           <table class="data-table">
@@ -85,19 +134,12 @@ window.renderFinancials = function(main) {
                 <th style="background:#8c241c;">Paid</th>
                 <th style="background:#8c241c;">Due</th>
                 <th style="background:#8c241c;">Due Date</th>
+                <th style="background:#8c241c;">Expenses</th>
+                <th style="background:#8c241c;">Profit</th>
               </tr>
             </thead>
             <tbody>
-              ${invoices.map(inv => `
-                <tr>
-                  <td>${inv.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${inv.client?.email || ''}</span></td>
-                  <td>${inv.status}</td>
-                  <td>$${inv.total || 0}</td>
-                  <td>$${inv.paidAmount || 0}</td>
-                  <td>$${((inv.total || 0) - (inv.paidAmount || 0)).toFixed(2)}</td>
-                  <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ''}</td>
-                </tr>
-              `).join('')}
+              ${invoiceRows.join('')}
             </tbody>
           </table>
         `;
@@ -105,5 +147,94 @@ window.renderFinancials = function(main) {
   }
 
   fetchFinancials();
+  document.getElementById('refresh-financials-btn').onclick = fetchFinancials;
+
+  // Expense logic
+  // Populate invoice select for expenses
+  fetch(`${window.API_BASE_URL}/api/invoices`, { credentials: 'include' })
+    .then(r => r.json())
+    .then(invoices => {
+      const select = document.getElementById('expense-invoice-select');
+      select.innerHTML = '<option value="">(Optional) Link to Invoice</option>' +
+        invoices.map(inv => `<option value="${inv._id}">${inv.number || inv._id} - $${inv.total} (${inv.status})</option>`).join('');
+    });
+
+  function fetchExpenses() {
+    fetch(`${window.API_BASE_URL}/api/expenses`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(expenses => {
+        document.getElementById('expenses-list').innerHTML = `
+          <h4 style="color:#8c241c;">Expenses</h4>
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Description</th><th>Invoice</th></tr></thead>
+            <tbody>
+              ${expenses.map(e => `
+                <tr>
+                  <td>${e.date ? new Date(e.date).toLocaleDateString() : ''}</td>
+                  <td>$${e.amount.toFixed(2)}</td>
+                  <td>${e.category}</td>
+                  <td>${e.description || ''}</td>
+                  <td>${e.invoice || ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      });
+  }
+  document.getElementById('expense-form').onsubmit = function(ev) {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const data = Object.fromEntries(fd.entries());
+    fetch(`${window.API_BASE_URL}/api/expenses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data)
+    }).then(r => r.json()).then(() => {
+      ev.target.reset();
+      fetchExpenses();
+    });
+  };
+  fetchExpenses();
+
+  // Income logic
+  function fetchIncome() {
+    fetch(`${window.API_BASE_URL}/api/income`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(income => {
+        document.getElementById('income-list').innerHTML = `
+          <h4 style="color:#8c241c;">Income</h4>
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Amount</th><th>Source</th><th>Description</th></tr></thead>
+            <tbody>
+              ${income.map(i => `
+                <tr>
+                  <td>${i.date ? new Date(i.date).toLocaleDateString() : ''}</td>
+                  <td>$${i.amount.toFixed(2)}</td>
+                  <td>${i.source}</td>
+                  <td>${i.description || ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      });
+  }
+  document.getElementById('income-form').onsubmit = function(ev) {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const data = Object.fromEntries(fd.entries());
+    fetch(`${window.API_BASE_URL}/api/income`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data)
+    }).then(r => r.json()).then(() => {
+      ev.target.reset();
+      fetchIncome();
+    });
+  };
+  fetchIncome();
   document.getElementById('refresh-financials-btn').onclick = fetchFinancials;
 };
