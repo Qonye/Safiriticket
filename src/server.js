@@ -8,9 +8,9 @@ import { dirname } from 'path';
 import multer from 'multer';
 import cloudinary from 'cloudinary';
 import fs from 'fs';
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from './models/User.js';
+import { sessionMiddleware, authRequired, superadminRequired, handleLogin, handleLogout } from './middleware/auth.js';
 
 // Initialize __filename and __dirname before using them
 const __filename = fileURLToPath(import.meta.url);
@@ -43,9 +43,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
-
-// JWT secret
-const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+app.use(sessionMiddleware);
 
 // --- Models ---
 import Client from './models/Client.js';
@@ -81,36 +79,13 @@ function adminAuth(req, res, next) {
 // Apply to all admin routes
 app.use('/api', adminAuth);
 
-// --- Auth Middleware ---
-function authRequired(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: 'No token' });
-  try {
-    const token = auth.split(' ')[1];
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-}
-
-function superadminRequired(req, res, next) {
-  if (req.user?.role === 'superadmin') return next();
-  res.status(403).json({ error: 'Superadmin only' });
-}
-
 // --- User Endpoints ---
 
 // Login
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
-  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
-  const token = jwt.sign({ id: user._id, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-  res.json({ token, name: user.name, role: user.role, username: user.username });
-});
+app.post('/api/login', handleLogin);
+
+// Logout
+app.post('/api/logout', handleLogout);
 
 // Create user (superadmin only)
 app.post('/api/users', authRequired, superadminRequired, async (req, res) => {
@@ -162,8 +137,8 @@ app.get('/api/clients', async (req, res) => {
   res.json(clients);
 });
 
-app.post('/api/clients', async (req, res) => {
-  const client = new Client(req.body);
+app.post('/api/clients', authRequired, async (req, res) => {
+  const client = new Client({ ...req.body, createdBy: req.user._id });
   await client.save();
   res.status(201).json(client);
 });
@@ -196,12 +171,12 @@ app.get('/api/quotations', async (req, res) => {
   res.json(quotations);
 });
 
-app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
+app.post('/api/quotations', authRequired, upload.single('pdf'), async (req, res) => {
   let data = req.body;
-  // If items is a string (from FormData), parse it
   if (typeof data.items === 'string') {
     try { data.items = JSON.parse(data.items); } catch { data.items = []; }
   }
+  data.createdBy = req.user._id;
   // If a PDF was uploaded, upload to Cloudinary and save the URL
   if (req.file) {
     try {
@@ -306,14 +281,12 @@ app.get('/api/invoices', async (req, res) => {
   res.json(invoices);
 });
 
-app.post('/api/invoices', async (req, res) => {
-  const invoice = new Invoice(req.body);
+app.post('/api/invoices', authRequired, async (req, res) => {
+  const invoice = new Invoice({ ...req.body, createdBy: req.user._id });
   if (!invoice.number) {
     invoice.number = await getNextNumber(Invoice, 'INV-');
   }
-  // Ensure paidAmount is set to 0 if not provided
   if (typeof invoice.paidAmount !== 'number') invoice.paidAmount = 0;
-  // If status is Paid and paidAmount is not set, set paidAmount = total
   if (invoice.status === 'Paid' && (!invoice.paidAmount || invoice.paidAmount < invoice.total)) {
     invoice.paidAmount = invoice.total;
   }
