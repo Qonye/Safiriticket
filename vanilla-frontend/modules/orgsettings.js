@@ -1,5 +1,14 @@
 // Attach to window for global access
 window.renderOrgSettings = function(main) {
+  // Add credentials: 'include' to all fetches to /api endpoints
+  const originalFetch = window.fetch;
+  window.fetch = function(resource, options = {}) {
+    if (typeof resource === 'string' && resource.startsWith(window.API_BASE_URL + '/api')) {
+      options.credentials = options.credentials || 'include';
+    }
+    return originalFetch(resource, options);
+  };
+
   // Helper to render the view mode
   function renderView(settings) {
     main.innerHTML = `
@@ -80,7 +89,7 @@ window.renderOrgSettings = function(main) {
         website: form.website.value.trim(),
         logoUrl: form.logoUrl.value.trim()
       };
-      fetch(`${window.API_BASE_URL}/api/orgsettings`, { // MODIFIED
+      fetch(`${window.API_BASE_URL}/api/orgsettings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -100,7 +109,7 @@ window.renderOrgSettings = function(main) {
   }
 
   // Initial load
-  fetch(`${window.API_BASE_URL}/api/orgsettings`) // MODIFIED
+  fetch(`${window.API_BASE_URL}/api/orgsettings`)
     .then(r => r.json())
     .then(settings => {
       window.currentOrgSettings = settings || {}; // <-- Make available globally for other modules

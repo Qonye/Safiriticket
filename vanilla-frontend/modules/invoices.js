@@ -65,7 +65,7 @@ window.renderInvoices = function(main) {
   `;
 
   // Populate client dropdown
-  fetch(`${window.API_BASE_URL}/api/clients`)
+  fetch(`${window.API_BASE_URL}/api/clients`, { credentials: 'include' })
     .then(r => r.json())
     .then(clients => {
       const select = document.getElementById('invoice-client-select');
@@ -75,7 +75,7 @@ window.renderInvoices = function(main) {
     });
 
   // Populate quotations dropdown (only accepted quotations)
-  fetch(`${window.API_BASE_URL}/api/quotations`)
+  fetch(`${window.API_BASE_URL}/api/quotations`, { credentials: 'include' })
     .then(r => r.json())
     .then(quotations => {
       const select = document.getElementById('invoice-quotation-select');
@@ -86,7 +86,7 @@ window.renderInvoices = function(main) {
     });
 
   // Populate client filter dropdown
-  fetch(`${window.API_BASE_URL}/api/clients`)
+  fetch(`${window.API_BASE_URL}/api/clients`, { credentials: 'include' })
     .then(r => r.json())
     .then(clients => {
       const select = document.getElementById('filter-client');
@@ -246,7 +246,7 @@ window.renderInvoices = function(main) {
   document.getElementById('invoice-quotation-select').addEventListener('change', function() {
     const qid = this.value;
     if (!qid) return;
-    fetch(`${window.API_BASE_URL}/api/quotations/${qid}`)
+    fetch(`${window.API_BASE_URL}/api/quotations/${qid}`, { credentials: 'include' })
       .then(r => r.json())
       .then(q => {
         // Set client
@@ -265,7 +265,7 @@ window.renderInvoices = function(main) {
 
   // --- Invoice CRUD logic ---
   function fetchInvoices(url = `${window.API_BASE_URL}/api/invoices`) {
-    fetch(url)
+    fetch(url, { credentials: 'include' })
       .then(r => r.json())
       .then(invoices => {
         window.invoices = invoices; // Store invoices globally
@@ -343,6 +343,7 @@ window.renderInvoices = function(main) {
             fetch(`${window.API_BASE_URL}/api/invoices/${id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
               body: JSON.stringify(payload)
             })
               .then(r => r.json())
@@ -368,7 +369,6 @@ window.renderInvoices = function(main) {
             const tr = btn.closest('tr');
             tr.querySelector('.paid-label').style.display = '';
             tr.querySelector('.edit-paid').style.display = 'none';
-            tr.querySelector('.save-paid-btn').style.display = 'none';
             tr.querySelector('.edit-paid-btn').style.display = '';
             btn.style.display = 'none';
           };
@@ -534,10 +534,15 @@ window.renderInvoices = function(main) {
       fetch(`${window.API_BASE_URL}/api/invoices`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Ensure session cookie is sent
         body: JSON.stringify(data)
       })
-        .then(r => r.json())
-        .then(invoice => {
+        .then(async r => {
+          const resp = await r.json();
+          if (!r.ok || resp.error) {
+            document.getElementById('invoice-form-msg').textContent = resp.error ? `Error: ${resp.error}` : 'Error adding invoice.';
+            return;
+          }
           document.getElementById('invoice-form-msg').textContent = 'Invoice added!';
           form.reset();
           // Remove all item rows except one

@@ -14,41 +14,71 @@ window.generatePDF = async function(html, options = {}) {
 };
 
 window.previewPDF = async function(html, options = {}) {
-  // Ensure logo is loaded before generating PDF and render full container (including footer)
+  // Ensure all images are loaded before generating PDF
   const tempDiv = document.createElement('div');
   tempDiv.style.display = 'none';
   tempDiv.innerHTML = html;
   document.body.appendChild(tempDiv);
+
+  // Replace logo src with absolute URL or base64 if needed
   const logo = tempDiv.querySelector('.logo');
-  const renderPDF = () => {
-    // Use minimal margins to maximize printable area and reduce cutoff
-    html2pdf().from(tempDiv).set({
-      margin: [2, 2, 2, 2], // 2mm on all sides
-      jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-      html2canvas: { scale: 2, useCORS: true },
-      ...options
-    }).outputPdf('bloburl').then(url => {
-      window.open(url, '_blank');
-      tempDiv.remove();
-    });
-  };
-  if (logo && !logo.complete) {
-    logo.onload = renderPDF;
-    return;
+  if (logo) {
+    // Use absolute path for logo
+    logo.src = window.location.origin + '/vanilla-frontend/templates/logo.png';
   }
-  renderPDF();
+
+  // Wait for all images to load
+  const images = tempDiv.querySelectorAll('img');
+  await Promise.all(Array.from(images).map(img => {
+    if (img.complete && img.naturalWidth !== 0) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = img.onerror = resolve;
+    });
+  }));
+
+  // Use safe margins to avoid truncation
+  html2pdf().from(tempDiv).set({
+    margin: [10, 10, 10, 10], // 10mm on all sides
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+    html2canvas: { scale: 2, useCORS: true },
+    ...options
+  }).outputPdf('bloburl').then(url => {
+    window.open(url, '_blank');
+    tempDiv.remove();
+  });
 };
 
 window.downloadPDF = async function(html, filename = 'document.pdf', options = {}) {
-  html2pdf().from(html).set({
-    margin: [0, 0, 0, 0],
+  // Ensure all images are loaded before generating PDF
+  const tempDiv = document.createElement('div');
+  tempDiv.style.display = 'none';
+  tempDiv.innerHTML = html;
+  document.body.appendChild(tempDiv);
+
+  // Replace logo src with absolute URL or base64 if needed
+  const logo = tempDiv.querySelector('.logo');
+  if (logo) {
+    logo.src = window.location.origin + '/vanilla-frontend/templates/logo.png';
+  }
+
+  // Wait for all images to load
+  const images = tempDiv.querySelectorAll('img');
+  await Promise.all(Array.from(images).map(img => {
+    if (img.complete && img.naturalWidth !== 0) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = img.onerror = resolve;
+    });
+  }));
+
+  html2pdf().from(tempDiv).set({
+    margin: [10, 10, 10, 10],
     jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-    html2canvas: { scale: 2, useCORS: true }, // ensure useCORS is set
+    html2canvas: { scale: 2, useCORS: true },
     filename,
     ...options
-  }).save();
+  }).save().then(() => tempDiv.remove());
 };
 
 // Helper to fill org details in a template (used by both quotations and invoices)

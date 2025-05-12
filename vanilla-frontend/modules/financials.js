@@ -5,49 +5,8 @@ window.renderFinancials = function(main) {
     <div id="financials-summary" style="margin-bottom:32px;">Loading...</div>
     <div class="widget-row" id="financials-widgets"></div>
     <div id="financials-charts" style="margin:32px 0 24px 0;"></div>
-    <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;">
-      <div style="flex:1;min-width:320px;">
-        <h3 style="color:#8c241c;">Expenses</h3>
-        <button id="add-expense-btn" class="finance-form-btn" style="margin-bottom:18px;width:100%;">Add Expense</button>
-        <div id="expenses-list" style="margin-top:18px;"></div>
-      </div>
-      <div style="flex:1;min-width:320px;">
-        <h3 style="color:#8c241c;">Income</h3>
-        <button id="add-income-btn" class="finance-form-btn" style="margin-bottom:18px;width:100%;">Add Income</button>
-        <div id="income-list" style="margin-top:18px;"></div>
-      </div>
-    </div>
     <div id="financials-details"></div>
     <button id="refresh-financials-btn" style="margin:16px 0;padding:6px 16px;">Refresh</button>
-    <div id="expense-modal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
-      <div style="background:#fff;padding:32px 24px;border-radius:10px;max-width:400px;width:95vw;box-shadow:0 4px 32px #8c241c33;position:relative;">
-        <button id="close-expense-modal" type="button" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:1.5em;color:#8c241c;cursor:pointer;">&times;</button>
-        <h3 style="color:#8c241c;">Add Expense</h3>
-        <form id="expense-form-modal">
-          <input type="date" name="date" required class="finance-form-input">
-          <input type="number" name="amount" placeholder="Amount" required min="0" step="0.01" class="finance-form-input">
-          <input type="text" name="category" placeholder="Category" required class="finance-form-input">
-          <input type="text" name="description" placeholder="Description" class="finance-form-input">
-          <select name="invoice" id="expense-invoice-select-modal" class="finance-form-select">
-            <option value="">(Optional) Link to Invoice</option>
-          </select>
-          <button type="submit" class="finance-form-btn">Add Expense</button>
-        </form>
-      </div>
-    </div>
-    <div id="income-modal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
-      <div style="background:#fff;padding:32px 24px;border-radius:10px;max-width:400px;width:95vw;box-shadow:0 4px 32px #8c241c33;position:relative;">
-        <button id="close-income-modal" type="button" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:1.5em;color:#8c241c;cursor:pointer;">&times;</button>
-        <h3 style="color:#8c241c;">Add Income</h3>
-        <form id="income-form-modal">
-          <input type="date" name="date" required class="finance-form-input">
-          <input type="number" name="amount" placeholder="Amount" required min="0" step="0.01" class="finance-form-input">
-          <input type="text" name="source" placeholder="Source" required class="finance-form-input">
-          <input type="text" name="description" placeholder="Description" class="finance-form-input">
-          <button type="submit" class="finance-form-btn">Add Income</button>
-        </form>
-      </div>
-    </div>
     <style>
       .finance-form-input {
         width: 100%;
@@ -217,152 +176,13 @@ window.renderFinancials = function(main) {
 
   fetchFinancials();
   document.getElementById('refresh-financials-btn').onclick = fetchFinancials;
+};
 
-  // Expense logic
-  // Populate invoice select for expenses
-  fetch(`${window.API_BASE_URL}/api/invoices`, { credentials: 'include' })
-    .then(r => r.json())
-    .then(invoices => {
-      const select = document.getElementById('expense-invoice-select');
-      select.innerHTML = '<option value="">(Optional) Link to Invoice</option>' +
-        invoices.map(inv => `<option value="${inv._id}">${inv.number || inv._id} - $${inv.total} (${inv.status})</option>`).join('');
-    });
-
-  function fetchExpenses() {
-    fetch(`${window.API_BASE_URL}/api/expenses`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(expenses => {
-        document.getElementById('expenses-list').innerHTML = `
-          <h4 style="color:#8c241c;">Expenses</h4>
-          <table class="data-table">
-            <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Description</th><th>Invoice</th></tr></thead>
-            <tbody>
-              ${expenses.map(e => `
-                <tr>
-                  <td>${e.date ? new Date(e.date).toLocaleDateString() : ''}</td>
-                  <td>$${e.amount.toFixed(2)}</td>
-                  <td>${e.category}</td>
-                  <td>${e.description || ''}</td>
-                  <td>${e.invoice || ''}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        `;
-      });
+// Add credentials: 'include' to all fetches to /api endpoints
+const originalFetch = window.fetch;
+window.fetch = function(resource, options = {}) {
+  if (typeof resource === 'string' && resource.startsWith(window.API_BASE_URL + '/api')) {
+    options.credentials = options.credentials || 'include';
   }
-  document.getElementById('expense-form').onsubmit = function(ev) {
-    ev.preventDefault();
-    const fd = new FormData(ev.target);
-    const data = Object.fromEntries(fd.entries());
-    fetch(`${window.API_BASE_URL}/api/expenses`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(data)
-    }).then(r => r.json()).then(() => {
-      ev.target.reset();
-      fetchExpenses();
-    });
-  };
-  fetchExpenses();
-
-  // Income logic
-  function fetchIncome() {
-    fetch(`${window.API_BASE_URL}/api/income`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(income => {
-        document.getElementById('income-list').innerHTML = `
-          <h4 style="color:#8c241c;">Income</h4>
-          <table class="data-table">
-            <thead><tr><th>Date</th><th>Amount</th><th>Source</th><th>Description</th></tr></thead>
-            <tbody>
-              ${income.map(i => `
-                <tr>
-                  <td>${i.date ? new Date(i.date).toLocaleDateString() : ''}</td>
-                  <td>$${i.amount.toFixed(2)}</td>
-                  <td>${i.source}</td>
-                  <td>${i.description || ''}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        `;
-      });
-  }
-  document.getElementById('income-form').onsubmit = function(ev) {
-    ev.preventDefault();
-    const fd = new FormData(ev.target);
-    const data = Object.fromEntries(fd.entries());
-    fetch(`${window.API_BASE_URL}/api/income`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(data)
-    }).then(r => r.json()).then(() => {
-      ev.target.reset();
-      fetchIncome();
-    });
-  };
-  fetchIncome();
-  document.getElementById('refresh-financials-btn').onclick = fetchFinancials;
-
-  // Modal logic for expense and income (ensure DOM is ready)
-  setTimeout(() => {
-    document.getElementById('add-expense-btn').onclick = function() {
-      document.getElementById('expense-modal').style.display = 'flex';
-      fetch(`${window.API_BASE_URL}/api/invoices`, { credentials: 'include' })
-        .then(r => r.json())
-        .then(invoices => {
-          const select = document.getElementById('expense-invoice-select-modal');
-          select.innerHTML = '<option value="">(Optional) Link to Invoice</option>' +
-            invoices.map(inv => `<option value="${inv._id}">${inv.number || inv._id} - $${inv.total} (${inv.status})</option>`).join('');
-        });
-    };
-    document.getElementById('close-expense-modal').onclick = function() {
-      document.getElementById('expense-modal').style.display = 'none';
-    };
-    document.getElementById('expense-modal').onclick = function(e) {
-      if (e.target === this) this.style.display = 'none';
-    };
-    document.getElementById('expense-form-modal').onsubmit = function(ev) {
-      ev.preventDefault();
-      const fd = new FormData(ev.target);
-      const data = Object.fromEntries(fd.entries());
-      fetch(`${window.API_BASE_URL}/api/expenses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      }).then(r => r.json()).then(() => {
-        ev.target.reset();
-        document.getElementById('expense-modal').style.display = 'none';
-        fetchExpenses();
-      });
-    };
-    document.getElementById('add-income-btn').onclick = function() {
-      document.getElementById('income-modal').style.display = 'flex';
-    };
-    document.getElementById('close-income-modal').onclick = function() {
-      document.getElementById('income-modal').style.display = 'none';
-    };
-    document.getElementById('income-modal').onclick = function(e) {
-      if (e.target === this) this.style.display = 'none';
-    };
-    document.getElementById('income-form-modal').onsubmit = function(ev) {
-      ev.preventDefault();
-      const fd = new FormData(ev.target);
-      const data = Object.fromEntries(fd.entries());
-      fetch(`${window.API_BASE_URL}/api/income`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      }).then(r => r.json()).then(() => {
-        ev.target.reset();
-        document.getElementById('income-modal').style.display = 'none';
-        fetchIncome();
-      });
-    };
-  }, 0);
+  return originalFetch(resource, options);
 };
