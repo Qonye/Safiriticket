@@ -5,35 +5,104 @@ window.renderFinancials = function(main) {
     <div id="financials-summary" style="margin-bottom:32px;">Loading...</div>
     <div class="widget-row" id="financials-widgets"></div>
     <div id="financials-charts" style="margin:32px 0 24px 0;"></div>
-    <div style="display:flex;gap:32px;flex-wrap:wrap;">
+    <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;">
       <div style="flex:1;min-width:320px;">
-        <h3 style="color:#8c241c;">Add Expense</h3>
-        <form id="expense-form">
-          <input type="date" name="date" required style="margin-bottom:8px;width:100%;">
-          <input type="number" name="amount" placeholder="Amount" required min="0" step="0.01" style="margin-bottom:8px;width:100%;">
-          <input type="text" name="category" placeholder="Category" required style="margin-bottom:8px;width:100%;">
-          <input type="text" name="description" placeholder="Description" style="margin-bottom:8px;width:100%;">
-          <select name="invoice" id="expense-invoice-select" style="margin-bottom:8px;width:100%;">
-            <option value="">(Optional) Link to Invoice</option>
-          </select>
-          <button type="submit">Add Expense</button>
-        </form>
+        <h3 style="color:#8c241c;">Expenses</h3>
+        <button id="add-expense-btn" class="finance-form-btn" style="margin-bottom:18px;width:100%;">Add Expense</button>
         <div id="expenses-list" style="margin-top:18px;"></div>
       </div>
       <div style="flex:1;min-width:320px;">
-        <h3 style="color:#8c241c;">Add Income</h3>
-        <form id="income-form">
-          <input type="date" name="date" required style="margin-bottom:8px;width:100%;">
-          <input type="number" name="amount" placeholder="Amount" required min="0" step="0.01" style="margin-bottom:8px;width:100%;">
-          <input type="text" name="source" placeholder="Source" required style="margin-bottom:8px;width:100%;">
-          <input type="text" name="description" placeholder="Description" style="margin-bottom:8px;width:100%;">
-          <button type="submit">Add Income</button>
-        </form>
+        <h3 style="color:#8c241c;">Income</h3>
+        <button id="add-income-btn" class="finance-form-btn" style="margin-bottom:18px;width:100%;">Add Income</button>
         <div id="income-list" style="margin-top:18px;"></div>
       </div>
     </div>
     <div id="financials-details"></div>
     <button id="refresh-financials-btn" style="margin:16px 0;padding:6px 16px;">Refresh</button>
+    <div id="expense-modal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
+      <div style="background:#fff;padding:32px 24px;border-radius:10px;max-width:400px;width:95vw;box-shadow:0 4px 32px #8c241c33;position:relative;">
+        <button id="close-expense-modal" type="button" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:1.5em;color:#8c241c;cursor:pointer;">&times;</button>
+        <h3 style="color:#8c241c;">Add Expense</h3>
+        <form id="expense-form-modal">
+          <input type="date" name="date" required class="finance-form-input">
+          <input type="number" name="amount" placeholder="Amount" required min="0" step="0.01" class="finance-form-input">
+          <input type="text" name="category" placeholder="Category" required class="finance-form-input">
+          <input type="text" name="description" placeholder="Description" class="finance-form-input">
+          <select name="invoice" id="expense-invoice-select-modal" class="finance-form-select">
+            <option value="">(Optional) Link to Invoice</option>
+          </select>
+          <button type="submit" class="finance-form-btn">Add Expense</button>
+        </form>
+      </div>
+    </div>
+    <div id="income-modal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2000;align-items:center;justify-content:center;">
+      <div style="background:#fff;padding:32px 24px;border-radius:10px;max-width:400px;width:95vw;box-shadow:0 4px 32px #8c241c33;position:relative;">
+        <button id="close-income-modal" type="button" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:1.5em;color:#8c241c;cursor:pointer;">&times;</button>
+        <h3 style="color:#8c241c;">Add Income</h3>
+        <form id="income-form-modal">
+          <input type="date" name="date" required class="finance-form-input">
+          <input type="number" name="amount" placeholder="Amount" required min="0" step="0.01" class="finance-form-input">
+          <input type="text" name="source" placeholder="Source" required class="finance-form-input">
+          <input type="text" name="description" placeholder="Description" class="finance-form-input">
+          <button type="submit" class="finance-form-btn">Add Income</button>
+        </form>
+      </div>
+    </div>
+    <style>
+      .finance-form-input {
+        width: 100%;
+        padding: 0.7rem;
+        margin-bottom: 10px;
+        border: 1.5px solid #8c241c;
+        border-radius: 6px;
+        background: #f8f9fa;
+        font-size: 1em;
+        transition: border 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 4px #e9c7bf33;
+      }
+      .finance-form-input:focus {
+        outline: none;
+        border-color: #eb7b24;
+        box-shadow: 0 2px 8px #e9c7bf66;
+        background: #fff;
+      }
+      .finance-form-select {
+        width: 100%;
+        padding: 0.7rem;
+        margin-bottom: 10px;
+        border: 1.5px solid #8c241c;
+        border-radius: 6px;
+        background: #f8f9fa;
+        font-size: 1em;
+        transition: border 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 4px #e9c7bf33;
+      }
+      .finance-form-select:focus {
+        outline: none;
+        border-color: #eb7b24;
+        box-shadow: 0 2px 8px #e9c7bf66;
+        background: #fff;
+      }
+      .finance-form-btn {
+        width: 100%;
+        padding: 0.7rem;
+        background: #8c241c;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 4px #e9c7bf33;
+      }
+      .finance-form-btn:hover {
+        background: #a63a2e;
+        box-shadow: 0 2px 12px #e9c7bf66;
+      }
+      .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.18); z-index: 2000; align-items: center; justify-content: center; }
+      .modal[open], .modal.show { display: flex !important; }
+    </style>
   `;
 
   function renderCharts(data) {
@@ -237,4 +306,63 @@ window.renderFinancials = function(main) {
   };
   fetchIncome();
   document.getElementById('refresh-financials-btn').onclick = fetchFinancials;
+
+  // Modal logic for expense and income (ensure DOM is ready)
+  setTimeout(() => {
+    document.getElementById('add-expense-btn').onclick = function() {
+      document.getElementById('expense-modal').style.display = 'flex';
+      fetch(`${window.API_BASE_URL}/api/invoices`, { credentials: 'include' })
+        .then(r => r.json())
+        .then(invoices => {
+          const select = document.getElementById('expense-invoice-select-modal');
+          select.innerHTML = '<option value="">(Optional) Link to Invoice</option>' +
+            invoices.map(inv => `<option value="${inv._id}">${inv.number || inv._id} - $${inv.total} (${inv.status})</option>`).join('');
+        });
+    };
+    document.getElementById('close-expense-modal').onclick = function() {
+      document.getElementById('expense-modal').style.display = 'none';
+    };
+    document.getElementById('expense-modal').onclick = function(e) {
+      if (e.target === this) this.style.display = 'none';
+    };
+    document.getElementById('expense-form-modal').onsubmit = function(ev) {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const data = Object.fromEntries(fd.entries());
+      fetch(`${window.API_BASE_URL}/api/expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      }).then(r => r.json()).then(() => {
+        ev.target.reset();
+        document.getElementById('expense-modal').style.display = 'none';
+        fetchExpenses();
+      });
+    };
+    document.getElementById('add-income-btn').onclick = function() {
+      document.getElementById('income-modal').style.display = 'flex';
+    };
+    document.getElementById('close-income-modal').onclick = function() {
+      document.getElementById('income-modal').style.display = 'none';
+    };
+    document.getElementById('income-modal').onclick = function(e) {
+      if (e.target === this) this.style.display = 'none';
+    };
+    document.getElementById('income-form-modal').onsubmit = function(ev) {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const data = Object.fromEntries(fd.entries());
+      fetch(`${window.API_BASE_URL}/api/income`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      }).then(r => r.json()).then(() => {
+        ev.target.reset();
+        document.getElementById('income-modal').style.display = 'none';
+        fetchIncome();
+      });
+    };
+  }, 0);
 };
