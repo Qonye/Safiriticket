@@ -7,8 +7,7 @@ const clientSchema = new mongoose.Schema({
   phone: String,
   address: String,
   // Optional: activity tracking
-  lastContacted: Date,
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  lastContacted: Date
 }, { timestamps: true });
 
 export default mongoose.model('Client', clientSchema);

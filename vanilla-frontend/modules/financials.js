@@ -1,3 +1,12 @@
+// Patch fetch globally in this module to always send credentials for /api requests
+const originalFetch = window.fetch;
+window.fetch = function(resource, options = {}) {
+  if (typeof resource === 'string' && resource.startsWith(window.API_BASE_URL + '/api')) {
+    options.credentials = 'include';
+  }
+  return originalFetch(resource, options);
+};
+
 // Attach to window for global access
 window.renderFinancials = function(main) {
   main.innerHTML = `
@@ -176,13 +185,4 @@ window.renderFinancials = function(main) {
 
   fetchFinancials();
   document.getElementById('refresh-financials-btn').onclick = fetchFinancials;
-};
-
-// Add credentials: 'include' to all fetches to /api endpoints
-const originalFetch = window.fetch;
-window.fetch = function(resource, options = {}) {
-  if (typeof resource === 'string' && resource.startsWith(window.API_BASE_URL + '/api')) {
-    options.credentials = options.credentials || 'include';
-  }
-  return originalFetch(resource, options);
 };

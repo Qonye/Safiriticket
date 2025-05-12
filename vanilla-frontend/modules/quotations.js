@@ -1,3 +1,15 @@
+// Patch fetch globally in this module to always send credentials for /api requests
+if (!window._fetchPatchedForApi) {
+  const originalFetch = window.fetch;
+  window.fetch = function(resource, options = {}) {
+    if (typeof resource === 'string' && resource.startsWith(window.API_BASE_URL + '/api')) {
+      options.credentials = 'include';
+    }
+    return originalFetch(resource, options);
+  };
+  window._fetchPatchedForApi = true;
+}
+
 // Attach to window for global access
 window.renderQuotations = function(main) {
   main.innerHTML = `
@@ -472,9 +484,6 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
         if (hotelName) item.hotelName = hotelName;
         if (checkin) item.checkin = checkin;
         if (checkout) item.checkout = checkout;
-      } else if (type === 'flight') {
-        const airline = tr.querySelector('.item-airline')?.value.trim();
-        const from = tr.querySelector('.item-from')?.value.trim();
         const to = tr.querySelector('.item-to')?.value.trim();
         const flightDate = tr.querySelector('.item-flight-date')?.value;
         const flightClass = tr.querySelector('.item-class')?.value.trim();

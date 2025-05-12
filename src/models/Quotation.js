@@ -15,8 +15,7 @@ const quotationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   number: { type: String, unique: true },
   externalPdfUrl: { type: String }, // stores Cloudinary PDF URL
-  isExternal: { type: Boolean, default: false },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  isExternal: { type: Boolean, default: false } // Optional: mark if has external PDF
 }, { timestamps: true, strict: false });
 
 export default mongoose.models.Quotation || mongoose.model('Quotation', quotationSchema);
