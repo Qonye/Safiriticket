@@ -1,12 +1,3 @@
-// Add credentials: 'include' to all fetches to /api endpoints
-const originalFetch = window.fetch;
-window.fetch = function(resource, options = {}) {
-  if (typeof resource === 'string' && resource.startsWith(window.API_BASE_URL + '/api')) {
-    options.credentials = options.credentials || 'include';
-  }
-  return originalFetch(resource, options);
-};
-
 // Make sure this attaches the function to window for global access
 window.renderClients = function(main) {
   main.innerHTML = `

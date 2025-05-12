@@ -73,72 +73,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-// --- Admin Authentication Middleware ---
-function adminAuth(req, res, next) {
-  // TODO: Implement real authentication (e.g., JWT, session)
-  // For now, allow all requests
-  next();
-}
-
-// Apply to all admin routes
-app.use('/api', adminAuth);
-
-// --- Auth Middleware ---
-function authRequired(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: 'No token' });
-  try {
-    const token = auth.split(' ')[1];
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-}
-
-function superadminRequired(req, res, next) {
-  if (req.user?.role === 'superadmin') return next();
-  res.status(403).json({ error: 'Superadmin only' });
-}
-
 // --- User Endpoints ---
 
-// Login
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
-  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
-  const token = jwt.sign({ id: user._id, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-  res.json({ token, name: user.name, role: user.role, username: user.username });
-});
-
-// Create user (superadmin only)
-app.post('/api/users', authRequired, superadminRequired, async (req, res) => {
-  const { username, password, name, role } = req.body;
-  const hash = await bcrypt.hash(password, 10);
-  const user = new User({ username, password: hash, name, role });
-  await user.save();
-  res.json({ success: true });
-});
-
-// List users (superadmin only)
-app.get('/api/users', authRequired, superadminRequired, async (req, res) => {
-  const users = await User.find({}, '-password');
-  res.json(users);
-});
+// Login (no longer needed, but left for reference)
+// app.post('/api/login', ...)
 
 // --- Initial Superadmin Creation (run once if no users) ---
-app.post('/api/setup-superadmin', async (req, res) => {
-  const { username, password, name } = req.body;
-  const exists = await User.findOne({ role: 'superadmin' });
-  if (exists) return res.status(400).json({ error: 'Superadmin exists' });
-  const hash = await bcrypt.hash(password, 10);
-  const user = new User({ username, password: hash, name, role: 'superadmin' });
-  await user.save();
-  res.json({ success: true });
-});
+// app.post('/api/setup-superadmin', ...)
 
 // Helper to get next sequential number for quotations/invoices
 async function getNextNumber(model, prefix) {
@@ -308,7 +249,7 @@ app.get('/api/invoices', async (req, res) => {
   res.json(invoices);
 });
 
-app.post('/api/invoices', authRequired, async (req, res) => {
+app.post('/api/invoices', async (req, res) => {
   const invoice = new Invoice(req.body);
   if (!invoice.number) {
     invoice.number = await getNextNumber(Invoice, 'INV-');
@@ -360,8 +301,8 @@ app.delete('/api/invoices/:id', async (req, res) => {
   res.json({ message: 'Invoice deleted' });
 });
 
-app.get('/api/invoices/:id/expenses', authRequired, async (req, res) => {
-  const expenses = await Expense.find({ invoice: req.params.id, createdBy: req.user._id });
+app.get('/api/invoices/:id/expenses', async (req, res) => {
+  const expenses = await Expense.find({ invoice: req.params.id });
   res.json(expenses);
 });
 
@@ -453,49 +394,49 @@ app.delete('/api/products/:id', async (req, res) => {
 });
 
 // --- Expense Routes ---
-app.get('/api/expenses', authRequired, async (req, res) => {
-  const expenses = await Expense.find({ createdBy: req.user._id });
+app.get('/api/expenses', async (req, res) => {
+  const expenses = await Expense.find();
   res.json(expenses);
 });
 
-app.post('/api/expenses', authRequired, async (req, res) => {
-  const expense = new Expense({ ...req.body, createdBy: req.user._id });
+app.post('/api/expenses', async (req, res) => {
+  const expense = new Expense(req.body);
   await expense.save();
   res.status(201).json(expense);
 });
 
-app.put('/api/expenses/:id', authRequired, async (req, res) => {
-  const expense = await Expense.findOneAndUpdate({ _id: req.params.id, createdBy: req.user._id }, req.body, { new: true });
+app.put('/api/expenses/:id', async (req, res) => {
+  const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!expense) return res.status(404).json({ error: 'Expense not found' });
   res.json(expense);
 });
 
-app.delete('/api/expenses/:id', authRequired, async (req, res) => {
-  const expense = await Expense.findOneAndDelete({ _id: req.params.id, createdBy: req.user._id });
+app.delete('/api/expenses/:id', async (req, res) => {
+  const expense = await Expense.findByIdAndDelete(req.params.id);
   if (!expense) return res.status(404).json({ error: 'Expense not found' });
   res.json({ success: true });
 });
 
 // --- Income Routes ---
-app.get('/api/income', authRequired, async (req, res) => {
-  const income = await Income.find({ createdBy: req.user._id });
+app.get('/api/income', async (req, res) => {
+  const income = await Income.find();
   res.json(income);
 });
 
-app.post('/api/income', authRequired, async (req, res) => {
-  const income = new Income({ ...req.body, createdBy: req.user._id });
+app.post('/api/income', async (req, res) => {
+  const income = new Income(req.body);
   await income.save();
   res.status(201).json(income);
 });
 
-app.put('/api/income/:id', authRequired, async (req, res) => {
-  const income = await Income.findOneAndUpdate({ _id: req.params.id, createdBy: req.user._id }, req.body, { new: true });
+app.put('/api/income/:id', async (req, res) => {
+  const income = await Income.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!income) return res.status(404).json({ error: 'Income not found' });
   res.json(income);
 });
 
-app.delete('/api/income/:id', authRequired, async (req, res) => {
-  const income = await Income.findOneAndDelete({ _id: req.params.id, createdBy: req.user._id });
+app.delete('/api/income/:id', async (req, res) => {
+  const income = await Income.findByIdAndDelete(req.params.id);
   if (!income) return res.status(404).json({ error: 'Income not found' });
   res.json({ success: true });
 });

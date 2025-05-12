@@ -228,15 +228,6 @@ window.renderQuotations = function(main) {
   }
 };
 
-// Add credentials: 'include' to all fetches to /api endpoints
-const originalFetch = window.fetch;
-window.fetch = function(resource, options = {}) {
-  if (typeof resource === 'string' && resource.startsWith(window.API_BASE_URL + '/api')) {
-    options.credentials = options.credentials || 'include';
-  }
-  return originalFetch(resource, options);
-};
-
 // --- System Quotation Creator ---
 function renderSystemQuotationForm(container, onQuotationAdded) {
   container.innerHTML = `

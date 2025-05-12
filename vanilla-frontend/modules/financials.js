@@ -1,13 +1,3 @@
-// Patch fetch globally in this module to always send credentials for /api requests
-const originalFetch = window.fetch;
-window.fetch = function(resource, options = {}) {
-  if (typeof resource === 'string' && resource.startsWith(window.API_BASE_URL + '/api')) {
-    options.credentials = 'include';
-  }
-  return originalFetch(resource, options);
-};
-
-// Attach to window for global access
 window.renderFinancials = function(main) {
   main.innerHTML = `
     <h2 style="color:#8c241c;">Financial Overview</h2>
@@ -142,7 +132,7 @@ window.renderFinancials = function(main) {
         const invoiceRows = await Promise.all(invoices.map(async inv => {
           let expenses = [];
           try {
-            const res = await fetch(`${window.API_BASE_URL}/api/invoices/${inv._id}/expenses`, { credentials: 'include' });
+            const res = await fetch(`${window.API_BASE_URL}/api/invoices/${inv._id}/expenses`);
             expenses = await res.json();
           } catch {}
           const expenseTotal = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
