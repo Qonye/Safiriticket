@@ -308,53 +308,7 @@ app.get('/api/invoices', async (req, res) => {
   res.json(invoices);
 });
 
-<<<<<<< HEAD
 app.post('/api/invoices', authRequired, async (req, res) => {
-  try {
-    // Log the incoming request for debugging
-    console.log('POST /api/invoices body:', JSON.stringify(req.body));
-    // Extra debug: log types of incoming fields
-    console.log('Types:', {
-      client: typeof req.body.client,
-      items: Array.isArray(req.body.items),
-      total: typeof req.body.total
-    });
-
-    // Validate required fields
-    const { client, items, total } = req.body;
-    if (!client) {
-      console.error('Invoice creation failed: Missing client');
-      return res.status(400).json({ error: 'Client is required' });
-    }
-    if (!Array.isArray(items) || items.length === 0) {
-      console.error('Invoice creation failed: No items');
-      return res.status(400).json({ error: 'At least one item is required' });
-    }
-    if (typeof total !== 'number' || isNaN(total)) {
-      console.error('Invoice creation failed: Invalid total');
-      return res.status(400).json({ error: 'Total must be a number' });
-    }
-
-    const invoice = new Invoice({ ...req.body, createdBy: req.user._id });
-    if (!invoice.number) {
-      invoice.number = await getNextNumber(Invoice, 'INV-');
-    }
-    if (typeof invoice.paidAmount !== 'number') invoice.paidAmount = 0;
-    if (invoice.status === 'Paid' && (!invoice.paidAmount || invoice.paidAmount < invoice.total)) {
-      invoice.paidAmount = invoice.total;
-    }
-    await invoice.save();
-    console.log('Invoice saved:', invoice._id);
-    res.status(201).json(invoice);
-  } catch (err) {
-    console.error('Error saving invoice:', err);
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ error: 'Validation error', details: err.message });
-    }
-    res.status(500).json({ error: 'Failed to save invoice', details: err.message });
-  }
-=======
-app.post('/api/invoices', async (req, res) => {
   const invoice = new Invoice(req.body);
   if (!invoice.number) {
     invoice.number = await getNextNumber(Invoice, 'INV-');
@@ -367,7 +321,6 @@ app.post('/api/invoices', async (req, res) => {
   }
   await invoice.save();
   res.status(201).json(invoice);
->>>>>>> parent of 10074b3 (login implemented)
 });
 
 app.get('/api/invoices/:id', async (req, res) => {
