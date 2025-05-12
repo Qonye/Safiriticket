@@ -16,28 +16,20 @@ window.generatePDF = async function(html, options = {}) {
 window.previewPDF = async function(html, options = {}) {
   // Ensure all images are loaded before generating PDF
   const tempDiv = document.createElement('div');
-  tempDiv.style.display = 'none';
+  // Position off-screen instead of display:none
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.left = '-9999px';
+  tempDiv.style.top = '-9999px';
+  tempDiv.style.width = '800px'; // Give it a defined width, similar to A4 paper width for rendering
   tempDiv.innerHTML = html;
   document.body.appendChild(tempDiv);
 
-  // Replace logo src with absolute URL or base64 if needed
-  const logo = tempDiv.querySelector('.logo');
-  if (logo) {
-    // Use absolute path for logo
-    logo.src = window.location.origin + '/vanilla-frontend/templates/logo.png';
-  }
-
-  // Wait for all images to load
-  const images = tempDiv.querySelectorAll('img');
-  await Promise.all(Array.from(images).map(img => {
-    if (img.complete && img.naturalWidth !== 0) return Promise.resolve();
-    return new Promise(resolve => {
-      img.onload = img.onerror = resolve;
-    });
-  }));
+  // Removed logo src replacement logic
+  // Removed waiting for all images to load (Promise.all block)
 
   // Use safe margins to avoid truncation
-  html2pdf().from(tempDiv).set({
+  // Pass tempDiv.innerHTML instead of tempDiv
+  html2pdf().from(tempDiv.innerHTML).set({
     margin: [10, 10, 10, 10], // 10mm on all sides
     jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
@@ -52,26 +44,19 @@ window.previewPDF = async function(html, options = {}) {
 window.downloadPDF = async function(html, filename = 'document.pdf', options = {}) {
   // Ensure all images are loaded before generating PDF
   const tempDiv = document.createElement('div');
-  tempDiv.style.display = 'none';
+  // Position off-screen instead of display:none
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.left = '-9999px';
+  tempDiv.style.top = '-9999px';
+  tempDiv.style.width = '800px'; // Give it a defined width
   tempDiv.innerHTML = html;
   document.body.appendChild(tempDiv);
 
-  // Replace logo src with absolute URL or base64 if needed
-  const logo = tempDiv.querySelector('.logo');
-  if (logo) {
-    logo.src = window.location.origin + '/vanilla-frontend/templates/logo.png';
-  }
+  // Removed logo src replacement logic
+  // Removed waiting for all images to load (Promise.all block)
 
-  // Wait for all images to load
-  const images = tempDiv.querySelectorAll('img');
-  await Promise.all(Array.from(images).map(img => {
-    if (img.complete && img.naturalWidth !== 0) return Promise.resolve();
-    return new Promise(resolve => {
-      img.onload = img.onerror = resolve;
-    });
-  }));
-
-  html2pdf().from(tempDiv).set({
+  // Pass tempDiv.innerHTML instead of tempDiv
+  html2pdf().from(tempDiv.innerHTML).set({
     margin: [10, 10, 10, 10],
     jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
@@ -79,19 +64,6 @@ window.downloadPDF = async function(html, filename = 'document.pdf', options = {
     filename,
     ...options
   }).save().then(() => tempDiv.remove());
-};
-
-// Helper to fill org details in a template (used by both quotations and invoices)
-window.fillOrgDetails = function(html) {
-  const org = window.currentOrgSettings || {};
-  html = html.replace(/{{orgName}}/g, org.name || '');
-  html = html.replace(/{{orgAddresses}}/g, (org.addresses || []).join(' | '));
-  html = html.replace(/{{orgEmails}}/g, (org.emails || []).join(' | '));
-  html = html.replace(/{{orgPhones}}/g, (org.phones || []).join(' | '));
-  html = html.replace(/{{orgVat}}/g, org.vat || '');
-  html = html.replace(/{{orgWebsite}}/g, org.website || '');
-  html = html.replace(/{{logoUrl}}/g, org.logoUrl || 'https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png');
-  return html;
 };
 
 // Helper to fill template placeholders for quotations
@@ -132,14 +104,18 @@ window.fillQuotationTemplate = function(template, quotation) {
   }).join('');
   html = html.replace(/{{items}}/g, itemsHtml);
 
-  // Fill org details and logo
-  html = window.fillOrgDetails(html);
   return html;
 };
 
 // Helper to group items by type and render service-specific tables for invoices
 window.renderInvoiceServiceTables = function(items = [], clientName = '') {
-  if (!items.length) return '';
+  console.log('[renderInvoiceServiceTables] Received items:', JSON.parse(JSON.stringify(items)));
+  console.log('[renderInvoiceServiceTables] Received clientName:', clientName);
+
+  if (!items.length) {
+    console.log('[renderInvoiceServiceTables] No items to render, returning empty string.');
+    return '';
+  }
 
   // Try to infer type if not present (fallback to description keywords)
   function inferType(item) {
@@ -159,6 +135,8 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
     if (!grouped[type]) grouped[type] = [];
     grouped[type].push(item);
   });
+
+  console.log('[renderInvoiceServiceTables] Grouped items:', JSON.parse(JSON.stringify(grouped)));
 
   let html = '';
   let grandTotal = 0;
@@ -307,6 +285,7 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
   // Grand Total
   html += `<div style="text-align:right;font-size:1.1em;font-weight:bold;margin-top:24px;font-family: Montserrat, sans-serif; font-size: 1.1em;">🧾 Grand Total: $${grandTotal.toLocaleString()}</div>`;
 
+  console.log('[renderInvoiceServiceTables] Generated HTML for tables (first 200 chars):', html.substring(0, 200) + '...');
   return html;
 };
 
@@ -315,18 +294,10 @@ window.fillInvoiceTemplate = function(template, invoice) {
   let html = template;
   html = html.replace(/{{number}}/g, invoice.number || '');
   html = html.replace(/{{clientName}}/g, invoice.client?.name || '');
-  html = html.replace(/{{clientEmail}}/g, invoice.client?.email || '');
-  html = html.replace(/{{status}}/g, invoice.status || '');
   html = html.replace(/{{dueDate}}/g, invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '');
-  html = html.replace(/{{paidAmount}}/g, invoice.paidAmount || 0);
-  html = html.replace(/{{amountDue}}/g, Math.max((invoice.total || 0) - (invoice.paidAmount || 0), 0));
-  html = html.replace(/{{total}}/g, invoice.total || '');
 
   // Service-specific tables only (no generic table)
   html = html.replace(/{{serviceTables}}/g, window.renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || ''));
-
-  // Fill org details and logo (header/footer)
-  html = window.fillOrgDetails(html);
 
   return html;
 };
@@ -334,12 +305,3 @@ window.fillInvoiceTemplate = function(template, invoice) {
 // Example usage in your frontend modules:
 // const html = await loadTemplate('quotation'); // loads quotation.html
 // const html = await loadTemplate('invoice');   // loads invoice.html
-
-// Preload logo image at app startup for reliable PDF rendering
-(function preloadLogo() {
-  const logoUrl = 'logo.png'; // or use your org logo URL if dynamic
-  const img = new window.Image();
-  img.src = logoUrl;
-  // Optionally, store for later use if needed
-  window._preloadedLogo = img;
-})();

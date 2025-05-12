@@ -408,10 +408,17 @@ window.renderInvoices = function(main) {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             const invoice = window.invoices.find(inv => inv._id === id);
-            if (!invoice) return;
-            const template = await window.loadTemplate('invoice');
-            const html = fillInvoiceTemplate(template, invoice);
-            window.previewPDF(html, { margin: 10, jsPDF: { format: 'a4' } });
+            if (!invoice) {
+              console.error('Invoice data not found for preview:', id);
+              alert('Could not find invoice details to generate PDF.');
+              return;
+            }
+            if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
+              await window.newPdfEngine.generateInvoice(invoice, 'preview');
+            } else {
+              console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
+              alert('Error: PDF preview functionality is currently unavailable. Please check console for details.');
+            }
           };
         });
 
@@ -421,10 +428,17 @@ window.renderInvoices = function(main) {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             const invoice = window.invoices.find(inv => inv._id === id);
-            if (!invoice) return;
-            const template = await window.loadTemplate('invoice');
-            const html = fillInvoiceTemplate(template, invoice);
-            window.downloadPDF(html, `invoice-${invoice.number || invoice._id}.pdf`, { margin: 10, jsPDF: { format: 'a4' } });
+            if (!invoice) {
+              console.error('Invoice data not found for download:', id);
+              alert('Could not find invoice details to generate PDF.');
+              return;
+            }
+            if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
+              await window.newPdfEngine.generateInvoice(invoice, 'download');
+            } else {
+              console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
+              alert('Error: PDF download functionality is currently unavailable. Please check console for details.');
+            }
           };
         });
 
@@ -594,24 +608,22 @@ function fillInvoiceTemplate(template, invoice) {
   html = html.replace(/{{items}}/g, itemsHtml);
 
   // Fill org details and logo (header/footer)
-  html = window.fillOrgDetails(html);
-
   return html;
 }
 
 // When generating the PDF, set html2pdf options to avoid extra pages
 // Example usage in preview/download handlers:
-window.previewPDF(html, {
-  margin: [0, 0, 0, 0], // or [top, right, bottom, left] in mm
-  jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
-  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-  html2canvas: { scale: 2 }
-});
-
-window.downloadPDF(html, `invoice-${invoice.number || invoice._id}.pdf`, {
-  margin: [0, 0, 0, 0],
-  jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
-});
+// window.previewPDF(html, {
+//   margin: [0, 0, 0, 0], // or [top, right, bottom, left] in mm
+//   jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+//   pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+//   html2canvas: { scale: 2 }
+// });
+// 
+// window.downloadPDF(html, `invoice-${invoice.number || invoice._id}.pdf`, {
+//   margin: [0, 0, 0, 0],
+//   jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+// });
 
 async function getNextInvoiceNumber() {
   // Fetch all invoices and find the highest number, then increment
