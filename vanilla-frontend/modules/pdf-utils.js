@@ -1,3 +1,5 @@
+console.log('[pdf-utils.js] Script start parsing.');
+
 // Utility to fetch and use HTML templates for PDF generation and create PDF in the browser
 
 window.loadTemplate = async function(templateName) {
@@ -119,9 +121,10 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
 
   // Try to infer type if not present (fallback to description keywords)
   function inferType(item) {
-    if (item.type) return item.type;
+    if (item.type) return item.type; // Primary source of type
     if (item.serviceType) return item.serviceType;
-    // Heuristics based on fields or description
+
+    // Heuristics based on fields or description if item.type is missing
     if (item.airline || /flight/i.test(item.description)) return 'flight';
     if (item.hotelName || /hotel/i.test(item.description)) return 'hotel';
     if ((item.from && item.to) || /transfer/i.test(item.description)) return 'transfer';
@@ -161,17 +164,25 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
         <tbody>
     `;
     grouped.flight.forEach(item => {
+      // Directly access properties from item
       const amount = Number(item.price) || 0;
       const fee = Number(item.serviceFee) || 0;
       const totalRow = amount + fee;
       total += totalRow;
       grandTotal += totalRow;
+
+      const flightDate = item.flightDate || ''; // Your example has empty flightDate, ensure it's handled
+      const airline = item.airline || '';
+      const from = item.from || '';
+      const to = item.to || '';
+      const route = `${from}${from && to ? '-' : ''}${to}`;
+
       html += `
         <tr>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${clientName}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.flightDate || ''}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.airline || ''}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.from || ''}${item.from && item.to ? '-' : ''}${item.to || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${flightDate ? new Date(flightDate).toLocaleDateString() : 'N/A'}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${airline}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${route}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${totalRow.toLocaleString()}</td>
@@ -206,24 +217,29 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
         <tbody>
     `;
     grouped.hotel.forEach(item => {
+      // Directly access properties from item
       const amount = Number(item.price) || 0;
       const fee = Number(item.serviceFee) || 0;
       let nights = 1;
       let stayDates = '';
-      if (item.checkin && item.checkout) {
-        const d1 = new Date(item.checkin);
-        const d2 = new Date(item.checkout);
+      const checkin = item.checkin;
+      const checkout = item.checkout;
+      const hotelName = item.hotelName || '';
+
+      if (checkin && checkout) {
+        const d1 = new Date(checkin);
+        const d2 = new Date(checkout);
         nights = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)));
-        stayDates = `${item.checkin} – ${item.checkout}`;
+        stayDates = `${new Date(checkin).toLocaleDateString()} – ${new Date(checkout).toLocaleDateString()}`;
       }
-      const totalRow = (amount * nights) + fee;
+      const totalRow = (amount * nights) + fee; // Assuming item.price for hotel is per night
       total += totalRow;
       grandTotal += totalRow;
       html += `
         <tr>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${clientName}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${stayDates}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.hotelName || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${hotelName}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${nights}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
@@ -258,16 +274,20 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
         <tbody>
     `;
     grouped.transfer.forEach(item => {
+      // Directly access properties from item
       const amount = Number(item.price) || 0;
       const fee = Number(item.serviceFee) || 0;
       const totalRow = amount + fee;
       total += totalRow;
       grandTotal += totalRow;
+      const from = item.from || '';
+      const to = item.to || '';
+
       html += `
         <tr>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${clientName}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.from || ''}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.to || ''}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${from}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${to}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${totalRow.toLocaleString()}</td>
@@ -292,15 +312,39 @@ window.renderInvoiceServiceTables = function(items = [], clientName = '') {
 // Helper to fill template placeholders for invoices, including service tables
 window.fillInvoiceTemplate = function(template, invoice) {
   let html = template;
+  console.log('[fillInvoiceTemplate] Initial HTML (first 200 chars):', html.substring(0, 200) + '...');
+  console.log('[fillInvoiceTemplate] Invoice data for template:', JSON.parse(JSON.stringify(invoice)));
+
   html = html.replace(/{{number}}/g, invoice.number || '');
   html = html.replace(/{{clientName}}/g, invoice.client?.name || '');
   html = html.replace(/{{dueDate}}/g, invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '');
 
+  console.log('[fillInvoiceTemplate] HTML after basic replacements (first 200 chars):', html.substring(0, 200) + '...');
+
   // Service-specific tables only (no generic table)
-  html = html.replace(/{{serviceTables}}/g, window.renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || ''));
+  const serviceTablesHtml = window.renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || '');
+  console.log('[fillInvoiceTemplate] HTML generated by renderInvoiceServiceTables (first 200 chars):', serviceTablesHtml.substring(0, 200) + '...');
+  
+  if (html.includes('{{serviceTables}}')) {
+    console.log('[fillInvoiceTemplate] Placeholder {{serviceTables}} found in HTML before replacement.');
+  } else {
+    console.warn('[fillInvoiceTemplate] Placeholder {{serviceTables}} NOT found in HTML before replacement. Check template file.');
+  }
+
+  html = html.replace(/{{serviceTables}}/g, serviceTablesHtml);
+  
+  if (html.includes('{{serviceTables}}')) {
+    console.warn('[fillInvoiceTemplate] Placeholder {{serviceTables}} STILL PRESENT after replacement. Replacement might have failed or serviceTablesHtml was empty/problematic.');
+  } else {
+    console.log('[fillInvoiceTemplate] Placeholder {{serviceTables}} successfully replaced (or serviceTablesHtml was empty).');
+  }
+  console.log('[fillInvoiceTemplate] Final HTML for {{serviceTables}} (first 200 chars of serviceTablesHtml):', serviceTablesHtml.substring(0, 200) + '...');
+  console.log('[fillInvoiceTemplate] Final HTML after all replacements (first 200 chars):', html.substring(0, 200) + '...');
 
   return html;
 };
+
+console.log('[pdf-utils.js] Script end parsing. window.fillInvoiceTemplate defined:', typeof window.fillInvoiceTemplate, 'window.renderInvoiceServiceTables defined:', typeof window.renderInvoiceServiceTables);
 
 // Example usage in your frontend modules:
 // const html = await loadTemplate('quotation'); // loads quotation.html

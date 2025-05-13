@@ -51,6 +51,13 @@ window.newPdfEngine = {
       // Log the items specifically before filling the template
       console.log('[newPdfEngine] invoiceData.items before fillInvoiceTemplate:', JSON.parse(JSON.stringify(invoiceData.items || [])));
 
+      // Check if window.fillInvoiceTemplate is a function before calling it
+      console.log('[newPdfEngine] typeof window.fillInvoiceTemplate:', typeof window.fillInvoiceTemplate);
+      if (typeof window.fillInvoiceTemplate !== 'function') {
+        console.error('[newPdfEngine] ERROR: window.fillInvoiceTemplate is NOT a function! Check if pdf-utils.js is loaded correctly and defines it.');
+        return; // Stop further execution if it's not a function
+      }
+
       // 2. Fill the template with invoice data
       // This uses window.fillInvoiceTemplate from pdf-utils.js, which correctly
       // handles serviceTables by calling window.renderInvoiceServiceTables and also fills org details.
