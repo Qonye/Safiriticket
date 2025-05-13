@@ -214,7 +214,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
   
   if (grandTotal > 0) {
     // Adjusted font-size to match table cells (0.95em).
-    htmlContent += `<div style="text-align:right; font-weight:bold; margin-top:16px; font-family: Montserrat, sans-serif; font-size: 1.05em; padding-right: 20px;">🧾 Grand Total: $${grandTotal.toLocaleString()}</div>`;
+    htmlContent += `<div style="text-align:right; font-weight:bold; margin-top:16px; font-family: Montserrat, sans-serif; font-size: 1.05em; padding-right: 16px;">🧾 Grand Total: $${grandTotal.toLocaleString()}</div>`;
   }
 
   console.log('[_renderInvoiceServiceTables] Final HTML generated (first 300 chars):', htmlContent.substring(0, 300) + (htmlContent.length > 300 ? '...' : ''));
