@@ -222,7 +222,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
 }
 
 // Helper function to fill template placeholders (moved and adapted from pdf-utils.js)
-function _fillInvoiceTemplate(template, invoice) {
+function _fillInvoiceTemplate(template, invoice, currentUser = null) {
   let html = template;
   console.log('[_fillInvoiceTemplate] Attempting to render service tables. invoice.items count:', (invoice.items || []).length);
 
@@ -231,6 +231,21 @@ function _fillInvoiceTemplate(template, invoice) {
   // Ensure clientEmail is also handled if present in the template or data
   html = html.replace(/{{clientEmail}}/g, invoice.client?.email || ''); 
   html = html.replace(/{{dueDate}}/g, invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '');
+  
+  // Set current date for creation date
+  const currentDate = new Date().toLocaleDateString();
+  html = html.replace(/{{creationDate}}/g, currentDate);
+  
+  // Add user information if available
+  if (currentUser) {
+    // Use name first, then username, then fallback to 'System'
+    const creatorName = currentUser.name || currentUser.username || 'System';
+    console.log('[_fillInvoiceTemplate] Setting creator name to:', creatorName);
+    html = html.replace(/{{createdBy}}/g, creatorName);
+  } else {
+    console.log('[_fillInvoiceTemplate] No currentUser provided, using System as creator');
+    html = html.replace(/{{createdBy}}/g, 'System');
+  }
 
   const serviceTablesHtml = _renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || ''); // Call local _renderInvoiceServiceTables
   
@@ -247,7 +262,7 @@ function _fillInvoiceTemplate(template, invoice) {
 }
 
 window.newPdfEngine = {
-  generateInvoice: async function(invoiceData, action = 'preview', options = {}) {
+  generateInvoice: async function(invoiceData, action = 'preview', options = {}, currentUser = null) {
     console.log('[newPdfEngine] Generating invoice. Action:', action); // Basic entry log
     try {
       let html = await window.loadTemplate('invoice');
@@ -264,7 +279,7 @@ window.newPdfEngine = {
       }
 
       console.log('[newPdfEngine] CALLING window.fillInvoiceTemplate now...');
-      html = _fillInvoiceTemplate(html, invoiceData); // This is the call
+      html = _fillInvoiceTemplate(html, invoiceData, currentUser); // This is the call
       console.log('[newPdfEngine] RETURNED from window.fillInvoiceTemplate. HTML (first 50 chars):', typeof html === 'string' ? html.substring(0, 50) + '...' : 'HTML is not a string or is null/undefined after call');
       
       const filename = `invoice-${invoiceData.number || 'details'}.pdf`;

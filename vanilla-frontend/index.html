@@ -5,6 +5,21 @@
   <title>SafiriTicket Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Store login template
+    document.addEventListener('DOMContentLoaded', () => {
+      const template = document.createElement('template');
+      template.id = 'login-template';
+      fetch('templates/login.html')
+        .then(response => response.text())
+        .then(html => {
+          template.innerHTML = html;
+          document.body.appendChild(template);
+          // Initialize auth after template is loaded
+          if (window.auth) window.auth.init();
+        });
+    });
+  </script>
 </head>
 <body>
   <div id="app" style="display: flex;">
@@ -33,6 +48,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="modules/pdf-utils.js"></script>
   <script src="modules/new-pdf-engine.js"></script>
+  <script src="modules/auth.js"></script>
   <script src="modules/clients.js"></script>
   <script src="modules/quotations.js"></script>
   <script src="modules/invoices.js"></script>

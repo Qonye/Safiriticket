@@ -402,7 +402,7 @@ window.renderInvoices = function(main) {
           };
         });
 
-        // Preview PDF
+        // Preview PDF with user info
         document.querySelectorAll('.preview-invoice-btn').forEach(btn => {
           btn.onclick = async function() {
             const tr = btn.closest('tr');
@@ -414,7 +414,29 @@ window.renderInvoices = function(main) {
               return;
             }
             if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
-              await window.newPdfEngine.generateInvoice(invoice, 'preview');
+              // Get current user info
+              const response = await fetch(`${window.API_BASE_URL}/api/auth/me`, { credentials: 'include' });
+              const currentUser = await response.json();
+              await window.newPdfEngine.generateInvoice(invoice, 'preview', {}, currentUser);
+            } else {
+              console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
+              alert('Error: PDF preview functionality is currently unavailable. Please check console for details.');
+            }
+          };
+        });
+        document.querySelectorAll('.preview-invoice-btn').forEach(btn => {
+          btn.onclick = async function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            const invoice = window.invoices.find(inv => inv._id === id);
+            if (!invoice) {
+              console.error('Invoice data not found for preview:', id);
+              alert('Could not find invoice details to generate PDF.');
+              return;
+            }
+            if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
+              const currentUser = window.auth.getUserInfo();
+              await window.newPdfEngine.generateInvoice(invoice, 'preview', {}, currentUser);
             } else {
               console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
               alert('Error: PDF preview functionality is currently unavailable. Please check console for details.');
@@ -422,7 +444,7 @@ window.renderInvoices = function(main) {
           };
         });
 
-        // Download PDF
+        // Download PDF with user info
         document.querySelectorAll('.download-invoice-btn').forEach(btn => {
           btn.onclick = async function() {
             const tr = btn.closest('tr');
@@ -434,7 +456,8 @@ window.renderInvoices = function(main) {
               return;
             }
             if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
-              await window.newPdfEngine.generateInvoice(invoice, 'download');
+              const currentUser = window.auth.getUserInfo();
+              await window.newPdfEngine.generateInvoice(invoice, 'download', { filename: `invoice-${invoice.number || invoice._id}.pdf` }, currentUser);
             } else {
               console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
               alert('Error: PDF download functionality is currently unavailable. Please check console for details.');
@@ -579,13 +602,23 @@ window.renderInvoices = function(main) {
 };
 
 async function previewInvoicePDF(invoice) {
+  // Get current user from auth module
+  const currentUser = window.auth.getUserInfo();
+  
   const template = await window.loadTemplate('invoice');
-  // ...replace placeholders in template with invoice data...
-  // ...generate PDF or show preview...
+  const html = window.fillInvoiceTemplate(template, invoice, currentUser);
+  
+  // Preview the PDF
+  window.previewPDF(html, {
+    margin: [0, 0, 0, 0],
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+    html2canvas: { scale: 2 }
+  });
 }
 
 // Helper to fill template placeholders using the full HTML template (with header/footer)
-function fillInvoiceTemplate(template, invoice) {
+function fillInvoiceTemplate(template, invoice, currentUser) {
   let html = template;
   html = html.replace(/{{number}}/g, invoice.number || '');
   html = html.replace(/{{clientName}}/g, invoice.client?.name || '');
@@ -595,6 +628,8 @@ function fillInvoiceTemplate(template, invoice) {
   html = html.replace(/{{paidAmount}}/g, invoice.paidAmount || 0);
   html = html.replace(/{{amountDue}}/g, Math.max((invoice.total || 0) - (invoice.paidAmount || 0), 0));
   html = html.replace(/{{total}}/g, invoice.total || '');
+  html = html.replace(/{{createdBy}}/g, currentUser?.name || 'Unknown User');
+  html = html.replace(/{{creationDate}}/g, new Date().toLocaleDateString());
 
   // Items
   const itemsHtml = (invoice.items || []).map(item =>
@@ -644,14 +679,26 @@ async function getNextInvoiceNumber() {
 
 // Example usage in preview or add form:
 async function renderInvoicePreview(invoice) {
+  // Get current user from auth module
+  const currentUser = window.auth.getUserInfo();
+  
   let number = invoice.number;
   if (!number) {
     number = await getNextInvoiceNumber();
   }
+  
   const template = await window.loadTemplate('invoice');
-  // Inject the number into the invoice object for template filling
-  const html = window.fillInvoiceTemplate(template, { ...invoice, number });
+  const html = window.fillInvoiceTemplate(template, { ...invoice, number }, currentUser);
+  
+  // Preview and download the PDF
   window.previewPDF(html, {
+    margin: [0, 0, 0, 0],
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+    html2canvas: { scale: 2 }
+  });
+  
+  window.downloadPDF(html, `invoice-${invoice.number || invoice._id}.pdf`, {
     margin: [0, 0, 0, 0],
     jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },

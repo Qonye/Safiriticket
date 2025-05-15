@@ -26,6 +26,23 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// MongoDB connection
+const connectDB = async () => {
+    try {
+        const mongoUri = 'mongodb+srv://Martin:0LN98uAumci1EwCc@cluster0.e1hy26f.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+        await mongoose.connect(mongoUri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+        console.log('MongoDB connected successfully');
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+};
+
+connectDB();
+
 const app = express();
 app.use(cors({
   origin: [
@@ -38,17 +55,42 @@ app.use(cors({
     'http://localhost:5500',  // Live server via localhost
     'http://localhost:5501',  // Live server default port via localhost
     'http://127.0.0.1:5501', // Live server default port via IP
+    'http://localhost:63342', // IntelliJ IDEA built-in server
+    'http://127.0.0.1:63342', // IntelliJ IDEA built-in server via IP
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Log all incoming requests for debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 app.use(express.json());
 
 // JWT secret
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
 // --- Models ---
+import authRoutes from './routes/auth.js';
+
+// --- Routes ---
+app.use('/api/auth', authRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        message: 'Something went wrong!',
+        error: process.env.NODE_ENV === 'development' ? err.message : {}
+    });
+});
+
+// Serve uploaded PDFs statically
+app.use('/uploads/quotations', express.static(path.join(__dirname, '../uploads/quotations')));
+
 import Client from './models/Client.js';
 import Quotation from './models/Quotation.js';
 import Invoice from './models/Invoice.js';
@@ -442,32 +484,13 @@ app.delete('/api/income/:id', async (req, res) => {
   res.json({ success: true });
 });
 
-// Serve vanilla frontend statically (add this before app.listen)
-app.use('/vanilla', express.static(path.join(__dirname, '../vanilla-frontend')));
-
 // Serve uploaded PDFs statically
 app.use('/uploads/quotations', express.static(path.join(__dirname, '../uploads/quotations')));
 
+// Define port
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI;
 
-// Debug log to verify .env loading
-console.log('Loaded MONGO_URI:', typeof MONGO_URI, MONGO_URI ? '[set]' : '[empty]', MONGO_URI && MONGO_URI.length);
-
-// Check for missing MONGO_URI and throw a clear error
-if (!MONGO_URI || typeof MONGO_URI !== 'string' || !MONGO_URI.trim()) {
-  console.error('ERROR: MONGO_URI is not set or is invalid. Please check your .env file and restart the server.');
-  process.exit(1);
-} else {
-  console.log('MONGO_URI loaded and appears valid.');
-}
-
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log('MongoDB connected.');
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  });
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
