@@ -125,11 +125,22 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
     grouped.hotel.forEach(item => {
       const amount = Number(item.price) || 0; // Assuming price is per night
       const fee = Number(item.serviceFee) || 0;
-      let nights = item.quantity || 1; // Use quantity for nights if available
+      let nights = item.quantity || 0; // Start with quantity if available
       let stayDates = '';
       const checkin = item.checkin;
       const checkout = item.checkout;
       const hotelName = item.hotelName || '';
+
+      // If quantity is not provided or invalid, calculate nights from dates
+      if (!nights || nights <= 0) {
+        if (checkin && checkout) {
+          const d1 = new Date(checkin);
+          const d2 = new Date(checkout);
+          nights = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+        } else {
+          nights = 1; // Default to 1 night if no dates provided
+        }
+      }
 
       if (checkin && checkout) {
         const d1 = new Date(checkin);
@@ -140,7 +151,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
       } else if (item.stayDates) { // Fallback if checkin/checkout not present
         stayDates = item.stayDates;
       }
-      
+      // Calculate total: (price * nights) + service fee
       const totalRow = (amount * nights) + fee;
       total += totalRow;
       grandTotal += totalRow;
