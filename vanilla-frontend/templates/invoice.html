@@ -164,15 +164,14 @@
     </div>
     <div class="section">
       {{serviceTables}}
-    </div>
-    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px;">
+    </div>    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px;">
       <strong style="color:#be292c;font-size:1.08em;">PAYMENT DETAILS:</strong><br>
-      ACCOUNT NAME: JUNGLE DWELLERS LTD<br>
-      ACCOUNT NO: 0254001002<br>
-      BANK NAME: DIAMOND TRUST BANK<br>
-      SWIFT CODE: DTKEKENA<br>
-      CURRENCY: USD<br>
-      <span style="color:#aaa5a5;font-size:0.97em;">(Please use your name or invoice number as payment reference)</span>
+      ACCOUNT NAME: {{paymentAccountName}}<br>
+      ACCOUNT NO: {{paymentAccountNumber}}<br>
+      BANK NAME: {{paymentBankName}}<br>
+      SWIFT CODE: {{paymentSwiftCode}}<br>
+      CURRENCY: {{paymentCurrency}}<br>
+      <span style="color:#aaa5a5;font-size:0.97em;">{{paymentAdditionalInfo}}</span>
     </div>
     <div class="footer" style="text-align:center;max-width:700px;margin:32px auto 0 auto;font-size:0.7em;color:#404040;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:2px solid #be292c;padding-top:16px;">
       <span class="footer-brand" style="font-weight:bold;color:#be292c;font-size:1.1em;letter-spacing:0.04em;margin-bottom:4px;display:block;">Safiri Ticket Ltd</span>

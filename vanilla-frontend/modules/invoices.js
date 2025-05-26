@@ -15,11 +15,32 @@ window.renderInvoices = function(main) {
           <label>Due Date<br>
             <input type="date" name="dueDate" style="padding:6px;width:140px;">
           </label>
-        </div>
-        <div>
+        </div>        <div>
           <label>From Quotation<br>
             <select name="quotation" id="invoice-quotation-select" style="padding:6px;width:180px;">
               <option value="">(Optional) Select Quotation</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>Currency<br>
+            <select name="currency" id="invoice-currency-select" style="padding:6px;width:120px;">
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="KES">KES</option>
+              <option value="CAD">CAD</option>
+              <option value="AUD">AUD</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>Payment Method<br>
+            <select name="paymentMethod" id="invoice-payment-method-select" style="padding:6px;width:180px;">
+              <option value="usd-dtb">USD - Diamond Trust Bank</option>
+              <option value="kes-dtb">KES - Diamond Trust Bank</option>
+              <option value="gbp-santander">GBP - Santander UK</option>
+              <option value="eur-wise">EUR - Wise Transfer</option>
             </select>
           </label>
         </div>
@@ -108,6 +129,59 @@ window.renderInvoices = function(main) {
   // Initial fetch (all)
   fetchInvoices();
 
+  // Helper function to get payment details based on selected method
+  function getPaymentDetails(paymentMethod) {
+    const paymentMethods = {
+      'usd-dtb': {
+        accountName: 'JUNGLE DWELLERS LTD',
+        accountNumber: '0254001002',
+        bankName: 'DIAMOND TRUST BANK',
+        swiftCode: 'DTKEKENA',
+        currency: 'USD',
+        additionalInfo: '(Please use your name or invoice number as payment reference)'
+      },
+      'kes-dtb': {
+        accountName: 'JUNGLE DWELLERS LTD',
+        accountNumber: '0254001003',
+        bankName: 'DIAMOND TRUST BANK',
+        swiftCode: 'DTKEKENA',
+        currency: 'KES',
+        additionalInfo: '(Please use your name or invoice number as payment reference)'
+      },
+      'gbp-santander': {
+        accountName: 'JUNGLE DWELLERS LTD',
+        accountNumber: '12345678',
+        bankName: 'SANTANDER UK PLC',
+        swiftCode: 'ABBYGB2L',
+        currency: 'GBP',
+        additionalInfo: '(Please use your name or invoice number as payment reference)'
+      },
+      'eur-wise': {
+        accountName: 'JUNGLE DWELLERS LTD',
+        accountNumber: 'BE12345678901234',
+        bankName: 'WISE TRANSFER',
+        swiftCode: 'TRWIBEB1XXX',
+        currency: 'EUR',
+        additionalInfo: '(Please use your name or invoice number as payment reference)'
+      }
+    };
+    
+    return paymentMethods[paymentMethod] || paymentMethods['usd-dtb'];
+  }
+
+  // Helper function to get currency symbol
+  function getCurrencySymbol(currency) {
+    const symbols = {
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'KES': 'KSh',
+      'CAD': 'C$',
+      'AUD': 'A$'
+    };
+    return symbols[currency] || '$';
+  }
+
   // --- Items logic ---
   function updateInvoiceSubtotalsAndTotal() {
     let total = 0;
@@ -132,13 +206,13 @@ window.renderInvoices = function(main) {
         serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
       } else {
         serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
-      }
-
-      subtotal += serviceFee;
+      }      subtotal += serviceFee;
       tr.querySelector('.item-subtotal').textContent = subtotal.toFixed(2);
       total += subtotal;
     });
-    document.getElementById('invoice-items-total').textContent = `Total: $${total.toFixed(2)}`;
+    const currency = document.getElementById('invoice-currency-select')?.value || 'USD';
+    const currencySymbol = getCurrencySymbol(currency);
+    document.getElementById('invoice-items-total').textContent = `Total: ${currencySymbol}${total.toFixed(2)}`;
     return total;
   }
 
@@ -286,11 +360,12 @@ window.renderInvoices = function(main) {
                 <th style="background:#8c241c;">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              ${invoices.map(inv => {
+            <tbody>              ${invoices.map(inv => {
                 const paid = Number(inv.paidAmount || 0);
                 const total = Number(inv.total || 0);
                 const due = Math.max(total - paid, 0).toFixed(2);
+                const currency = inv.currency || 'USD';
+                const currencySymbol = getCurrencySymbol(currency);
                 return `
                 <tr data-id="${inv._id}">
                   <td>${inv.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${inv.client?.email || ''}</span></td>
@@ -301,12 +376,12 @@ window.renderInvoices = function(main) {
                       <option value="Overdue" ${inv.status === 'Overdue' ? 'selected' : ''}>Overdue</option>
                     </select>
                   </td>
-                  <td>$${total}</td>
+                  <td>${currencySymbol}${total.toFixed(2)}</td>
                   <td>
-                    <span class="paid-label">$${paid}</span>
+                    <span class="paid-label">${currencySymbol}${paid.toFixed(2)}</span>
                     <input type="number" class="edit-paid" min="0" max="${total}" value="${paid}" style="display:none;width:80px;padding:4px;">
                   </td>
-                  <td>$${due}</td>
+                  <td>${currencySymbol}${due}</td>
                   <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ''}</td>
                   <td>
                     <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
@@ -553,19 +628,23 @@ window.renderInvoices = function(main) {
         });
     } else {
       submitInvoice(clientId);
-    }
-
-    function submitInvoice(clientId) {
+    }    function submitInvoice(clientId) {
       if (!clientId || clientId === "") {
         document.getElementById('invoice-form-msg').textContent = 'Client is required.';
         return;
       }
+      const currency = form.currency.value || 'USD';
+      const paymentMethod = form.paymentMethod.value || 'usd-dtb';
+      const paymentDetails = getPaymentDetails(paymentMethod);
+      
       const data = {
         client: clientId,
         status: "Unpaid",
         dueDate: form.dueDate.value,
         items,
         total,
+        currency,
+        paymentDetails,
         quotation: quotationId || undefined
       };
       fetch(`${window.API_BASE_URL}/api/invoices`, {
@@ -620,26 +699,41 @@ async function previewInvoicePDF(invoice) {
 // Helper to fill template placeholders using the full HTML template (with header/footer)
 function fillInvoiceTemplate(template, invoice, currentUser) {
   let html = template;
+  
+  // Get currency symbol for display
+  const currency = invoice.currency || 'USD';
+  const currencySymbol = getCurrencySymbol(currency);
+  
   html = html.replace(/{{number}}/g, invoice.number || '');
   html = html.replace(/{{clientName}}/g, invoice.client?.name || '');
   html = html.replace(/{{clientEmail}}/g, invoice.client?.email || '');
   html = html.replace(/{{status}}/g, invoice.status || '');
   html = html.replace(/{{dueDate}}/g, invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '');
-  html = html.replace(/{{paidAmount}}/g, invoice.paidAmount || 0);
-  html = html.replace(/{{amountDue}}/g, Math.max((invoice.total || 0) - (invoice.paidAmount || 0), 0));
-  html = html.replace(/{{total}}/g, invoice.total || '');
+  html = html.replace(/{{paidAmount}}/g, `${currencySymbol}${(invoice.paidAmount || 0).toFixed(2)}`);
+  html = html.replace(/{{amountDue}}/g, `${currencySymbol}${Math.max((invoice.total || 0) - (invoice.paidAmount || 0), 0).toFixed(2)}`);
+  html = html.replace(/{{total}}/g, `${currencySymbol}${(invoice.total || 0).toFixed(2)}`);
   html = html.replace(/{{createdBy}}/g, currentUser?.name || 'Unknown User');
   html = html.replace(/{{creationDate}}/g, new Date().toLocaleDateString());
 
-  // Items
-  const itemsHtml = (invoice.items || []).map(item =>
-    `<tr>
+  // Payment details
+  const paymentDetails = invoice.paymentDetails || {};
+  html = html.replace(/{{paymentAccountName}}/g, paymentDetails.accountName || 'JUNGLE DWELLERS LTD');
+  html = html.replace(/{{paymentAccountNumber}}/g, paymentDetails.accountNumber || '0254001002');
+  html = html.replace(/{{paymentBankName}}/g, paymentDetails.bankName || 'DIAMOND TRUST BANK');
+  html = html.replace(/{{paymentSwiftCode}}/g, paymentDetails.swiftCode || 'DTKEKENA');
+  html = html.replace(/{{paymentCurrency}}/g, paymentDetails.currency || currency);
+  html = html.replace(/{{paymentAdditionalInfo}}/g, paymentDetails.additionalInfo || '(Please use your name or invoice number as payment reference)');
+
+  // Items with currency formatting
+  const itemsHtml = (invoice.items || []).map(item => {
+    const subtotal = item.quantity && item.price ? Number(item.quantity) * Number(item.price) + (Number(item.serviceFee) || 0) : '';
+    return `<tr>
       <td>${item.description || ''}</td>
       <td>${item.quantity || ''}</td>
-      <td>$${item.price || ''}</td>
-      <td>$${item.quantity && item.price ? Number(item.quantity) * Number(item.price) : ''}</td>
-    </tr>`
-  ).join('');
+      <td>${currencySymbol}${(item.price || 0).toFixed(2)}</td>
+      <td>${subtotal ? `${currencySymbol}${subtotal.toFixed(2)}` : ''}</td>
+    </tr>`;
+  }).join('');
   html = html.replace(/{{items}}/g, itemsHtml);
 
   // Fill org details and logo (header/footer)

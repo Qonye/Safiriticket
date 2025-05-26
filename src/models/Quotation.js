@@ -10,6 +10,7 @@ const quotationSchema = new mongoose.Schema({
     // Allow any additional dynamic fields (hotelName, checkin, checkout, airline, etc.)
   }],
   total: { type: Number, required: true },
+  currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'GBP', 'KES', 'CAD', 'AUD'] },
   status: { type: String, enum: ['Pending', 'Accepted', 'Declined', 'Expired'], default: 'Pending' },
   expiresAt: Date,
   createdAt: { type: Date, default: Date.now },

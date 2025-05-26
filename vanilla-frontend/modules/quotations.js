@@ -153,7 +153,7 @@ window.renderQuotations = function(main) {
                       ).join('')}
                     </select>
                   </td>
-                  <td>$${q.total?.toFixed ? q.total.toFixed(2) : q.total || 0}</td>
+                  <td>${getCurrencySymbol(q.currency || 'USD')}${q.total?.toFixed ? q.total.toFixed(2) : q.total || 0}</td>
                   <td>${q.expiresAt ? new Date(q.expiresAt).toLocaleDateString() : ''}</td>
                   <td>
                     <button class="q-view-btn" title="View">👁️</button>
@@ -239,10 +239,21 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
               <option value="">Loading...</option>
             </select>
           </label>
-        </div>
-        <div>
+        </div>        <div>
           <label>Expires At<br>
             <input type="date" name="expiresAt" style="padding:6px;width:140px;">
+          </label>
+        </div>
+        <div>
+          <label>Currency<br>
+            <select name="currency" id="quotation-currency-select" style="padding:6px;width:120px;">
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="KES">KES</option>
+              <option value="CAD">CAD</option>
+              <option value="AUD">AUD</option>
+            </select>
           </label>
         </div>
         <div>
@@ -285,6 +296,20 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
     });
 
   // --- Items logic ---
+  
+  // Helper function to get currency symbol
+  function getCurrencySymbol(currency) {
+    const symbols = {
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'KES': 'KSh',
+      'CAD': 'C$',
+      'AUD': 'A$'
+    };
+    return symbols[currency] || '$';
+  }
+  
   function updateSubtotalsAndTotal() {
     let total = 0;
     document.querySelectorAll('#items-tbody tr').forEach(tr => {
@@ -327,12 +352,12 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
         // Remove nights span if not hotel
         const nightsSpan = tr.querySelector('.item-nights-span');
         if (nightsSpan) nightsSpan.remove();
-      }
-
-      tr.querySelector('.item-subtotal').textContent = subtotal.toFixed(2);
+      }      tr.querySelector('.item-subtotal').textContent = subtotal.toFixed(2);
       total += subtotal;
     });
-    document.getElementById('items-total').textContent = `Total: $${total.toFixed(2)}`;
+    const currency = document.getElementById('quotation-currency-select')?.value || 'USD';
+    const currencySymbol = getCurrencySymbol(currency);
+    document.getElementById('items-total').textContent = `Total: ${currencySymbol}${total.toFixed(2)}`;
     return total;
   }
 
@@ -490,11 +515,10 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
     if (items.length === 0 && !form.pdf.files[0]) {
       quotationMsg.textContent = 'Please add at least one item or attach a PDF.';
       return;
-    }
-
-    const total = updateSubtotalsAndTotal();
+    }    const total = updateSubtotalsAndTotal();
     const clientId = form.client.value;
     const expiresAt = form.expiresAt.value;
+    const currency = form.currency.value || 'USD';
     const pdfFile = form.pdf.files[0];
 
     let payload;
@@ -504,6 +528,7 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
       payload = new FormData();
       payload.append('client', clientId);
       if (expiresAt) payload.append('expiresAt', expiresAt);
+      payload.append('currency', currency);
       // Always send items as a JSON string, even if empty, to match backend expectations
       payload.append('items', JSON.stringify(items.length ? items : []));
       payload.append('total', total);
@@ -517,6 +542,7 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
       payload = JSON.stringify({
         client: clientId,
         expiresAt: expiresAt || null,
+        currency: currency,
         items: items,
         total: total,
         isExternal: false
