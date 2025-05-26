@@ -62,7 +62,6 @@ window.renderFinancials = function(main) {
       .modal[open], .modal.show { display: flex !important; }
     </style>
   `;
-
   // Helper function to get currency symbol
   function getCurrencySymbol(currency) {
     const symbols = {
@@ -74,6 +73,19 @@ window.renderFinancials = function(main) {
       'AUD': 'A$'
     };
     return symbols[currency] || '$';
+  }
+
+  // Helper to convert currency to USD (same rates as dashboard and server)
+  function convertToUSD(amount, currency) {
+    const rates = {
+      'USD': 1.0,
+      'KES': 0.0067,
+      'GBP': 1.23,
+      'EUR': 1.03,
+      'CAD': 0.70,
+      'AUD': 0.62
+    };
+    return amount * (rates[currency] || 1);
   }
 
   // Helper function to group monetary amounts by currency
@@ -202,8 +214,7 @@ window.renderFinancials = function(main) {
         if (!invoices.length) {
           document.getElementById('financials-details').innerHTML = '<p>No invoices found.</p>';
           return;
-        }
-        // For each invoice, fetch its expenses and calculate profit
+        }        // For each invoice, fetch its expenses and calculate profit
         const invoiceRows = await Promise.all(invoices.map(async inv => {
           let expenses = [];
           try {
@@ -211,23 +222,33 @@ window.renderFinancials = function(main) {
             expenses = await res.json();
           } catch {}
           const expenseTotal = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-          const profit = (inv.paidAmount || 0) - expenseTotal;
+          
+          // Convert all amounts to USD equivalents for consistent display
           const currency = inv.currency || 'USD';
+          const totalUSD = convertToUSD(Number(inv.total || 0), currency);
+          const paidUSD = convertToUSD(Number(inv.paidAmount || 0), currency);
+          const dueUSD = convertToUSD(Math.max((Number(inv.total || 0) - Number(inv.paidAmount || 0)), 0), currency);
+          const profit = paidUSD - expenseTotal;
+          
+          // Show original currency in parentheses for reference
           const currencySymbol = getCurrencySymbol(currency);
+          const originalTotal = `${currencySymbol}${(inv.total || 0)}`;
+          const originalPaid = `${currencySymbol}${(inv.paidAmount || 0)}`;
+          const originalDue = `${currencySymbol}${((inv.total || 0) - (inv.paidAmount || 0)).toFixed(2)}`;
           
           return `
             <tr>
               <td>${inv.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${inv.client?.email || ''}</span></td>
               <td>${inv.status}</td>
-              <td>${currencySymbol}${inv.total || 0}</td>
-              <td>${currencySymbol}${inv.paidAmount || 0}</td>
-              <td>${currencySymbol}${((inv.total || 0) - (inv.paidAmount || 0)).toFixed(2)}</td>
+              <td>$${totalUSD.toFixed(2)} <span style="font-size:0.85em;color:#888;">(${originalTotal})</span></td>
+              <td>$${paidUSD.toFixed(2)} <span style="font-size:0.85em;color:#888;">(${originalPaid})</span></td>
+              <td>$${dueUSD.toFixed(2)} <span style="font-size:0.85em;color:#888;">(${originalDue})</span></td>
               <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ''}</td>
               <td>$${expenseTotal.toFixed(2)}</td>
               <td style="font-weight:bold;color:${profit >= 0 ? '#2ecc40' : '#d63031'};">$${profit.toFixed(2)}</td>
             </tr>
           `;
-        }));        // Calculate currency breakdown
+        }));// Calculate currency breakdown
         const currencyBreakdown = {};
         invoices.forEach(inv => {
           const currency = inv.currency || 'USD';
@@ -260,19 +281,18 @@ window.renderFinancials = function(main) {
           <div style="margin-bottom:24px;">
             ${currencyBreakdownHtml}
           </div>
-          
-          <h3 style="color:#8c241c;">All Invoices</h3>
+            <h3 style="color:#8c241c;">All Invoices (USD Equivalents)</h3>
           <table class="data-table">
             <thead>
               <tr>
                 <th style="background:#8c241c;">Client</th>
                 <th style="background:#8c241c;">Status</th>
-                <th style="background:#8c241c;">Total</th>
-                <th style="background:#8c241c;">Paid</th>
-                <th style="background:#8c241c;">Due</th>
+                <th style="background:#8c241c;">Total (USD)</th>
+                <th style="background:#8c241c;">Paid (USD)</th>
+                <th style="background:#8c241c;">Due (USD)</th>
                 <th style="background:#8c241c;">Due Date</th>
-                <th style="background:#8c241c;">Expenses</th>
-                <th style="background:#8c241c;">Profit</th>
+                <th style="background:#8c241c;">Expenses (USD)</th>
+                <th style="background:#8c241c;">Profit (USD)</th>
               </tr>
             </thead>
             <tbody>
@@ -280,8 +300,9 @@ window.renderFinancials = function(main) {
             </tbody>
           </table>          <div style="margin-top:16px;font-size:0.9em;color:#888;">
             <strong>Important Notes:</strong><br>
-            • Exchange rates and profit calculations are converted to USD for aggregation<br>
-            • Invoice amounts display in their original currency<br>
+            • All amounts in the "All Invoices" section are converted to USD equivalents using current exchange rates<br>
+            • Original currency amounts shown in parentheses for reference<br>
+            • Expenses and profit calculations use USD equivalents for consistent aggregation<br>
             • Exchange rates are approximate and for internal analysis only
           </div>
         `;
