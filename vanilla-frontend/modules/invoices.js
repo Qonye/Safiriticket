@@ -757,7 +757,7 @@ async function getNextInvoiceNumber() {
   // Fetch all invoices and find the highest number, then increment
   const res = await fetch(`${window.API_BASE_URL}/api/invoices`);
   const invoices = await res.json();
-  let max = 0;
+  let max = 8462; // Start from 8462 so next number will be 8463
   invoices.forEach(inv => {
     if (inv.number && typeof inv.number === 'string') {
       const match = inv.number.match(/(\d+)$/);
@@ -767,7 +767,7 @@ async function getNextInvoiceNumber() {
       }
     }
   });
-  return 'INV-' + String(max + 1).padStart(3, '0');
+  return 'INV-' + String(max + 1).padStart(5, '0');
 }
 
 // Example usage in preview or add form:

@@ -127,12 +127,15 @@ app.get('/api/health', (req, res) => {
 // Helper to get next sequential number for quotations/invoices
 async function getNextNumber(model, prefix) {
   const last = await model.findOne({ number: new RegExp('^' + prefix) }).sort({ createdAt: -1 });
-  let next = 1;
+  let next = 8463; // Start invoice numbering from INV-08463
   if (last && last.number) {
     const match = last.number.match(/(\d+)$/);
-    if (match) next = parseInt(match[1], 10) + 1;
+    if (match) {
+      const lastNum = parseInt(match[1], 10);
+      next = Math.max(lastNum + 1, 8463); // Ensure we don't go below 8463
+    }
   }
-  return `${prefix}${String(next).padStart(3, '0')}`;
+  return `${prefix}${String(next).padStart(5, '0')}`;
 }
 
 // --- Multer setup for file uploads ---
