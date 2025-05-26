@@ -17,6 +17,19 @@ if (typeof html2pdf === 'undefined') {
   alert('Critical Error: html2pdf.js library is missing. PDF functionality will be broken.');
 }
 
+// Helper function to get the correct currency symbol
+function _getCurrencySymbol(currency) {
+  const symbols = {
+    'USD': '$',
+    'EUR': '€',
+    'GBP': '£',
+    'KES': 'KSh',
+    'CAD': 'C$',
+    'AUD': 'A$'
+  };
+  return symbols[currency] || '$';
+}
+
 // Helper function to infer item type (moved from pdf-utils.js)
 function _inferType(item) {
   if (item.type) return item.type; // Primary source of type
@@ -30,7 +43,7 @@ function _inferType(item) {
 }
 
 // Helper function to render service tables (moved and adapted from pdf-utils.js)
-function _renderInvoiceServiceTables(items = [], clientName = '') {
+function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'USD') {
   console.log('[_renderInvoiceServiceTables] ENTERED. Processing items count:', items.length);
 
   if (!items || !items.length) {
@@ -38,6 +51,8 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
     return '';
   }
 
+  const currencySymbol = _getCurrencySymbol(currency);
+  
   const grouped = {};
   items.forEach(item => {
     const type = _inferType(item); // Use local _inferType
@@ -88,15 +103,15 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${flightDate ? new Date(flightDate).toLocaleDateString() : 'N/A'}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${airline}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${route}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${totalRow.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     htmlContent += `
         </tbody>
-        <tfoot><tr><td colspan="6" style="text-align:right;font-weight:bold;color:#be292c;">Flight Subtotal:</td><td style="font-weight:bold;color:#be292c;">$${total.toLocaleString()}</td></tr></tfoot>
+        <tfoot><tr><td colspan="6" style="text-align:right;font-weight:bold;color:#be292c;">Flight Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
       </table>
     `;
   } else {
@@ -160,16 +175,16 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.description || clientName}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${stayDates}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${hotelName}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${nights}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${totalRow.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     htmlContent += `
         </tbody>
-        <tfoot><tr><td colspan="6" style="text-align:right;font-weight:bold;color:#be292c;">Hotel Subtotal:</td><td style="font-weight:bold;color:#be292c;">$${total.toLocaleString()}</td></tr></tfoot>
+        <tfoot><tr><td colspan="6" style="text-align:right;font-weight:bold;color:#be292c;">Hotel Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
       </table>
     `;
   } else {
@@ -208,15 +223,15 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.description || clientName}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${from}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${to}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${amount.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${fee.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">$${totalRow.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     htmlContent += `
         </tbody>
-        <tfoot><tr><td colspan="5" style="text-align:right;font-weight:bold;color:#be292c;">Transfer Subtotal:</td><td style="font-weight:bold;color:#be292c;">$${total.toLocaleString()}</td></tr></tfoot>
+        <tfoot><tr><td colspan="5" style="text-align:right;font-weight:bold;color:#be292c;">Transfer Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
       </table>
     `;
   } else {
@@ -225,7 +240,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '') {
   
   if (grandTotal > 0) {
     // Adjusted font-size to match table cells (0.95em).
-    htmlContent += `<div style="text-align:right; font-weight:bold; margin-top:16px; font-family: Montserrat, sans-serif; font-size: 1.05em; padding-right: 16px;">🧾 Grand Total: $${grandTotal.toLocaleString()}</div>`;
+    htmlContent += `<div style="text-align:right; font-weight:bold; margin-top:16px; font-family: Montserrat, sans-serif; font-size: 1.05em; padding-right: 16px;">🧾 Grand Total: ${currencySymbol}${grandTotal.toLocaleString()}</div>`;
   }
 
   console.log('[_renderInvoiceServiceTables] Final HTML generated (first 300 chars):', htmlContent.substring(0, 300) + (htmlContent.length > 300 ? '...' : ''));
@@ -258,7 +273,24 @@ function _fillInvoiceTemplate(template, invoice, currentUser = null) {
     html = html.replace(/{{createdBy}}/g, 'System');
   }
 
-  const serviceTablesHtml = _renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || ''); // Call local _renderInvoiceServiceTables
+  // Get the currency from invoice or default to USD
+  const currency = invoice.currency || 'USD';
+  const currencySymbol = _getCurrencySymbol(currency);
+  
+  // Replace all payment details placeholders
+  if (invoice.paymentDetails) {
+    html = html.replace(/{{paymentAccountName}}/g, invoice.paymentDetails.accountName || '');
+    html = html.replace(/{{paymentAccountNumber}}/g, invoice.paymentDetails.accountNumber || '');
+    html = html.replace(/{{paymentBankName}}/g, invoice.paymentDetails.bankName || '');
+    html = html.replace(/{{paymentSwiftCode}}/g, invoice.paymentDetails.swiftCode || '');
+    html = html.replace(/{{paymentCurrency}}/g, invoice.paymentDetails.currency || currency);
+    html = html.replace(/{{paymentAdditionalInfo}}/g, invoice.paymentDetails.additionalInfo || '');
+  }
+  
+  // Replace currency symbol placeholder if present
+  html = html.replace(/{{currencySymbol}}/g, currencySymbol);
+
+  const serviceTablesHtml = _renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || '', currency); // Call local _renderInvoiceServiceTables with currency
   
   console.log('[_fillInvoiceTemplate] HTML returned by _renderInvoiceServiceTables (first 300 chars):', serviceTablesHtml.substring(0, 300) + (serviceTablesHtml.length > 300 ? '...' : ''));
   if (serviceTablesHtml.trim() === '') {
@@ -314,6 +346,7 @@ window.newPdfEngine = {
       console.log('[newPdfEngine] Loaded template HTML (first 50 chars):', typeof html === 'string' ? html.substring(0, 50) + '...' : 'HTML is not a string or is null/undefined');
       
       console.log('[newPdfEngine] quotationData.items count before fillQuotationTemplate:', (quotationData && quotationData.items ? quotationData.items.length : 'N/A'));
+      console.log('[newPdfEngine] quotationData.currency:', quotationData.currency || 'USD (default)');
 
       console.log('[newPdfEngine] typeof window.fillQuotationTemplate before call:', typeof window.fillQuotationTemplate);
       if (typeof window.fillQuotationTemplate === 'function') {

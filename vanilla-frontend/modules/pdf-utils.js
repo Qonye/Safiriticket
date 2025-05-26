@@ -81,6 +81,19 @@ window.downloadPDF = async function(html, filename = 'document.pdf', options = {
 // window.renderInvoiceServiceTables = function(items = [], clientName = '') { ... MOVED ... };
 */
 
+// Helper function to get currency symbol (same as in new-pdf-engine.js)
+function _getCurrencySymbol(currency) {
+  const symbols = {
+    'USD': '$',
+    'EUR': '€',
+    'GBP': '£',
+    'KES': 'KSh',
+    'CAD': 'C$',
+    'AUD': 'A$'
+  };
+  return symbols[currency] || '$';
+}
+
 // Helper to fill template placeholders for quotations
 window.fillQuotationTemplate = function(template, quotation) {
   let html = template;
@@ -90,6 +103,13 @@ window.fillQuotationTemplate = function(template, quotation) {
   html = html.replace(/{{status}}/g, quotation.status || '');
   html = html.replace(/{{expiresAt}}/g, quotation.expiresAt ? new Date(quotation.expiresAt).toLocaleDateString() : '');
   html = html.replace(/{{total}}/g, quotation.total || '');
+  
+  // Get the currency from quotation or default to USD
+  const currency = quotation.currency || 'USD';
+  const currencySymbol = _getCurrencySymbol(currency);
+  
+  // Replace currency symbol placeholder if present
+  html = html.replace(/{{currencySymbol}}/g, currencySymbol);
 
   // Items (show description, price, service fee, and subtotal in correct columns)
   const itemsHtml = (quotation.items || []).map(item => {
@@ -112,9 +132,9 @@ window.fillQuotationTemplate = function(template, quotation) {
     return `<tr>
       <td>${desc}</td>
       <td>${qty}</td>
-      <td>$${price.toFixed(2)}</td>
-      <td>$${serviceFee.toFixed(2)}</td>
-      <td>$${subtotal.toFixed(2)}</td>
+      <td>${currencySymbol}${price.toFixed(2)}</td>
+      <td>${currencySymbol}${serviceFee.toFixed(2)}</td>
+      <td>${currencySymbol}${subtotal.toFixed(2)}</td>
     </tr>`;
   }).join('');
   html = html.replace(/{{items}}/g, itemsHtml);

@@ -39,8 +39,8 @@ window.renderInvoices = function(main) {
             <select name="paymentMethod" id="invoice-payment-method-select" style="padding:6px;width:180px;">
               <option value="usd-dtb">USD - Diamond Trust Bank</option>
               <option value="kes-dtb">KES - Diamond Trust Bank</option>
-              <option value="gbp-santander">GBP - Santander UK</option>
-              <option value="eur-wise">EUR - Wise Transfer</option>
+              <option value="usd-NCBA">USD - NCBA Bank</option>
+              <option value="gbp-barclays">GBP - Barckays Bank UK</option>
             </select>
           </label>
         </div>
@@ -139,30 +139,29 @@ window.renderInvoices = function(main) {
         swiftCode: 'DTKEKENA',
         currency: 'USD',
         additionalInfo: '(Please use your name or invoice number as payment reference)'
-      },
-      'kes-dtb': {
+      },      'kes-dtb': {
         accountName: 'JUNGLE DWELLERS LTD',
-        accountNumber: '0254001003',
+        accountNumber: '0254001001',
         bankName: 'DIAMOND TRUST BANK',
         swiftCode: 'DTKEKENA',
         currency: 'KES',
         additionalInfo: '(Please use your name or invoice number as payment reference)'
       },
-      'gbp-santander': {
+      'usd-NCBA': {
         accountName: 'JUNGLE DWELLERS LTD',
-        accountNumber: '12345678',
-        bankName: 'SANTANDER UK PLC',
-        swiftCode: 'ABBYGB2L',
-        currency: 'GBP',
-        additionalInfo: '(Please use your name or invoice number as payment reference)'
+        accountNumber: '8816130022 ',
+        bankName: 'NCBA BANK KENYA',
+        swiftCode: ' CBAFKENX',
+        currency: 'USD',
+        additionalInfo: '( Bank Code: 07 - 000, P.O. Box 44599-00100 Nairobi, Kenya,NCBA Center, Mara and Ragati Roads Upperhill, Please use your name or invoice number as payment reference)'
       },
-      'eur-wise': {
-        accountName: 'JUNGLE DWELLERS LTD',
-        accountNumber: 'BE12345678901234',
-        bankName: 'WISE TRANSFER',
-        swiftCode: 'TRWIBEB1XXX',
-        currency: 'EUR',
-        additionalInfo: '(Please use your name or invoice number as payment reference)'
+      'gbp-barclays': {
+        accountName: 'SAFIRI TICKETS LTD',
+        accountNumber: '63557618',
+        bankName: 'Barclays Bank UK',
+        swiftCode: 'BUKBGB22',
+        currency: 'GBP',
+        additionalInfo: '(Sort Code: 20-89-56, IBAN: GB46 BUKB 2089 5663 5576 18 - Please use your name or invoice number as payment reference)'
       }
     };
     
