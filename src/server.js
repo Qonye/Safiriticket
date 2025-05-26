@@ -357,21 +357,57 @@ app.get('/api/financials', async (req, res) => {
   // Calculate revenue breakdowns from actual invoice data
   let paidRevenue = 0, unpaidRevenue = 0, overdueRevenue = 0;
   let paid = 0, unpaid = 0, overdue = 0;
+  
+  // Track currency-specific data
+  const currencyData = {};
 
   invoices.forEach(i => {
     const paidAmt = Number(i.paidAmount || 0);
     const totalAmt = Number(i.total || 0);
     const dueAmt = Math.max(totalAmt - paidAmt, 0);
+    const currency = i.currency || 'USD';
 
-    // Count by status
-    if (i.status === 'Paid') paid++;
-    else if (i.status === 'Unpaid') unpaid++;
-    else if (i.status === 'Overdue') overdue++;
+    // Initialize currency data if not already done
+    if (!currencyData[currency]) {
+      currencyData[currency] = {
+        paidRevenue: 0,
+        unpaidRevenue: 0, 
+        overdueRevenue: 0,
+        paid: 0,
+        unpaid: 0,
+        overdue: 0,
+        totalInvoices: 0
+      };
+    }
+    
+    // Count by status (both overall and per currency)
+    if (i.status === 'Paid') {
+      paid++;
+      currencyData[currency].paid++;
+    } else if (i.status === 'Unpaid') {
+      unpaid++;
+      currencyData[currency].unpaid++;
+    } else if (i.status === 'Overdue') {
+      overdue++;
+      currencyData[currency].overdue++;
+    }
+    
+    // Increment total invoice count per currency
+    currencyData[currency].totalInvoices++;
 
-    // Revenue analysis (partial payments included)
+    // Revenue analysis - overall (for backward compatibility)
     paidRevenue += paidAmt;
     if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) unpaidRevenue += dueAmt;
     if (i.status === 'Overdue') overdueRevenue += dueAmt;
+    
+    // Currency-specific revenue analysis
+    currencyData[currency].paidRevenue += paidAmt;
+    if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) {
+      currencyData[currency].unpaidRevenue += dueAmt;
+    }
+    if (i.status === 'Overdue') {
+      currencyData[currency].overdueRevenue += dueAmt;
+    }
   });
 
   // Total revenue is sum of all paid amounts (partial or full)
@@ -385,7 +421,8 @@ app.get('/api/financials', async (req, res) => {
     totalInvoices: invoices.length,
     paidRevenue,
     unpaidRevenue,
-    overdueRevenue
+    overdueRevenue,
+    currencyData // Add the currency-specific breakdown
   });
 });
 

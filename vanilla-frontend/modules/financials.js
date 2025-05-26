@@ -63,6 +63,35 @@ window.renderFinancials = function(main) {
     </style>
   `;
 
+  // Helper function to get currency symbol
+  function getCurrencySymbol(currency) {
+    const symbols = {
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'KES': 'KSh',
+      'CAD': 'C$',
+      'AUD': 'A$'
+    };
+    return symbols[currency] || '$';
+  }
+
+  // Helper function to group monetary amounts by currency
+  function formatMultiCurrency(amounts) {
+    const grouped = {};
+    amounts.forEach(item => {
+      const currency = item.currency || 'USD';
+      if (!grouped[currency]) {
+        grouped[currency] = 0;
+      }
+      grouped[currency] += item.amount || 0;
+    });
+    
+    return Object.entries(grouped)
+      .map(([currency, amount]) => `${getCurrencySymbol(currency)}${amount.toFixed(2)}`)
+      .join(' + ');
+  }
+
   function renderCharts(data) {
     // Simple bar chart using inline SVG (no dependencies)
     const paid = data.paidRevenue || 0;
@@ -89,19 +118,48 @@ window.renderFinancials = function(main) {
         ${bar(200, '#e45424', 'Unpaid', unpaid)}
         ${bar(200, '#943c34', 'Overdue', overdue)}
         <div style="margin-top:8px;font-size:0.95em;color:#555;">Total Revenue: $${(paid + unpaid + overdue).toFixed(2)}</div>
+        <div style="margin-top:4px;font-size:0.9em;color:#888;">Note: All amounts shown in USD equivalent for aggregation</div>
       </div>
     `;
   }
-
   function fetchFinancials() {
     fetch(`${window.API_BASE_URL}/api/financials`)
       .then(r => r.json())
       .then(data => {
+        // Create currency-specific summary if available
+        let currencySummaryHtml = '';
+        if (data.currencyData) {
+          const currencies = Object.keys(data.currencyData);
+          if (currencies.length > 0) {
+            currencySummaryHtml = `
+              <h4 style="margin:16px 0 8px;color:#8c241c;">Revenue by Currency</h4>
+              <div style="display:flex;flex-wrap:wrap;gap:16px;">
+                ${currencies.map(currency => {
+                  const currData = data.currencyData[currency];
+                  const symbol = getCurrencySymbol(currency);
+                  return `
+                    <div style="border:1px solid #eee;border-radius:6px;padding:8px 12px;background:#f8f9fa;flex:1;min-width:250px;">
+                      <div style="font-weight:bold;margin-bottom:4px;">${currency} (${currData.totalInvoices} invoices)</div>
+                      <div style="font-size:0.95em;display:flex;flex-direction:column;gap:3px;">
+                        <div>Revenue: <strong>${symbol}${currData.paidRevenue.toFixed(2)}</strong></div>
+                        <div>Unpaid: <strong style="color:#e45424;">${symbol}${currData.unpaidRevenue.toFixed(2)}</strong></div>
+                        <div>Overdue: <strong style="color:#943c34;">${symbol}${currData.overdueRevenue.toFixed(2)}</strong></div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `;
+          }
+        }
+
         document.getElementById('financials-summary').innerHTML = `
           <div style="font-size:1.1em;">
             <strong>Total Revenue:</strong> <span style="color:#2ecc40;font-weight:bold;">$${data.revenue || 0}</span><br>
-            <strong>Total Invoices:</strong> ${data.totalInvoices}
+            <strong>Total Invoices:</strong> ${data.totalInvoices}<br>
+            <div style="margin-top:8px;font-size:0.9em;color:#888;">Revenue shown in USD equivalent for aggregation</div>
           </div>
+          ${currencySummaryHtml}
         `;
         document.getElementById('financials-widgets').innerHTML = `
           <div class="widget">
@@ -137,20 +195,55 @@ window.renderFinancials = function(main) {
           } catch {}
           const expenseTotal = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
           const profit = (inv.paidAmount || 0) - expenseTotal;
+          const currency = inv.currency || 'USD';
+          const currencySymbol = getCurrencySymbol(currency);
+          
           return `
             <tr>
               <td>${inv.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${inv.client?.email || ''}</span></td>
               <td>${inv.status}</td>
-              <td>$${inv.total || 0}</td>
-              <td>$${inv.paidAmount || 0}</td>
-              <td>$${((inv.total || 0) - (inv.paidAmount || 0)).toFixed(2)}</td>
+              <td>${currencySymbol}${inv.total || 0}</td>
+              <td>${currencySymbol}${inv.paidAmount || 0}</td>
+              <td>${currencySymbol}${((inv.total || 0) - (inv.paidAmount || 0)).toFixed(2)}</td>
               <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ''}</td>
               <td>$${expenseTotal.toFixed(2)}</td>
               <td style="font-weight:bold;color:${profit >= 0 ? '#2ecc40' : '#d63031'};">$${profit.toFixed(2)}</td>
             </tr>
           `;
-        }));
+        }));        // Calculate currency breakdown
+        const currencyBreakdown = {};
+        invoices.forEach(inv => {
+          const currency = inv.currency || 'USD';
+          if (!currencyBreakdown[currency]) {
+            currencyBreakdown[currency] = { total: 0, paid: 0, count: 0 };
+          }
+          currencyBreakdown[currency].total += Number(inv.total || 0);
+          currencyBreakdown[currency].paid += Number(inv.paidAmount || 0);
+          currencyBreakdown[currency].count++;
+        });
+
+        const currencyBreakdownHtml = Object.entries(currencyBreakdown)
+          .map(([currency, data]) => {
+            const symbol = getCurrencySymbol(currency);
+            const due = data.total - data.paid;
+            return `
+              <div style="background:#f8f9fa;padding:12px;border-radius:6px;margin-bottom:8px;">
+                <div style="font-weight:bold;color:#8c241c;margin-bottom:4px;">${currency} (${data.count} invoices)</div>
+                <div style="display:flex;gap:24px;font-size:0.95em;">
+                  <span>Total: <strong>${symbol}${data.total.toFixed(2)}</strong></span>
+                  <span>Paid: <strong style="color:#2ecc40;">${symbol}${data.paid.toFixed(2)}</strong></span>
+                  <span>Due: <strong style="color:#e45424;">${symbol}${due.toFixed(2)}</strong></span>
+                </div>
+              </div>
+            `;
+          }).join('');
+
         document.getElementById('financials-details').innerHTML = `
+          <h3 style="color:#8c241c;">Currency Breakdown</h3>
+          <div style="margin-bottom:24px;">
+            ${currencyBreakdownHtml}
+          </div>
+          
           <h3 style="color:#8c241c;">All Invoices</h3>
           <table class="data-table">
             <thead>
@@ -169,6 +262,9 @@ window.renderFinancials = function(main) {
               ${invoiceRows.join('')}
             </tbody>
           </table>
+          <div style="margin-top:16px;font-size:0.9em;color:#888;">
+            Note: Expenses and profit calculations are in USD. Invoice amounts show in their original currency.
+          </div>
         `;
       });
   }
