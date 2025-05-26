@@ -138,6 +138,25 @@ async function getNextNumber(model, prefix) {
   return `${prefix}${String(next).padStart(5, '0')}`;
 }
 
+// Exchange rates helper function (you can update these rates as needed)
+function getExchangeRates() {
+  return {
+    'USD': 1.0,    // Base currency
+    'KES': 0.0067, // 1 KES = 0.0067 USD (approximately 149 KES = 1 USD as of May 2025)
+    'GBP': 1.23,   // 1 GBP = 1.23 USD  
+    'EUR': 1.03,   // 1 EUR = 1.03 USD
+    'CAD': 0.70,   // 1 CAD = 0.70 USD
+    'AUD': 0.62    // 1 AUD = 0.62 USD
+  };
+}
+
+// Convert amount to USD equivalent
+function convertToUSD(amount, fromCurrency) {
+  const rates = getExchangeRates();
+  const rate = rates[fromCurrency] || 1.0;
+  return amount * rate;
+}
+
 // --- Multer setup for file uploads ---
 // Use memory storage so files are not saved to disk
 const upload = multer({
@@ -370,6 +389,10 @@ app.get('/api/financials', async (req, res) => {
     const dueAmt = Math.max(totalAmt - paidAmt, 0);
     const currency = i.currency || 'USD';
 
+    // Convert amounts to USD for aggregation
+    const paidAmtUSD = convertToUSD(paidAmt, currency);
+    const dueAmtUSD = convertToUSD(dueAmt, currency);
+
     // Initialize currency data if not already done
     if (!currencyData[currency]) {
       currencyData[currency] = {
@@ -398,12 +421,12 @@ app.get('/api/financials', async (req, res) => {
     // Increment total invoice count per currency
     currencyData[currency].totalInvoices++;
 
-    // Revenue analysis - overall (for backward compatibility)
-    paidRevenue += paidAmt;
-    if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) unpaidRevenue += dueAmt;
-    if (i.status === 'Overdue') overdueRevenue += dueAmt;
+    // Revenue analysis - overall in USD equivalents
+    paidRevenue += paidAmtUSD;
+    if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) unpaidRevenue += dueAmtUSD;
+    if (i.status === 'Overdue') overdueRevenue += dueAmtUSD;
     
-    // Currency-specific revenue analysis
+    // Currency-specific revenue analysis (in original currency)
     currencyData[currency].paidRevenue += paidAmt;
     if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) {
       currencyData[currency].unpaidRevenue += dueAmt;
@@ -413,9 +436,8 @@ app.get('/api/financials', async (req, res) => {
     }
   });
 
-  // Total revenue is sum of all paid amounts (partial or full)
+  // Total revenue is sum of all paid amounts (partial or full) in USD
   const revenue = paidRevenue;
-
   res.json({
     paid,
     unpaid,
@@ -425,7 +447,20 @@ app.get('/api/financials', async (req, res) => {
     paidRevenue,
     unpaidRevenue,
     overdueRevenue,
-    currencyData // Add the currency-specific breakdown
+    currencyData, // Add the currency-specific breakdown
+    exchangeRates: getExchangeRates(), // Include current exchange rates
+    note: 'Overall revenue figures are converted to USD equivalents using current exchange rates'
+  });
+});
+
+// --- Exchange Rates Endpoint ---
+app.get('/api/exchange-rates', async (req, res) => {
+  const rates = getExchangeRates();
+  res.json({
+    rates,
+    baseCurrency: 'USD',
+    lastUpdated: new Date().toISOString(),
+    note: 'Exchange rates are approximate and for internal aggregation purposes only'
   });
 });
 

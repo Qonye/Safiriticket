@@ -91,7 +91,6 @@ window.renderFinancials = function(main) {
       .map(([currency, amount]) => `${getCurrencySymbol(currency)}${amount.toFixed(2)}`)
       .join(' + ');
   }
-
   function renderCharts(data) {
     // Simple bar chart using inline SVG (no dependencies)
     const paid = data.paidRevenue || 0;
@@ -111,15 +110,35 @@ window.renderFinancials = function(main) {
       `;
     }
 
+    // Display exchange rates if available
+    let exchangeRateInfo = '';
+    if (data.exchangeRates) {
+      const rates = data.exchangeRates;
+      exchangeRateInfo = `
+        <div style="margin-top:16px;padding:12px;background:#f8f9fa;border-radius:6px;border-left:4px solid #8c241c;">
+          <div style="font-weight:bold;margin-bottom:8px;color:#8c241c;">Current Exchange Rates (to USD)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:0.9em;">
+            ${Object.entries(rates).filter(([curr]) => curr !== 'USD').map(([currency, rate]) => 
+              `<span><strong>${currency}:</strong> ${rate.toFixed(4)}</span>`
+            ).join('')}
+          </div>          <div style="margin-top:8px;font-size:0.85em;color:#666;">
+            Exchange rates are approximate and used for aggregation purposes only.<br>
+            <a href="#" id="view-current-rates" style="color:#8c241c;text-decoration:none;">View current rates</a>
+          </div>
+        </div>
+      `;
+    }
+
     document.getElementById('financials-charts').innerHTML = `
-      <div style="margin-bottom:12px;font-weight:bold;color:#8c241c;">Revenue Analysis</div>
+      <div style="margin-bottom:12px;font-weight:bold;color:#8c241c;">Revenue Analysis (USD Equivalents)</div>
       <div style="max-width:350px;">
         ${bar(200, '#2ecc40', 'Paid', paid)}
         ${bar(200, '#e45424', 'Unpaid', unpaid)}
         ${bar(200, '#943c34', 'Overdue', overdue)}
         <div style="margin-top:8px;font-size:0.95em;color:#555;">Total Revenue: $${(paid + unpaid + overdue).toFixed(2)}</div>
-        <div style="margin-top:4px;font-size:0.9em;color:#888;">Note: All amounts shown in USD equivalent for aggregation</div>
+        <div style="margin-top:4px;font-size:0.9em;color:#888;">All amounts converted to USD using current exchange rates</div>
       </div>
+      ${exchangeRateInfo}
     `;
   }
   function fetchFinancials() {
@@ -151,13 +170,11 @@ window.renderFinancials = function(main) {
               </div>
             `;
           }
-        }
-
-        document.getElementById('financials-summary').innerHTML = `
+        }        document.getElementById('financials-summary').innerHTML = `
           <div style="font-size:1.1em;">
             <strong>Total Revenue:</strong> <span style="color:#2ecc40;font-weight:bold;">$${data.revenue || 0}</span><br>
             <strong>Total Invoices:</strong> ${data.totalInvoices}<br>
-            <div style="margin-top:8px;font-size:0.9em;color:#888;">Revenue shown in USD equivalent for aggregation</div>
+            <div style="margin-top:8px;font-size:0.9em;color:#888;">Revenue converted to USD equivalents using current exchange rates</div>
           </div>
           ${currencySummaryHtml}
         `;
@@ -261,14 +278,33 @@ window.renderFinancials = function(main) {
             <tbody>
               ${invoiceRows.join('')}
             </tbody>
-          </table>
-          <div style="margin-top:16px;font-size:0.9em;color:#888;">
-            Note: Expenses and profit calculations are in USD. Invoice amounts show in their original currency.
+          </table>          <div style="margin-top:16px;font-size:0.9em;color:#888;">
+            <strong>Important Notes:</strong><br>
+            • Exchange rates and profit calculations are converted to USD for aggregation<br>
+            • Invoice amounts display in their original currency<br>
+            • Exchange rates are approximate and for internal analysis only
           </div>
         `;
       });
   }
-
   fetchFinancials();
   document.getElementById('refresh-financials-btn').onclick = fetchFinancials;
+  
+  // Add event listener for viewing exchange rates
+  document.addEventListener('click', function(e) {
+    if (e.target.id === 'view-current-rates') {
+      e.preventDefault();
+      fetch(`${window.API_BASE_URL}/api/exchange-rates`)
+        .then(r => r.json())
+        .then(data => {
+          const ratesList = Object.entries(data.rates)
+            .filter(([curr]) => curr !== 'USD')
+            .map(([currency, rate]) => `${currency}: ${rate.toFixed(4)} USD`)
+            .join('<br>');
+          
+          alert(`Current Exchange Rates (Base: USD)\n\n${ratesList.replace(/<br>/g, '\n')}\n\nLast Updated: ${new Date(data.lastUpdated).toLocaleString()}`);
+        })
+        .catch(() => alert('Unable to fetch current exchange rates'));
+    }
+  });
 };

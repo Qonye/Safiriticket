@@ -8,9 +8,8 @@ window.renderFinancialCharts = function(container) {
       <div style="flex:1;min-width:320px;">
         <canvas id="monthly-revenue-chart" height="180"></canvas>
       </div>
-    </div>
-    <div style="margin-top:8px;font-size:0.9em;color:#888;text-align:center;">
-      Note: Financial data is aggregated across all currencies for visualization purposes
+    </div>    <div style="margin-top:8px;font-size:0.9em;color:#888;text-align:center;">
+      Financial data converted to USD equivalents using current exchange rates for aggregation
     </div>
   `;
 
@@ -41,10 +40,9 @@ window.renderFinancialCharts = function(container) {
             data: [data.paidRevenue, data.unpaidRevenue, data.overdueRevenue],
             backgroundColor: ['#2ecc40', '#f39c12', '#e74c3c']
           }]
-        },
-        options: {
+        },        options: {
           plugins: {
-            title: { display: true, text: 'Revenue Breakdown' },
+            title: { display: true, text: 'Revenue Breakdown (USD Equivalent)' },
             legend: { position: 'bottom' }
           }
         }
