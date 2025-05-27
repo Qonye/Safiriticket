@@ -19,7 +19,7 @@ const __dirname = dirname(__filename);
 // Now you can safely use __dirname for dotenv
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-// --- Cloudinary config (set your credentials in .env) ---
+// --- Cloudinary config (legacy support for existing PDFs) ---
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -42,6 +42,14 @@ const connectDB = async () => {
 };
 
 connectDB();
+
+// Environment detection for Railway deployment
+const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME;
+console.log('Environment detected:', isRailway ? 'Railway' : 'Local Development');
+if (isRailway) {
+  console.log('Railway Volume Mount Path:', process.env.RAILWAY_VOLUME_MOUNT_PATH);
+  console.log('Railway Volume Name:', process.env.RAILWAY_VOLUME_NAME);
+}
 
 const app = express();
 app.use(cors({
@@ -88,7 +96,11 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Serve uploaded PDFs statically with proper headers
+// Serve uploaded PDFs statically with proper headers - Railway Volume support
+const staticUploadsPath = isRailway 
+  ? '/app/uploads/quotations'  // Railway volume mount path
+  : path.join(__dirname, '../uploads/quotations'); // Local development
+
 app.use('/uploads/quotations', (req, res, next) => {
   // Set proper headers for PDF files
   if (req.path.endsWith('.pdf')) {
@@ -98,7 +110,7 @@ app.use('/uploads/quotations', (req, res, next) => {
     });
   }
   next();
-}, express.static(path.join(__dirname, '../uploads/quotations')));
+}, express.static(staticUploadsPath));
 
 import Client from './models/Client.js';
 import Quotation from './models/Quotation.js';
@@ -257,94 +269,39 @@ app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
   // If items is a string (from FormData), parse it
   if (typeof data.items === 'string') {
     try { data.items = JSON.parse(data.items); } catch { data.items = []; }
-  }
-  
-  // If a PDF was uploaded, handle file storage
+  }    // If a PDF was uploaded, handle file storage - Railway Volume support
   if (req.file) {
     try {
-      // Check if Cloudinary is configured
-      const hasCloudinaryConfig = process.env.CLOUDINARY_CLOUD_NAME && 
-                                 process.env.CLOUDINARY_API_KEY && 
-                                 process.env.CLOUDINARY_API_SECRET;
-
-      if (hasCloudinaryConfig) {
-        // Try Cloudinary upload first
-        try {          const uploadResult = await new Promise((resolve, reject) => {
-            const stream = cloudinary.v2.uploader.upload_stream(
-              {
-                resource_type: 'raw',
-                folder: 'safiriticket/quotations',
-                public_id: `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`,
-                use_filename: true,
-                unique_filename: true,
-                access_mode: 'public',
-                type: 'upload'
-              },
-              (error, result) => {
-                if (error) {
-                  console.error('Cloudinary upload error:', error);
-                  reject(error);
-                } else {
-                  resolve(result);
-                }
-              }
-            );
-            stream.end(req.file.buffer);
-          });
-
-          data.externalPdfUrl = uploadResult.secure_url;
-          data.isExternal = true;
-          data.cloudinaryPublicId = uploadResult.public_id;
-          console.log('Successfully uploaded to Cloudinary:', uploadResult.secure_url);
-          
-        } catch (cloudinaryError) {
-          console.warn('Cloudinary upload failed, falling back to local storage:', cloudinaryError.message);
-          
-          // Fallback to local storage
-          const fs = await import('fs');
-          const uploadsDir = path.join(__dirname, '../uploads/quotations');
-          
-          // Ensure uploads directory exists
-          if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir, { recursive: true });
-          }
-          
-          // Generate unique filename
-          const filename = `${Date.now()}_${req.file.originalname}`;
-          const filepath = path.join(uploadsDir, filename);
-          
-          // Save file to local storage
-          fs.writeFileSync(filepath, req.file.buffer);
-          
-          data.externalPdfUrl = `/uploads/quotations/${filename}`;
-          data.isExternal = true;
-          data.isLocalFile = true;
-          console.log('Successfully saved to local storage:', data.externalPdfUrl);
-        }
-      } else {
-        // No Cloudinary config, use local storage directly
-        console.log('No Cloudinary configuration found, using local storage');
-        
-        const fs = await import('fs');
-        const uploadsDir = path.join(__dirname, '../uploads/quotations');
-        
-        // Ensure uploads directory exists
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-        
-        // Generate unique filename
-        const filename = `${Date.now()}_${req.file.originalname}`;
-        const filepath = path.join(uploadsDir, filename);
-        
-        // Save file to local storage
-        fs.writeFileSync(filepath, req.file.buffer);
-        
-        data.externalPdfUrl = `/uploads/quotations/${filename}`;
-        data.isExternal = true;
-        data.isLocalFile = true;
-        console.log('Successfully saved to local storage:', data.externalPdfUrl);
+      console.log('PDF upload received, using persistent storage');
+      
+      const fs = await import('fs');
+      
+      // Railway Volume-aware uploads directory
+      // On Railway, volumes are mounted at the specified path
+      // In development, use relative path
+      const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME;
+      const uploadsDir = isRailway 
+        ? '/app/uploads/quotations'  // Railway volume mount path
+        : path.join(__dirname, '../uploads/quotations'); // Local development
+      
+      console.log('Using uploads directory:', uploadsDir);
+      
+      // Ensure uploads directory exists
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
       }
+      
+      // Generate unique filename
+      const filename = `${Date.now()}_${req.file.originalname}`;
+      const filepath = path.join(uploadsDir, filename);
+      
+      // Save file to local storage
+      fs.writeFileSync(filepath, req.file.buffer);
+      
+      data.externalPdfUrl = `/uploads/quotations/${filename}`;
+      data.isExternal = true;
+      data.isLocalFile = true;
+      console.log('Successfully saved to local storage:', data.externalPdfUrl);
 
       // Save quotation with file URL
       const quotation = new Quotation(data);
@@ -719,22 +676,42 @@ app.get('/api/pdf/download/:quotationId', async (req, res) => {
     }
 
     const pdfUrl = quotation.externalPdfUrl;
-    console.log('PDF download request for:', pdfUrl);
+    console.log('PDF download request for:', pdfUrl);    // Handle local file paths (primary method since we're using persistent storage)
+    if (pdfUrl.startsWith('/uploads/')) {
+      const filename = path.basename(pdfUrl);
+      
+      // Railway Volume-aware file path
+      const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME;
+      const filepath = isRailway 
+        ? path.join('/app', pdfUrl)  // Railway volume mount path
+        : path.join(__dirname, '..', pdfUrl); // Local development
+      
+      console.log('Attempting to serve file from:', filepath);
+      
+      const fs = await import('fs');
+      if (!fs.existsSync(filepath)) {
+        console.error('Local PDF file not found:', filepath);
+        return res.status(404).json({ error: 'PDF file not found on server' });
+      }
 
-    // If it's a Cloudinary URL, fetch and proxy the content
-    if (pdfUrl.includes('cloudinary.com')) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.number}.pdf"`);
+      
+      const fileStream = fs.createReadStream(filepath);
+      fileStream.pipe(res);
+    }
+    // Legacy support for Cloudinary URLs (for existing quotations)
+    else if (pdfUrl.includes('cloudinary.com')) {
       try {
         const response = await fetch(pdfUrl);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        // Set proper headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.number}.pdf"`);
         res.setHeader('Cache-Control', 'public, max-age=3600');
 
-        // Stream the PDF content from Cloudinary
         response.body.pipe(res);
         
       } catch (cloudinaryError) {
@@ -745,24 +722,8 @@ app.get('/api/pdf/download/:quotationId', async (req, res) => {
           url: pdfUrl
         });
       }
-    } 
-    // If it's a local file path, serve directly
-    else if (pdfUrl.startsWith('/uploads/')) {
-      const filename = path.basename(pdfUrl);
-      const filepath = path.join(__dirname, '..', pdfUrl);
-      
-      const fs = await import('fs');
-      if (!fs.existsSync(filepath)) {
-        return res.status(404).json({ error: 'Local PDF file not found' });
-      }
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.number}.pdf"`);
-      
-      const fileStream = fs.createReadStream(filepath);
-      fileStream.pipe(res);
     }
-    // Handle external URLs
+    // Handle other external URLs
     else {
       res.redirect(pdfUrl);
     }
