@@ -269,15 +269,16 @@ app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
 
       if (hasCloudinaryConfig) {
         // Try Cloudinary upload first
-        try {
-          const uploadResult = await new Promise((resolve, reject) => {
+        try {          const uploadResult = await new Promise((resolve, reject) => {
             const stream = cloudinary.v2.uploader.upload_stream(
               {
                 resource_type: 'raw',
                 folder: 'safiriticket/quotations',
                 public_id: `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`,
                 use_filename: true,
-                unique_filename: true
+                unique_filename: true,
+                access_mode: 'public',
+                type: 'upload'
               },
               (error, result) => {
                 if (error) {
@@ -601,6 +602,178 @@ app.put('/api/orgsettings', async (req, res) => {
   }
   await settings.save();
   res.json(settings);
+});
+
+// --- Debug PDF Downloads ---
+app.get('/api/debug/uploads', async (req, res) => {
+  try {
+    const fs = await import('fs');
+    const uploadsDir = path.join(__dirname, '../uploads/quotations');
+    
+    if (!fs.existsSync(uploadsDir)) {
+      return res.json({ 
+        error: 'Uploads directory does not exist',
+        path: uploadsDir,
+        files: []
+      });
+    }
+    
+    const files = fs.readdirSync(uploadsDir);
+    const fileDetails = files.map(filename => {
+      const filepath = path.join(uploadsDir, filename);
+      const stats = fs.statSync(filepath);
+      return {
+        filename,
+        size: stats.size,
+        created: stats.birthtime,
+        downloadUrl: `/uploads/quotations/${filename}`,
+        fullPath: filepath
+      };
+    });
+    
+    res.json({
+      uploadsDir,
+      totalFiles: files.length,
+      files: fileDetails
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: error.message 
+    });
+  }
+});
+
+// --- Test direct PDF download ---
+app.get('/api/debug/download/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, '../uploads/quotations', filename);
+    
+    console.log('Direct download test for:', filename);
+    console.log('Full path:', filepath);
+    
+    const fs = await import('fs');
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({ 
+        error: 'File not found',
+        path: filepath
+      });
+    }
+    
+    // Set proper headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(filepath);
+    fileStream.pipe(res);
+    
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Download error', 
+      details: error.message 
+    });
+  }
+});
+
+// --- Get quotations with PDF info ---
+app.get('/api/debug/quotations-with-pdfs', async (req, res) => {
+  try {
+    const quotations = await Quotation.find({ 
+      $or: [
+        { externalPdfUrl: { $exists: true, $ne: null } },
+        { isExternal: true }
+      ]
+    }).populate('client');
+    
+    const quotationsWithPdfInfo = quotations.map(q => ({
+      _id: q._id,
+      number: q.number,
+      client: q.client?.name,
+      externalPdfUrl: q.externalPdfUrl,
+      isExternal: q.isExternal,
+      isLocalFile: q.isLocalFile,
+      cloudinaryPublicId: q.cloudinaryPublicId,
+      createdAt: q.createdAt
+    }));
+    
+    res.json({
+      total: quotationsWithPdfInfo.length,
+      quotations: quotationsWithPdfInfo
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Database error', 
+      details: error.message 
+    });
+  }
+});
+
+// --- PDF Proxy/Download Endpoint ---
+app.get('/api/pdf/download/:quotationId', async (req, res) => {
+  try {
+    const quotation = await Quotation.findById(req.params.quotationId);
+    if (!quotation || !quotation.externalPdfUrl) {
+      return res.status(404).json({ error: 'PDF not found' });
+    }
+
+    const pdfUrl = quotation.externalPdfUrl;
+    console.log('PDF download request for:', pdfUrl);
+
+    // If it's a Cloudinary URL, fetch and proxy the content
+    if (pdfUrl.includes('cloudinary.com')) {
+      try {
+        const response = await fetch(pdfUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // Set proper headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.number}.pdf"`);
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+
+        // Stream the PDF content from Cloudinary
+        response.body.pipe(res);
+        
+      } catch (cloudinaryError) {
+        console.error('Cloudinary PDF fetch error:', cloudinaryError);
+        return res.status(502).json({ 
+          error: 'Unable to fetch PDF from Cloudinary',
+          details: cloudinaryError.message,
+          url: pdfUrl
+        });
+      }
+    } 
+    // If it's a local file path, serve directly
+    else if (pdfUrl.startsWith('/uploads/')) {
+      const filename = path.basename(pdfUrl);
+      const filepath = path.join(__dirname, '..', pdfUrl);
+      
+      const fs = await import('fs');
+      if (!fs.existsSync(filepath)) {
+        return res.status(404).json({ error: 'Local PDF file not found' });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.number}.pdf"`);
+      
+      const fileStream = fs.createReadStream(filepath);
+      fileStream.pipe(res);
+    }
+    // Handle external URLs
+    else {
+      res.redirect(pdfUrl);
+    }
+
+  } catch (error) {
+    console.error('PDF download error:', error);
+    res.status(500).json({ 
+      error: 'PDF download failed',
+      details: error.message
+    });
+  }
 });
 
 // --- Service (Product) CRUD API ---

@@ -171,11 +171,10 @@ window.renderQuotations = function(main) {
                     </select>
                   </td>
                   <td>${getCurrencySymbol(q.currency || 'USD')}${q.total?.toFixed ? q.total.toFixed(2) : q.total || 0}</td>
-                  <td>${q.expiresAt ? new Date(q.expiresAt).toLocaleDateString() : ''}</td>
-                  <td>
+                  <td>${q.expiresAt ? new Date(q.expiresAt).toLocaleDateString() : ''}</td>                  <td>
                     <button class="q-view-btn" title="View">👁️</button>
                     ${q.isExternal && q.externalPdfUrl ? `
-                      <a href="${q.externalPdfUrl}" target="_blank" download style="margin-left:4px;" title="Download PDF">📄</a>
+                      <a href="${window.API_BASE_URL}/api/pdf/download/${q._id}" target="_blank" download style="margin-left:4px;" title="Download PDF">📄</a>
                     ` : ''}
                     <button class="q-delete-btn" title="Delete" style="margin-left:4px;">🗑️</button>
                   </td>
@@ -630,10 +629,9 @@ function viewQuotationModal(id) {
                 </li>
               `).join('')}
             </ul>
-          </div>
-          ${q.isExternal && q.externalPdfUrl ? `
+          </div>          ${q.isExternal && q.externalPdfUrl ? `
             <div>
-              <a href="${q.externalPdfUrl}" target="_blank" download style="color:#8c241c;">Download/View PDF</a>
+              <a href="${window.API_BASE_URL}/api/pdf/download/${q._id}" target="_blank" download style="color:#8c241c;">Download/View PDF</a>
             </div>
           ` : ''}
         </div>
