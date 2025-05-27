@@ -136,8 +136,7 @@ window.renderFinancialCharts = function(container) {
         cornerRadius: 6
       }
     }
-  };  
-  // Fetch financials data for status chart
+  };    // Fetch financials data for status chart
   fetch(`${window.API_BASE_URL}/api/financials`)
     .then(r => r.json())
     .then(data => {      // 1. Revenue Status Doughnut Chart (improved pie chart)
@@ -161,8 +160,7 @@ window.renderFinancialCharts = function(container) {
           plugins: {
             ...commonOptions.plugins,
             tooltip: {
-              ...commonOptions.plugins.tooltip,
-              callbacks: {
+              ...commonOptions.plugins.tooltip,              callbacks: {
                 label: function(context) {
                   const value = context.raw;
                   const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -174,15 +172,17 @@ window.renderFinancialCharts = function(container) {
           }
         }
       });
+      
+      // Store chart for cleanup
+      window.chartInstances.push(chart1);
 
       // 2. Currency Breakdown Polar Area Chart
       if (data.currencyData) {
         const currencies = Object.keys(data.currencyData);
         const currencyValues = currencies.map(curr => data.currencyData[curr].paidRevenue);
         const currencyColors_array = currencies.map(curr => currencyColors[curr] || '#95a5a6');
-        
-        const ctx_currency = document.getElementById('currency-breakdown-chart').getContext('2d');
-        new Chart(ctx_currency, {
+          const ctx_currency = document.getElementById('currency-breakdown-chart').getContext('2d');
+        const chart2 = new Chart(ctx_currency, {
           type: 'polarArea',
           data: {
             labels: currencies.map(curr => `${curr} Revenue`),
@@ -209,8 +209,7 @@ window.renderFinancialCharts = function(container) {
               ...commonOptions.plugins,
               tooltip: {
                 ...commonOptions.plugins.tooltip,
-                callbacks: {
-                  label: function(context) {
+                callbacks: {                  label: function(context) {
                     const currency = currencies[context.dataIndex];
                     const value = context.raw;
                     const symbol = getCurrencySymbol(currency);
@@ -221,6 +220,9 @@ window.renderFinancialCharts = function(container) {
             }
           }
         });
+        
+        // Store chart for cleanup
+        window.chartInstances.push(chart2);
       }
     });
 
@@ -267,9 +269,8 @@ window.renderFinancialCharts = function(container) {
       // 3. Monthly Revenue Trends (Line Chart)
       const monthlyRevenue = months.map(month => monthlyData[month]?.total || 0);
       const paidRevenue = months.map(month => monthlyData[month]?.byStatus.paid || 0);
-      
-      const ctx3 = document.getElementById('monthly-revenue-chart').getContext('2d');
-      new Chart(ctx3, {
+        const ctx3 = document.getElementById('monthly-revenue-chart').getContext('2d');
+      const chart3 = new Chart(ctx3, {
         type: 'line',
         data: {
           labels: months.map(month => {
@@ -337,16 +338,17 @@ window.renderFinancialCharts = function(container) {
                   return `${context.dataset.label}: $${context.raw.toLocaleString()}`;
                 }
               }
-            }
-          }
+            }          }
         }
       });
+      
+      // Store chart for cleanup
+      window.chartInstances.push(chart3);
 
       // 4. Invoice Volume Chart (Bar Chart)
       const volumeData = months.map(month => monthlyVolume[month]?.total || 0);
-      
-      const ctx4 = document.getElementById('invoice-volume-chart').getContext('2d');
-      new Chart(ctx4, {
+        const ctx4 = document.getElementById('invoice-volume-chart').getContext('2d');
+      const chart4 = new Chart(ctx4, {
         type: 'bar',
         data: {
           labels: months.map(month => {
@@ -373,8 +375,7 @@ window.renderFinancialCharts = function(container) {
             x: {
               grid: { display: false },
               ticks: { font: { size: 10 }, color: '#666' }
-            },
-            y: {
+            },            y: {
               beginAtZero: true,
               grid: { color: '#f0f0f0', drawBorder: false },
               ticks: { 
@@ -386,6 +387,9 @@ window.renderFinancialCharts = function(container) {
           }
         }
       });
+      
+      // Store chart for cleanup
+      window.chartInstances.push(chart4);
 
       // 5. Average Invoice Value Chart (Area Chart)
       const avgValues = months.map(month => {
@@ -393,9 +397,8 @@ window.renderFinancialCharts = function(container) {
         const count = monthlyVolume[month]?.total || 0;
         return count > 0 ? total / count : 0;
       });
-      
-      const ctx5 = document.getElementById('avg-invoice-chart').getContext('2d');
-      new Chart(ctx5, {
+        const ctx5 = document.getElementById('avg-invoice-chart').getContext('2d');
+      const chart5 = new Chart(ctx5, {
         type: 'line',
         data: {
           labels: months.map(month => {
@@ -446,10 +449,12 @@ window.renderFinancialCharts = function(container) {
                   return `${context.dataset.label}: $${context.raw.toFixed(2)}`;
                 }
               }
-            }
-          }
+            }          }
         }
       });
+      
+      // Store chart for cleanup
+      window.chartInstances.push(chart5);
     });
 };
 

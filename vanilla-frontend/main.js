@@ -60,8 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   function showSection(section) {
+    // Clean up any existing charts before switching sections
+    if (typeof window.destroyCharts === 'function') {
+      window.destroyCharts();
+    }
+    
     setActive(section);
     if (section === 'overview') showOverview();
     else if (section === 'quotations' && typeof window.renderQuotations === 'function') window.renderQuotations(main);

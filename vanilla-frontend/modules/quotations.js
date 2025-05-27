@@ -1,5 +1,19 @@
 // Attach to window for global access
 window.renderQuotations = function(main) {
+  
+  // Helper function to get currency symbol (accessible throughout the module)
+  function getCurrencySymbol(currency) {
+    const symbols = {
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'KES': 'KSh',
+      'CAD': 'C$',
+      'AUD': 'A$'
+    };
+    return symbols[currency] || '$';
+  }
+  
   main.innerHTML = `
     <h2 style="color:#8c241c;">Quotations</h2>
     <div id="quotation-creator-area"></div>
@@ -294,21 +308,7 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
         ? clients.map(c => `<option value="${c._id}">${c.name} (${c.email})</option>`).join('')
         : '<option value="">No clients</option>';
     });
-
   // --- Items logic ---
-  
-  // Helper function to get currency symbol
-  function getCurrencySymbol(currency) {
-    const symbols = {
-      'USD': '$',
-      'EUR': '€',
-      'GBP': '£',
-      'KES': 'KSh',
-      'CAD': 'C$',
-      'AUD': 'A$'
-    };
-    return symbols[currency] || '$';
-  }
   
   function updateSubtotalsAndTotal() {
     let total = 0;
