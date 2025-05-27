@@ -88,8 +88,17 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Serve uploaded PDFs statically
-app.use('/uploads/quotations', express.static(path.join(__dirname, '../uploads/quotations')));
+// Serve uploaded PDFs statically with proper headers
+app.use('/uploads/quotations', (req, res, next) => {
+  // Set proper headers for PDF files
+  if (req.path.endsWith('.pdf')) {
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="quotation.pdf"'
+    });
+  }
+  next();
+}, express.static(path.join(__dirname, '../uploads/quotations')));
 
 import Client from './models/Client.js';
 import Quotation from './models/Quotation.js';
@@ -114,6 +123,45 @@ const OrgSettings = mongoose.models.OrgSettings || mongoose.model('OrgSettings',
 // --- Health check route ---
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
+});
+
+// --- Test PDF serving endpoint ---
+app.get('/api/test-pdf/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, '../uploads/quotations', filename);
+    
+    console.log('Testing PDF access for:', filename);
+    console.log('Full path:', filepath);
+    
+    // Check if file exists
+    const fs = await import('fs');
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({ 
+        error: 'File not found',
+        path: filepath,
+        exists: false
+      });
+    }
+    
+    // Get file stats
+    const stats = fs.statSync(filepath);
+    
+    res.json({
+      filename,
+      path: filepath,
+      exists: true,
+      size: stats.size,
+      created: stats.birthtime,
+      modified: stats.mtime,
+      downloadUrl: `/uploads/quotations/${filename}`
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: error.message 
+    });
+  }
 });
 
 // --- User Endpoints ---
@@ -210,35 +258,109 @@ app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
   if (typeof data.items === 'string') {
     try { data.items = JSON.parse(data.items); } catch { data.items = []; }
   }
-  // If a PDF was uploaded, upload to Cloudinary and save the URL
+  
+  // If a PDF was uploaded, handle file storage
   if (req.file) {
     try {
-      // Upload buffer directly to Cloudinary
-      const uploadResult = await cloudinary.v2.uploader.upload_stream(
-        {
-          resource_type: 'raw',
-          folder: 'safiriticket/quotations',
-          filename_override: req.file.originalname
-        },
-        async (error, result) => {
-          if (error) {
-            return res.status(500).json({ error: 'Failed to upload PDF to Cloudinary', details: error.message });
-          }
-          data.externalPdfUrl = result.secure_url;
+      // Check if Cloudinary is configured
+      const hasCloudinaryConfig = process.env.CLOUDINARY_CLOUD_NAME && 
+                                 process.env.CLOUDINARY_API_KEY && 
+                                 process.env.CLOUDINARY_API_SECRET;
+
+      if (hasCloudinaryConfig) {
+        // Try Cloudinary upload first
+        try {
+          const uploadResult = await new Promise((resolve, reject) => {
+            const stream = cloudinary.v2.uploader.upload_stream(
+              {
+                resource_type: 'raw',
+                folder: 'safiriticket/quotations',
+                public_id: `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`,
+                use_filename: true,
+                unique_filename: true
+              },
+              (error, result) => {
+                if (error) {
+                  console.error('Cloudinary upload error:', error);
+                  reject(error);
+                } else {
+                  resolve(result);
+                }
+              }
+            );
+            stream.end(req.file.buffer);
+          });
+
+          data.externalPdfUrl = uploadResult.secure_url;
           data.isExternal = true;
-          const quotation = new Quotation(data);
-          if (!quotation.number) {
-            quotation.number = await getNextNumber(Quotation, 'Q-');
+          data.cloudinaryPublicId = uploadResult.public_id;
+          console.log('Successfully uploaded to Cloudinary:', uploadResult.secure_url);
+          
+        } catch (cloudinaryError) {
+          console.warn('Cloudinary upload failed, falling back to local storage:', cloudinaryError.message);
+          
+          // Fallback to local storage
+          const fs = await import('fs');
+          const uploadsDir = path.join(__dirname, '../uploads/quotations');
+          
+          // Ensure uploads directory exists
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
           }
-          await quotation.save();
-          res.status(201).json(quotation);
+          
+          // Generate unique filename
+          const filename = `${Date.now()}_${req.file.originalname}`;
+          const filepath = path.join(uploadsDir, filename);
+          
+          // Save file to local storage
+          fs.writeFileSync(filepath, req.file.buffer);
+          
+          data.externalPdfUrl = `/uploads/quotations/${filename}`;
+          data.isExternal = true;
+          data.isLocalFile = true;
+          console.log('Successfully saved to local storage:', data.externalPdfUrl);
         }
-      );
-      // Pipe the buffer to Cloudinary
-      uploadResult.end(req.file.buffer);
-      return; // prevent further execution
+      } else {
+        // No Cloudinary config, use local storage directly
+        console.log('No Cloudinary configuration found, using local storage');
+        
+        const fs = await import('fs');
+        const uploadsDir = path.join(__dirname, '../uploads/quotations');
+        
+        // Ensure uploads directory exists
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        
+        // Generate unique filename
+        const filename = `${Date.now()}_${req.file.originalname}`;
+        const filepath = path.join(uploadsDir, filename);
+        
+        // Save file to local storage
+        fs.writeFileSync(filepath, req.file.buffer);
+        
+        data.externalPdfUrl = `/uploads/quotations/${filename}`;
+        data.isExternal = true;
+        data.isLocalFile = true;
+        console.log('Successfully saved to local storage:', data.externalPdfUrl);
+      }
+
+      // Save quotation with file URL
+      const quotation = new Quotation(data);
+      if (!quotation.number) {
+        quotation.number = await getNextNumber(Quotation, 'Q-');
+      }
+      await quotation.save();
+      res.status(201).json(quotation);
+      return;
+      
     } catch (err) {
-      return res.status(500).json({ error: 'Failed to upload PDF to Cloudinary', details: err.message });
+      console.error('File upload error:', err);
+      return res.status(500).json({ 
+        error: 'Failed to upload PDF', 
+        details: err.message,
+        fallback: 'Please check server configuration and try again'
+      });
     }
   }
   // ...existing code for non-PDF case...
@@ -558,9 +680,6 @@ app.delete('/api/income/:id', async (req, res) => {
   if (!income) return res.status(404).json({ error: 'Income not found' });
   res.json({ success: true });
 });
-
-// Serve uploaded PDFs statically
-app.use('/uploads/quotations', express.static(path.join(__dirname, '../uploads/quotations')));
 
 // Define port
 const PORT = process.env.PORT || 5000;
