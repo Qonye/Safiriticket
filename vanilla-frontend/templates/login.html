@@ -1,0 +1,22 @@
+<div id="login-container" style="width:100%;height:100vh;display:flex;align-items:center;justify-content:center;background-color:#f5f5f5;">
+    <div style="background:#fff;padding:40px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);width:400px;">
+        <div style="text-align:center;margin-bottom:30px;">
+            <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" style="width:200px;margin-bottom:20px;" />
+            <h2 style="color:#8c241c;font-size:24px;margin:0;">Admin Portal</h2>
+        </div>
+        <form id="login-form" style="display:flex;flex-direction:column;gap:20px;">
+            <div>
+                <label style="display:block;margin-bottom:8px;font-weight:500;color:#444;">Username</label>
+                <input type="text" name="username" autocomplete="username" required style="padding:12px;border:1px solid #ddd;border-radius:6px;width:100%;font-size:16px;transition:border-color 0.3s;">
+            </div>
+            <div>
+                <label style="display:block;margin-bottom:8px;font-weight:500;color:#444;">Password</label>
+                <input type="password" name="password" autocomplete="current-password" required style="padding:12px;border:1px solid #ddd;border-radius:6px;width:100%;font-size:16px;transition:border-color 0.3s;">
+            </div>
+            <button type="submit" style="padding:14px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:16px;font-weight:500;margin-top:10px;transition:background-color 0.3s;">
+                Sign In
+            </button>
+        </form>
+        <div id="login-error" style="color:#e74c3c;text-align:center;margin-top:16px;font-size:14px;display:none;"></div>
+    </div>
+</div>

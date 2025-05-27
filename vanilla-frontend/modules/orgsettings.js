@@ -80,7 +80,7 @@ window.renderOrgSettings = function(main) {
         website: form.website.value.trim(),
         logoUrl: form.logoUrl.value.trim()
       };
-      fetch('http://localhost:5000/api/orgsettings', {
+      fetch(`${window.API_BASE_URL}/api/orgsettings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -100,7 +100,7 @@ window.renderOrgSettings = function(main) {
   }
 
   // Initial load
-  fetch('http://localhost:5000/api/orgsettings')
+  fetch(`${window.API_BASE_URL}/api/orgsettings`)
     .then(r => r.json())
     .then(settings => {
       window.currentOrgSettings = settings || {}; // <-- Make available globally for other modules

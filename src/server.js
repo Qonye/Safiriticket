@@ -5,6 +5,12 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import multer from 'multer';
+import cloudinary from 'cloudinary';
+import fs from 'fs';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import User from './models/User.js';
 
 // Initialize __filename and __dirname before using them
 const __filename = fileURLToPath(import.meta.url);
@@ -13,25 +19,134 @@ const __dirname = dirname(__filename);
 // Now you can safely use __dirname for dotenv
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
+// --- Cloudinary config (legacy support for existing PDFs) ---
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// MongoDB connection
+const connectDB = async () => {
+    try {
+        const mongoUri = 'mongodb+srv://Martin:0LN98uAumci1EwCc@cluster0.e1hy26f.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+        await mongoose.connect(mongoUri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+        console.log('MongoDB connected successfully');
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+};
+
+connectDB();
+
+// Environment detection for Railway deployment
+const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
+console.log('Environment detected:', isRailway ? 'Railway' : 'Local Development');
+console.log('Available environment variables:');
+console.log('- PORT:', process.env.PORT);
+console.log('- NODE_ENV:', process.env.NODE_ENV);
+console.log('- RAILWAY_ENVIRONMENT_NAME:', process.env.RAILWAY_ENVIRONMENT_NAME);
+console.log('- RAILWAY_ENVIRONMENT:', process.env.RAILWAY_ENVIRONMENT);
+
+if (isRailway) {
+  console.log('Railway-specific variables:');
+  console.log('- RAILWAY_VOLUME_MOUNT_PATH:', process.env.RAILWAY_VOLUME_MOUNT_PATH);
+  console.log('- RAILWAY_VOLUME_NAME:', process.env.RAILWAY_VOLUME_NAME);
+  
+  // Log all environment variables that start with RAILWAY
+  Object.keys(process.env).filter(key => key.startsWith('RAILWAY')).forEach(key => {
+    console.log(`- ${key}:`, process.env[key]);
+  });
+}
+
 const app = express();
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'http://localhost:5000',
+    'https://safiritickets.netlify.app',
     'http://127.0.0.1:5000',
+    'https://admin.safiritickets.com',
     'http://127.0.0.1:3000',
-    'http://127.0.0.1:5500' // <-- add this for your live server
+    'http://127.0.0.1:5500', // Live server via IP
+    'http://localhost:5500',  // Live server via localhost
+    'http://localhost:5501',  // Live server default port via localhost
+    'http://127.0.0.1:5501', // Live server default port via IP
+    'http://localhost:63342', // IntelliJ IDEA built-in server
+    'http://127.0.0.1:63342', // IntelliJ IDEA built-in server via IP
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Log all incoming requests for debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 app.use(express.json());
 
+// JWT secret
+const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+
 // --- Models ---
+import authRoutes from './routes/auth.js';
+
+// --- Routes ---
+app.use('/api/auth', authRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        message: 'Something went wrong!',
+        error: process.env.NODE_ENV === 'development' ? err.message : {}
+    });
+});
+
+// Serve uploaded PDFs statically with proper headers - Railway Volume support
+function getUploadsPath() {
+  const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
+  
+  if (isRailway) {
+    // Try different possible Railway volume mount paths
+    const possiblePaths = [
+      '/app/uploads/quotations',
+      process.env.RAILWAY_VOLUME_MOUNT_PATH ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/quotations` : null,
+      '/var/lib/containers/railwayapp/bind-mounts/uploads/quotations',
+      '/uploads/quotations'
+    ].filter(Boolean);
+    
+    return possiblePaths[0]; // Use first option as default
+  } else {
+    return path.join(__dirname, '../uploads/quotations');
+  }
+}
+
+const staticUploadsPath = getUploadsPath();
+console.log('Static uploads path:', staticUploadsPath);
+
+app.use('/uploads/quotations', (req, res, next) => {
+  // Set proper headers for PDF files
+  if (req.path.endsWith('.pdf')) {
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="quotation.pdf"'
+    });
+  }
+  next();
+}, express.static(staticUploadsPath));
+
 import Client from './models/Client.js';
 import Quotation from './models/Quotation.js';
 import Invoice from './models/Invoice.js';
+import Service from './models/Service.js';
+import Expense from './models/Expense.js';
+import Income from './models/Income.js';
 
 // --- Organization Settings Model ---
 const orgSettingsSchema = new mongoose.Schema({
@@ -51,26 +166,92 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-// --- Admin Authentication Middleware ---
-function adminAuth(req, res, next) {
-  // TODO: Implement real authentication (e.g., JWT, session)
-  // For now, allow all requests
-  next();
-}
+// --- Test PDF serving endpoint ---
+app.get('/api/test-pdf/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, '../uploads/quotations', filename);
+    
+    console.log('Testing PDF access for:', filename);
+    console.log('Full path:', filepath);
+    
+    // Check if file exists
+    const fs = await import('fs');
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({ 
+        error: 'File not found',
+        path: filepath,
+        exists: false
+      });
+    }
+    
+    // Get file stats
+    const stats = fs.statSync(filepath);
+    
+    res.json({
+      filename,
+      path: filepath,
+      exists: true,
+      size: stats.size,
+      created: stats.birthtime,
+      modified: stats.mtime,
+      downloadUrl: `/uploads/quotations/${filename}`
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: error.message 
+    });
+  }
+});
 
-// Apply to all admin routes
-app.use('/api', adminAuth);
+// --- User Endpoints ---
+
+// Login (no longer needed, but left for reference)
+// app.post('/api/login', ...)
+
+// --- Initial Superadmin Creation (run once if no users) ---
+// app.post('/api/setup-superadmin', ...)
 
 // Helper to get next sequential number for quotations/invoices
 async function getNextNumber(model, prefix) {
   const last = await model.findOne({ number: new RegExp('^' + prefix) }).sort({ createdAt: -1 });
-  let next = 1;
+  let next = 8463; // Start invoice numbering from INV-08463
   if (last && last.number) {
     const match = last.number.match(/(\d+)$/);
-    if (match) next = parseInt(match[1], 10) + 1;
+    if (match) {
+      const lastNum = parseInt(match[1], 10);
+      next = Math.max(lastNum + 1, 8463); // Ensure we don't go below 8463
+    }
   }
-  return `${prefix}${String(next).padStart(3, '0')}`;
+  return `${prefix}${String(next).padStart(5, '0')}`;
 }
+
+// Exchange rates helper function (you can update these rates as needed)
+function getExchangeRates() {
+  return {
+    'USD': 1.0,    // Base currency
+    'KES': 0.0067, // 1 KES = 0.0067 USD (approximately 149 KES = 1 USD as of May 2025)
+    'GBP': 1.23,   // 1 GBP = 1.23 USD  
+    'EUR': 1.03,   // 1 EUR = 1.03 USD
+    'CAD': 0.70,   // 1 CAD = 0.70 USD
+    'AUD': 0.62    // 1 AUD = 0.62 USD
+  };
+}
+
+// Convert amount to USD equivalent
+function convertToUSD(amount, fromCurrency) {
+  const rates = getExchangeRates();
+  const rate = rates[fromCurrency] || 1.0;
+  return amount * rate;
+}
+
+// --- Multer setup for file uploads ---
+// Use memory storage so files are not saved to disk
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
 
 // --- Client Routes ---
 app.get('/api/clients', async (req, res) => {
@@ -104,12 +285,91 @@ app.delete('/api/clients/:id', async (req, res) => {
 
 // --- Quotation Routes ---
 app.get('/api/quotations', async (req, res) => {
-  const quotations = await Quotation.find().populate('client');
+  const { client, status } = req.query;
+  const filter = {};
+  if (client) filter.client = client;
+  if (status) filter.status = status;
+  const quotations = await Quotation.find(filter).populate('client');
   res.json(quotations);
 });
 
-app.post('/api/quotations', async (req, res) => {
-  const quotation = new Quotation(req.body);
+app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
+  let data = req.body;
+  // If items is a string (from FormData), parse it
+  if (typeof data.items === 'string') {
+    try { data.items = JSON.parse(data.items); } catch { data.items = []; }
+  }    // If a PDF was uploaded, handle file storage - Railway Volume support
+  if (req.file) {    try {
+      console.log('PDF upload received, using persistent storage');
+      
+      const fs = await import('fs');
+      
+      // Determine uploads directory based on environment
+      let uploadsDir;
+      const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
+      
+      if (isRailway) {
+        // Try different possible Railway volume mount paths
+        const possiblePaths = [
+          '/app/uploads/quotations',  // Standard volume mount
+          process.env.RAILWAY_VOLUME_MOUNT_PATH ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/quotations` : null,
+          '/var/lib/containers/railwayapp/bind-mounts/uploads/quotations', // From the logs
+          '/uploads/quotations'  // Alternative mount
+        ].filter(Boolean);
+        
+        // Find the first existing directory or use the first option
+        uploadsDir = possiblePaths[0]; // Default to first option
+        
+        console.log('Railway volume detection:');
+        console.log('- Possible paths:', possiblePaths);
+        console.log('- Selected path:', uploadsDir);
+      } else {
+        uploadsDir = path.join(__dirname, '../uploads/quotations'); // Local development
+        console.log('Local development path:', uploadsDir);
+      }
+      
+      console.log('Using uploads directory:', uploadsDir);
+      
+      // Ensure uploads directory exists
+      if (!fs.existsSync(uploadsDir)) {
+        console.log('Creating uploads directory:', uploadsDir);
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Generate unique filename
+      const filename = `${Date.now()}_${req.file.originalname}`;
+      const filepath = path.join(uploadsDir, filename);
+      
+      console.log('Saving file to:', filepath);
+      
+      // Save file to storage
+      fs.writeFileSync(filepath, req.file.buffer);
+      
+      data.externalPdfUrl = `/uploads/quotations/${filename}`;
+      data.isExternal = true;
+      data.isLocalFile = true;
+      console.log('Successfully saved to local storage:', data.externalPdfUrl);
+
+      // Save quotation with file URL
+      const quotation = new Quotation(data);
+      if (!quotation.number) {
+        quotation.number = await getNextNumber(Quotation, 'Q-');
+      }
+      await quotation.save();
+      res.status(201).json(quotation);
+      return;
+      
+    } catch (err) {
+      console.error('File upload error:', err);
+      return res.status(500).json({ 
+        error: 'Failed to upload PDF', 
+        details: err.message,
+        fallback: 'Please check server configuration and try again'
+      });
+    }
+  }
+  // ...existing code for non-PDF case...
+  const quotation = new Quotation(data);
   if (!quotation.number) {
     quotation.number = await getNextNumber(Quotation, 'Q-');
   }
@@ -173,7 +433,11 @@ app.post('/api/quotations/expire', async (req, res) => {
 
 // --- Invoice Routes ---
 app.get('/api/invoices', async (req, res) => {
-  const invoices = await Invoice.find().populate('client').populate('quotation');
+  const { client, status } = req.query;
+  const filter = {};
+  if (client) filter.client = client;
+  if (status) filter.status = status;
+  const invoices = await Invoice.find(filter).populate('client').populate('quotation');
   res.json(invoices);
 });
 
@@ -229,6 +493,11 @@ app.delete('/api/invoices/:id', async (req, res) => {
   res.json({ message: 'Invoice deleted' });
 });
 
+app.get('/api/invoices/:id/expenses', async (req, res) => {
+  const expenses = await Expense.find({ invoice: req.params.id });
+  res.json(expenses);
+});
+
 // --- Financials Summary Endpoint ---
 app.get('/api/financials', async (req, res) => {
   // Fetch all invoices with up-to-date paidAmount and total
@@ -237,26 +506,65 @@ app.get('/api/financials', async (req, res) => {
   // Calculate revenue breakdowns from actual invoice data
   let paidRevenue = 0, unpaidRevenue = 0, overdueRevenue = 0;
   let paid = 0, unpaid = 0, overdue = 0;
+  
+  // Track currency-specific data
+  const currencyData = {};
 
   invoices.forEach(i => {
     const paidAmt = Number(i.paidAmount || 0);
     const totalAmt = Number(i.total || 0);
     const dueAmt = Math.max(totalAmt - paidAmt, 0);
+    const currency = i.currency || 'USD';
 
-    // Count by status
-    if (i.status === 'Paid') paid++;
-    else if (i.status === 'Unpaid') unpaid++;
-    else if (i.status === 'Overdue') overdue++;
+    // Convert amounts to USD for aggregation
+    const paidAmtUSD = convertToUSD(paidAmt, currency);
+    const dueAmtUSD = convertToUSD(dueAmt, currency);
 
-    // Revenue analysis (partial payments included)
-    paidRevenue += paidAmt;
-    if (i.status === 'Unpaid') unpaidRevenue += dueAmt;
-    if (i.status === 'Overdue') overdueRevenue += dueAmt;
+    // Initialize currency data if not already done
+    if (!currencyData[currency]) {
+      currencyData[currency] = {
+        paidRevenue: 0,
+        unpaidRevenue: 0, 
+        overdueRevenue: 0,
+        paid: 0,
+        unpaid: 0,
+        overdue: 0,
+        totalInvoices: 0
+      };
+    }
+    
+    // Count by status (both overall and per currency)
+    if (i.status === 'Paid') {
+      paid++;
+      currencyData[currency].paid++;
+    } else if (i.status === 'Unpaid') {
+      unpaid++;
+      currencyData[currency].unpaid++;
+    } else if (i.status === 'Overdue') {
+      overdue++;
+      currencyData[currency].overdue++;
+    }
+    
+    // Increment total invoice count per currency
+    currencyData[currency].totalInvoices++;
+
+    // Revenue analysis - overall in USD equivalents
+    paidRevenue += paidAmtUSD;
+    if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) unpaidRevenue += dueAmtUSD;
+    if (i.status === 'Overdue') overdueRevenue += dueAmtUSD;
+    
+    // Currency-specific revenue analysis (in original currency)
+    currencyData[currency].paidRevenue += paidAmt;
+    if (i.status === 'Unpaid' || (i.status === 'Paid' && paidAmt < totalAmt)) {
+      currencyData[currency].unpaidRevenue += dueAmt;
+    }
+    if (i.status === 'Overdue') {
+      currencyData[currency].overdueRevenue += dueAmt;
+    }
   });
 
-  // Total revenue is sum of all paid amounts (partial or full)
+  // Total revenue is sum of all paid amounts (partial or full) in USD
   const revenue = paidRevenue;
-
   res.json({
     paid,
     unpaid,
@@ -265,7 +573,21 @@ app.get('/api/financials', async (req, res) => {
     totalInvoices: invoices.length,
     paidRevenue,
     unpaidRevenue,
-    overdueRevenue
+    overdueRevenue,
+    currencyData, // Add the currency-specific breakdown
+    exchangeRates: getExchangeRates(), // Include current exchange rates
+    note: 'Overall revenue figures are converted to USD equivalents using current exchange rates'
+  });
+});
+
+// --- Exchange Rates Endpoint ---
+app.get('/api/exchange-rates', async (req, res) => {
+  const rates = getExchangeRates();
+  res.json({
+    rates,
+    baseCurrency: 'USD',
+    lastUpdated: new Date().toISOString(),
+    note: 'Exchange rates are approximate and for internal aggregation purposes only'
   });
 });
 
@@ -286,29 +608,297 @@ app.put('/api/orgsettings', async (req, res) => {
   res.json(settings);
 });
 
-// Serve vanilla frontend statically (add this before app.listen)
-app.use('/vanilla', express.static(path.join(__dirname, '../vanilla-frontend')));
+// --- Debug PDF Downloads ---
+app.get('/api/debug/uploads', async (req, res) => {
+  try {
+    const fs = await import('fs');
+    const uploadsDir = path.join(__dirname, '../uploads/quotations');
+    
+    if (!fs.existsSync(uploadsDir)) {
+      return res.json({ 
+        error: 'Uploads directory does not exist',
+        path: uploadsDir,
+        files: []
+      });
+    }
+    
+    const files = fs.readdirSync(uploadsDir);
+    const fileDetails = files.map(filename => {
+      const filepath = path.join(uploadsDir, filename);
+      const stats = fs.statSync(filepath);
+      return {
+        filename,
+        size: stats.size,
+        created: stats.birthtime,
+        downloadUrl: `/uploads/quotations/${filename}`,
+        fullPath: filepath
+      };
+    });
+    
+    res.json({
+      uploadsDir,
+      totalFiles: files.length,
+      files: fileDetails
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Server error', 
+      details: error.message 
+    });
+  }
+});
 
+// --- Test direct PDF download ---
+app.get('/api/debug/download/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, '../uploads/quotations', filename);
+    
+    console.log('Direct download test for:', filename);
+    console.log('Full path:', filepath);
+    
+    const fs = await import('fs');
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({ 
+        error: 'File not found',
+        path: filepath
+      });
+    }
+    
+    // Set proper headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(filepath);
+    fileStream.pipe(res);
+    
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Download error', 
+      details: error.message 
+    });
+  }
+});
+
+// --- Get quotations with PDF info ---
+app.get('/api/debug/quotations-with-pdfs', async (req, res) => {
+  try {
+    const quotations = await Quotation.find({ 
+      $or: [
+        { externalPdfUrl: { $exists: true, $ne: null } },
+        { isExternal: true }
+      ]
+    }).populate('client');
+    
+    const quotationsWithPdfInfo = quotations.map(q => ({
+      _id: q._id,
+      number: q.number,
+      client: q.client?.name,
+      externalPdfUrl: q.externalPdfUrl,
+      isExternal: q.isExternal,
+      isLocalFile: q.isLocalFile,
+      cloudinaryPublicId: q.cloudinaryPublicId,
+      createdAt: q.createdAt
+    }));
+    
+    res.json({
+      total: quotationsWithPdfInfo.length,
+      quotations: quotationsWithPdfInfo
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Database error', 
+      details: error.message 
+    });
+  }
+});
+
+// --- PDF Proxy/Download Endpoint ---
+app.get('/api/pdf/download/:quotationId', async (req, res) => {
+  try {
+    const quotation = await Quotation.findById(req.params.quotationId);
+    if (!quotation || !quotation.externalPdfUrl) {
+      return res.status(404).json({ error: 'PDF not found' });
+    }
+
+    const pdfUrl = quotation.externalPdfUrl;    console.log('PDF download request for:', pdfUrl);    // Handle local file paths (primary method since we're using persistent storage)
+    if (pdfUrl.startsWith('/uploads/')) {
+      const filename = path.basename(pdfUrl);
+      
+      // Use EXACT same path construction as upload logic
+      let filepath;
+      const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
+      
+      if (isRailway) {
+        // Use the same path as upload: /app/uploads/quotations/
+        filepath = path.join('/app/uploads/quotations', filename);
+        console.log('Railway download path (matching upload):', filepath);
+      } else {
+        filepath = path.join(__dirname, '..', pdfUrl); // Local development
+        console.log('Local download path:', filepath);
+      }
+      
+      const fs = await import('fs');
+      if (!fs.existsSync(filepath)) {
+        console.error('PDF file not found:', filepath);
+        return res.status(404).json({ 
+          error: 'PDF file not found on server', 
+          searchedPath: filepath,
+          storedUrl: pdfUrl
+        });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.number}.pdf"`);
+      
+      const fileStream = fs.createReadStream(filepath);
+      fileStream.pipe(res);
+    }
+    // Legacy support for Cloudinary URLs (for existing quotations)
+    else if (pdfUrl.includes('cloudinary.com')) {
+      try {
+        const response = await fetch(pdfUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="quotation-${quotation.number}.pdf"`);
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+
+        response.body.pipe(res);
+        
+      } catch (cloudinaryError) {
+        console.error('Cloudinary PDF fetch error:', cloudinaryError);
+        return res.status(502).json({ 
+          error: 'Unable to fetch PDF from Cloudinary',
+          details: cloudinaryError.message,
+          url: pdfUrl
+        });
+      }
+    }
+    // Handle other external URLs
+    else {
+      res.redirect(pdfUrl);
+    }
+
+  } catch (error) {
+    console.error('PDF download error:', error);
+    res.status(500).json({ 
+      error: 'PDF download failed',
+      details: error.message
+    });
+  }
+});
+
+// --- Service (Product) CRUD API ---
+app.get('/api/products', async (req, res) => {
+  const services = await Service.find({ active: true });
+  res.json(services);
+});
+
+app.post('/api/products', async (req, res) => {
+  const service = new Service(req.body);
+  await service.save();
+  res.status(201).json(service);
+});
+
+app.get('/api/products/:id', async (req, res) => {
+  const service = await Service.findById(req.params.id);
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  res.json(service);
+});
+
+app.put('/api/products/:id', async (req, res) => {
+  const service = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  res.json(service);
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  const service = await Service.findByIdAndUpdate(req.params.id, { active: false }, { new: true });
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  res.json({ message: 'Service deleted (soft)' });
+});
+
+// --- Expense Routes ---
+app.get('/api/expenses', async (req, res) => {
+  const expenses = await Expense.find();
+  res.json(expenses);
+});
+
+app.post('/api/expenses', async (req, res) => {
+  const expense = new Expense(req.body);
+  await expense.save();
+  res.status(201).json(expense);
+});
+
+app.put('/api/expenses/:id', async (req, res) => {
+  const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!expense) return res.status(404).json({ error: 'Expense not found' });
+  res.json(expense);
+});
+
+app.delete('/api/expenses/:id', async (req, res) => {
+  const expense = await Expense.findByIdAndDelete(req.params.id);
+  if (!expense) return res.status(404).json({ error: 'Expense not found' });
+  res.json({ success: true });
+});
+
+// --- Income Routes ---
+app.get('/api/income', async (req, res) => {
+  const income = await Income.find();
+  res.json(income);
+});
+
+app.post('/api/income', async (req, res) => {
+  const income = new Income(req.body);
+  await income.save();
+  res.status(201).json(income);
+});
+
+app.put('/api/income/:id', async (req, res) => {
+  const income = await Income.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!income) return res.status(404).json({ error: 'Income not found' });
+  res.json(income);
+});
+
+app.delete('/api/income/:id', async (req, res) => {
+  const income = await Income.findByIdAndDelete(req.params.id);
+  if (!income) return res.status(404).json({ error: 'Income not found' });
+  res.json({ success: true });
+});
+
+// Define port
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI;
 
-// Debug log to verify .env loading
-console.log('Loaded MONGO_URI:', typeof MONGO_URI, MONGO_URI ? '[set]' : '[empty]', MONGO_URI && MONGO_URI.length);
+// Start server
+const server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log('Environment:', process.env.NODE_ENV || 'development');
+    console.log('Railway Environment:', process.env.RAILWAY_ENVIRONMENT_NAME || 'Not detected');
+});
 
-// Check for missing MONGO_URI and throw a clear error
-if (!MONGO_URI || typeof MONGO_URI !== 'string' || !MONGO_URI.trim()) {
-  console.error('ERROR: MONGO_URI is not set or is invalid. Please check your .env file and restart the server.');
-  process.exit(1);
-} else {
-  console.log('MONGO_URI loaded and appears valid.');
-}
+// Graceful shutdown handling for Railway
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+        mongoose.connection.close(false, () => {
+            console.log('MongoDB connection closed');
+            process.exit(0);
+        });
+    });
+});
 
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log('MongoDB connected.');
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  });
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+        mongoose.connection.close(false, () => {
+            console.log('MongoDB connection closed');
+            process.exit(0);
+        });
+    });
+});
