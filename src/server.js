@@ -722,60 +722,31 @@ app.get('/api/pdf/download/:quotationId', async (req, res) => {
       return res.status(404).json({ error: 'PDF not found' });
     }
 
-    const pdfUrl = quotation.externalPdfUrl;    console.log('PDF download request for:', pdfUrl);
-
-    // Handle local file paths (primary method since we're using persistent storage)
+    const pdfUrl = quotation.externalPdfUrl;    console.log('PDF download request for:', pdfUrl);    // Handle local file paths (primary method since we're using persistent storage)
     if (pdfUrl.startsWith('/uploads/')) {
       const filename = path.basename(pdfUrl);
       
-      // Railway Volume-aware file path using the same logic as upload
+      // Use EXACT same path construction as upload logic
       let filepath;
       const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
       
       if (isRailway) {
-        const possibleBasePaths = [
-          '/app',
-          process.env.RAILWAY_VOLUME_MOUNT_PATH || '',
-          '/var/lib/containers/railwayapp/bind-mounts',
-          ''
-        ].filter(Boolean);
-        
-        // Try to find the file in any of the possible locations
-        filepath = path.join(possibleBasePaths[0], pdfUrl);
-        console.log('Railway file path attempts:', possibleBasePaths.map(base => path.join(base, pdfUrl)));
+        // Use the same path as upload: /app/uploads/quotations/
+        filepath = path.join('/app/uploads/quotations', filename);
+        console.log('Railway download path (matching upload):', filepath);
       } else {
         filepath = path.join(__dirname, '..', pdfUrl); // Local development
+        console.log('Local download path:', filepath);
       }
-      
-      console.log('Attempting to serve file from:', filepath);
       
       const fs = await import('fs');
       if (!fs.existsSync(filepath)) {
-        console.error('Local PDF file not found:', filepath);
-        
-        // If Railway, try alternative paths
-        if (isRailway) {
-          const alternativePaths = [
-            '/app/uploads/quotations/' + filename,
-            '/var/lib/containers/railwayapp/bind-mounts/uploads/quotations/' + filename,
-            '/uploads/quotations/' + filename
-          ];
-          
-          for (const altPath of alternativePaths) {
-            console.log('Trying alternative path:', altPath);
-            if (fs.existsSync(altPath)) {
-              filepath = altPath;
-              console.log('Found file at alternative path:', altPath);
-              break;
-            }
-          }
-          
-          if (!fs.existsSync(filepath)) {
-            return res.status(404).json({ error: 'PDF file not found on server', searchedPaths: [filepath, ...alternativePaths] });
-          }
-        } else {
-          return res.status(404).json({ error: 'PDF file not found on server' });
-        }
+        console.error('PDF file not found:', filepath);
+        return res.status(404).json({ 
+          error: 'PDF file not found on server', 
+          searchedPath: filepath,
+          storedUrl: pdfUrl
+        });
       }
 
       res.setHeader('Content-Type', 'application/pdf');
