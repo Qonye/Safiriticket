@@ -44,11 +44,23 @@ const connectDB = async () => {
 connectDB();
 
 // Environment detection for Railway deployment
-const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME;
+const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
 console.log('Environment detected:', isRailway ? 'Railway' : 'Local Development');
+console.log('Available environment variables:');
+console.log('- PORT:', process.env.PORT);
+console.log('- NODE_ENV:', process.env.NODE_ENV);
+console.log('- RAILWAY_ENVIRONMENT_NAME:', process.env.RAILWAY_ENVIRONMENT_NAME);
+console.log('- RAILWAY_ENVIRONMENT:', process.env.RAILWAY_ENVIRONMENT);
+
 if (isRailway) {
-  console.log('Railway Volume Mount Path:', process.env.RAILWAY_VOLUME_MOUNT_PATH);
-  console.log('Railway Volume Name:', process.env.RAILWAY_VOLUME_NAME);
+  console.log('Railway-specific variables:');
+  console.log('- RAILWAY_VOLUME_MOUNT_PATH:', process.env.RAILWAY_VOLUME_MOUNT_PATH);
+  console.log('- RAILWAY_VOLUME_NAME:', process.env.RAILWAY_VOLUME_NAME);
+  
+  // Log all environment variables that start with RAILWAY
+  Object.keys(process.env).filter(key => key.startsWith('RAILWAY')).forEach(key => {
+    console.log(`- ${key}:`, process.env[key]);
+  });
 }
 
 const app = express();
@@ -97,9 +109,26 @@ app.use((err, req, res, next) => {
 });
 
 // Serve uploaded PDFs statically with proper headers - Railway Volume support
-const staticUploadsPath = isRailway 
-  ? '/app/uploads/quotations'  // Railway volume mount path
-  : path.join(__dirname, '../uploads/quotations'); // Local development
+function getUploadsPath() {
+  const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
+  
+  if (isRailway) {
+    // Try different possible Railway volume mount paths
+    const possiblePaths = [
+      '/app/uploads/quotations',
+      process.env.RAILWAY_VOLUME_MOUNT_PATH ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/quotations` : null,
+      '/var/lib/containers/railwayapp/bind-mounts/uploads/quotations',
+      '/uploads/quotations'
+    ].filter(Boolean);
+    
+    return possiblePaths[0]; // Use first option as default
+  } else {
+    return path.join(__dirname, '../uploads/quotations');
+  }
+}
+
+const staticUploadsPath = getUploadsPath();
+console.log('Static uploads path:', staticUploadsPath);
 
 app.use('/uploads/quotations', (req, res, next) => {
   // Set proper headers for PDF files
@@ -270,24 +299,40 @@ app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
   if (typeof data.items === 'string') {
     try { data.items = JSON.parse(data.items); } catch { data.items = []; }
   }    // If a PDF was uploaded, handle file storage - Railway Volume support
-  if (req.file) {
-    try {
+  if (req.file) {    try {
       console.log('PDF upload received, using persistent storage');
       
       const fs = await import('fs');
       
-      // Railway Volume-aware uploads directory
-      // On Railway, volumes are mounted at the specified path
-      // In development, use relative path
-      const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME;
-      const uploadsDir = isRailway 
-        ? '/app/uploads/quotations'  // Railway volume mount path
-        : path.join(__dirname, '../uploads/quotations'); // Local development
+      // Determine uploads directory based on environment
+      let uploadsDir;
+      const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
+      
+      if (isRailway) {
+        // Try different possible Railway volume mount paths
+        const possiblePaths = [
+          '/app/uploads/quotations',  // Standard volume mount
+          process.env.RAILWAY_VOLUME_MOUNT_PATH ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/quotations` : null,
+          '/var/lib/containers/railwayapp/bind-mounts/uploads/quotations', // From the logs
+          '/uploads/quotations'  // Alternative mount
+        ].filter(Boolean);
+        
+        // Find the first existing directory or use the first option
+        uploadsDir = possiblePaths[0]; // Default to first option
+        
+        console.log('Railway volume detection:');
+        console.log('- Possible paths:', possiblePaths);
+        console.log('- Selected path:', uploadsDir);
+      } else {
+        uploadsDir = path.join(__dirname, '../uploads/quotations'); // Local development
+        console.log('Local development path:', uploadsDir);
+      }
       
       console.log('Using uploads directory:', uploadsDir);
       
       // Ensure uploads directory exists
       if (!fs.existsSync(uploadsDir)) {
+        console.log('Creating uploads directory:', uploadsDir);
         fs.mkdirSync(uploadsDir, { recursive: true });
       }
       
@@ -295,7 +340,9 @@ app.post('/api/quotations', upload.single('pdf'), async (req, res) => {
       const filename = `${Date.now()}_${req.file.originalname}`;
       const filepath = path.join(uploadsDir, filename);
       
-      // Save file to local storage
+      console.log('Saving file to:', filepath);
+      
+      // Save file to storage
       fs.writeFileSync(filepath, req.file.buffer);
       
       data.externalPdfUrl = `/uploads/quotations/${filename}`;
@@ -675,23 +722,60 @@ app.get('/api/pdf/download/:quotationId', async (req, res) => {
       return res.status(404).json({ error: 'PDF not found' });
     }
 
-    const pdfUrl = quotation.externalPdfUrl;
-    console.log('PDF download request for:', pdfUrl);    // Handle local file paths (primary method since we're using persistent storage)
+    const pdfUrl = quotation.externalPdfUrl;    console.log('PDF download request for:', pdfUrl);
+
+    // Handle local file paths (primary method since we're using persistent storage)
     if (pdfUrl.startsWith('/uploads/')) {
       const filename = path.basename(pdfUrl);
       
-      // Railway Volume-aware file path
-      const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME;
-      const filepath = isRailway 
-        ? path.join('/app', pdfUrl)  // Railway volume mount path
-        : path.join(__dirname, '..', pdfUrl); // Local development
+      // Railway Volume-aware file path using the same logic as upload
+      let filepath;
+      const isRailway = process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT;
+      
+      if (isRailway) {
+        const possibleBasePaths = [
+          '/app',
+          process.env.RAILWAY_VOLUME_MOUNT_PATH || '',
+          '/var/lib/containers/railwayapp/bind-mounts',
+          ''
+        ].filter(Boolean);
+        
+        // Try to find the file in any of the possible locations
+        filepath = path.join(possibleBasePaths[0], pdfUrl);
+        console.log('Railway file path attempts:', possibleBasePaths.map(base => path.join(base, pdfUrl)));
+      } else {
+        filepath = path.join(__dirname, '..', pdfUrl); // Local development
+      }
       
       console.log('Attempting to serve file from:', filepath);
       
       const fs = await import('fs');
       if (!fs.existsSync(filepath)) {
         console.error('Local PDF file not found:', filepath);
-        return res.status(404).json({ error: 'PDF file not found on server' });
+        
+        // If Railway, try alternative paths
+        if (isRailway) {
+          const alternativePaths = [
+            '/app/uploads/quotations/' + filename,
+            '/var/lib/containers/railwayapp/bind-mounts/uploads/quotations/' + filename,
+            '/uploads/quotations/' + filename
+          ];
+          
+          for (const altPath of alternativePaths) {
+            console.log('Trying alternative path:', altPath);
+            if (fs.existsSync(altPath)) {
+              filepath = altPath;
+              console.log('Found file at alternative path:', altPath);
+              break;
+            }
+          }
+          
+          if (!fs.existsSync(filepath)) {
+            return res.status(404).json({ error: 'PDF file not found on server', searchedPaths: [filepath, ...alternativePaths] });
+          }
+        } else {
+          return res.status(404).json({ error: 'PDF file not found on server' });
+        }
       }
 
       res.setHeader('Content-Type', 'application/pdf');
@@ -819,6 +903,31 @@ app.delete('/api/income/:id', async (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log('Environment:', process.env.NODE_ENV || 'development');
+    console.log('Railway Environment:', process.env.RAILWAY_ENVIRONMENT_NAME || 'Not detected');
+});
+
+// Graceful shutdown handling for Railway
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+        mongoose.connection.close(false, () => {
+            console.log('MongoDB connection closed');
+            process.exit(0);
+        });
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+        console.log('Process terminated');
+        mongoose.connection.close(false, () => {
+            console.log('MongoDB connection closed');
+            process.exit(0);
+        });
+    });
 });
