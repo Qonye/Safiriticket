@@ -5,11 +5,42 @@ window.chartInstances = window.chartInstances || [];
 
 // Cleanup function to destroy existing charts
 window.destroyCharts = function() {
-  window.chartInstances.forEach(chart => {
-    if (chart && typeof chart.destroy === 'function') {
-      chart.destroy();
+  // First destroy any existing chart instances
+  if (window.chartInstances && window.chartInstances.length > 0) {
+    window.chartInstances.forEach(chart => {
+      if (chart && typeof chart.destroy === 'function') {
+        try {
+          chart.destroy();
+        } catch (e) {
+          console.warn('Error destroying chart:', e);
+        }
+      }
+    });
+  }
+  
+  // Also check for any Chart.js instances on known canvas elements
+  const canvasIds = [
+    'revenue-status-chart',
+    'currency-breakdown-chart', 
+    'monthly-revenue-chart',
+    'invoice-volume-chart',
+    'payment-methods-chart'
+  ];
+  
+  canvasIds.forEach(id => {
+    const canvas = document.getElementById(id);
+    if (canvas) {
+      const existingChart = Chart.getChart(canvas);
+      if (existingChart) {
+        try {
+          existingChart.destroy();
+        } catch (e) {
+          console.warn(`Error destroying chart on canvas ${id}:`, e);
+        }
+      }
     }
   });
+  
   window.chartInstances = [];
 };
 
@@ -135,19 +166,29 @@ window.renderFinancialCharts = function(container) {
         borderWidth: 1,
         cornerRadius: 6
       }
-    }
-  };    // Fetch financials data for status chart
-  fetch(`${window.API_BASE_URL}/api/financials`)
-    .then(r => r.json())
-    .then(data => {      // 1. Revenue Status Doughnut Chart (improved pie chart)
-      const ctx1 = document.getElementById('revenue-status-chart').getContext('2d');
-      const chart1 = new Chart(ctx1, {
-        type: 'doughnut',
-        data: {
-          labels: ['Paid Revenue', 'Unpaid Revenue', 'Overdue Revenue'],
-          datasets: [{
-            data: [data.paidRevenue, data.unpaidRevenue, data.overdueRevenue],
-            backgroundColor: [statusColors.paid, statusColors.unpaid, statusColors.overdue],
+    }  };    
+  
+  // Fetch financials data for status chart with DOM ready check
+  setTimeout(() => {
+    fetch(`${window.API_BASE_URL}/api/financials`)
+      .then(r => r.json())
+      .then(data => {      
+        // Ensure canvas exists before creating chart
+        const canvas1 = document.getElementById('revenue-status-chart');
+        if (!canvas1) {
+          console.warn('Canvas revenue-status-chart not found');
+          return;
+        }
+        
+        // 1. Revenue Status Doughnut Chart (improved pie chart)
+        const ctx1 = canvas1.getContext('2d');
+        const chart1 = new Chart(ctx1, {
+          type: 'doughnut',
+          data: {
+            labels: ['Paid Revenue', 'Unpaid Revenue', 'Overdue Revenue'],
+            datasets: [{
+              data: [data.paidRevenue, data.unpaidRevenue, data.overdueRevenue],
+              backgroundColor: [statusColors.paid, statusColors.unpaid, statusColors.overdue],
             borderWidth: 3,
             borderColor: '#fff',
             hoverBorderWidth: 4,
@@ -172,8 +213,7 @@ window.renderFinancialCharts = function(container) {
           }
         }
       });
-      
-      // Store chart for cleanup
+        // Store chart for cleanup
       window.chartInstances.push(chart1);
 
       // 2. Currency Breakdown Polar Area Chart
@@ -181,7 +221,15 @@ window.renderFinancialCharts = function(container) {
         const currencies = Object.keys(data.currencyData);
         const currencyValues = currencies.map(curr => data.currencyData[curr].paidRevenue);
         const currencyColors_array = currencies.map(curr => currencyColors[curr] || '#95a5a6');
-          const ctx_currency = document.getElementById('currency-breakdown-chart').getContext('2d');
+        
+        // Ensure canvas exists before creating chart
+        const canvas2 = document.getElementById('currency-breakdown-chart');
+        if (!canvas2) {
+          console.warn('Canvas currency-breakdown-chart not found');
+          return;
+        }
+        
+        const ctx_currency = canvas2.getContext('2d');
         const chart2 = new Chart(ctx_currency, {
           type: 'polarArea',
           data: {
@@ -264,12 +312,18 @@ window.renderFinancialCharts = function(container) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         months.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
-      }
-
-      // 3. Monthly Revenue Trends (Line Chart)
+      }      // 3. Monthly Revenue Trends (Line Chart)
       const monthlyRevenue = months.map(month => monthlyData[month]?.total || 0);
       const paidRevenue = months.map(month => monthlyData[month]?.byStatus.paid || 0);
-        const ctx3 = document.getElementById('monthly-revenue-chart').getContext('2d');
+      
+      // Ensure canvas exists before creating chart
+      const canvas3 = document.getElementById('monthly-revenue-chart');
+      if (!canvas3) {
+        console.warn('Canvas monthly-revenue-chart not found');
+        return;
+      }
+      
+      const ctx3 = canvas3.getContext('2d');
       const chart3 = new Chart(ctx3, {
         type: 'line',
         data: {
@@ -343,11 +397,17 @@ window.renderFinancialCharts = function(container) {
       });
       
       // Store chart for cleanup
-      window.chartInstances.push(chart3);
-
-      // 4. Invoice Volume Chart (Bar Chart)
+      window.chartInstances.push(chart3);      // 4. Invoice Volume Chart (Bar Chart)
       const volumeData = months.map(month => monthlyVolume[month]?.total || 0);
-        const ctx4 = document.getElementById('invoice-volume-chart').getContext('2d');
+      
+      // Ensure canvas exists before creating chart
+      const canvas4 = document.getElementById('invoice-volume-chart');
+      if (!canvas4) {
+        console.warn('Canvas invoice-volume-chart not found');
+        return;
+      }
+      
+      const ctx4 = canvas4.getContext('2d');
       const chart4 = new Chart(ctx4, {
         type: 'bar',
         data: {
@@ -392,12 +452,19 @@ window.renderFinancialCharts = function(container) {
       window.chartInstances.push(chart4);
 
       // 5. Average Invoice Value Chart (Area Chart)
-      const avgValues = months.map(month => {
-        const total = monthlyData[month]?.total || 0;
+      const avgValues = months.map(month => {        const total = monthlyData[month]?.total || 0;
         const count = monthlyVolume[month]?.total || 0;
         return count > 0 ? total / count : 0;
       });
-        const ctx5 = document.getElementById('avg-invoice-chart').getContext('2d');
+      
+      // Ensure canvas exists before creating chart
+      const canvas5 = document.getElementById('avg-invoice-chart');
+      if (!canvas5) {
+        console.warn('Canvas avg-invoice-chart not found');
+        return;
+      }
+      
+      const ctx5 = canvas5.getContext('2d');
       const chart5 = new Chart(ctx5, {
         type: 'line',
         data: {
@@ -452,10 +519,10 @@ window.renderFinancialCharts = function(container) {
             }          }
         }
       });
-      
-      // Store chart for cleanup
+        // Store chart for cleanup
       window.chartInstances.push(chart5);
     });
+  }, 100); // Small timeout to ensure DOM is ready
 };
 
 // Usage: Call window.renderFinancialCharts(someContainerElement) after rendering widgets.

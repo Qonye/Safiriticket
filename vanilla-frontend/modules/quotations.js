@@ -1,18 +1,21 @@
+// Helper function to get currency symbol (accessible globally)
+function getCurrencySymbol(currency) {
+  const symbols = {
+    'USD': '$',
+    'EUR': '€',
+    'GBP': '£',
+    'KES': 'KSh',
+    'CAD': 'C$',
+    'AUD': 'A$'
+  };
+  return symbols[currency] || '$';
+}
+
+// Make function globally accessible
+window.getCurrencySymbol = getCurrencySymbol;
+
 // Attach to window for global access
 window.renderQuotations = function(main) {
-  
-  // Helper function to get currency symbol (accessible throughout the module)
-  function getCurrencySymbol(currency) {
-    const symbols = {
-      'USD': '$',
-      'EUR': '€',
-      'GBP': '£',
-      'KES': 'KSh',
-      'CAD': 'C$',
-      'AUD': 'A$'
-    };
-    return symbols[currency] || '$';
-  }
   
   main.innerHTML = `
     <h2 style="color:#8c241c;">Quotations</h2>
