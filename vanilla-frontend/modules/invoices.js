@@ -231,14 +231,15 @@ window.renderInvoices = function(main) {
           <input type="date" class="item-checkout" placeholder="Check-out" style="width:110px;padding:4px;">
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
-      `;
-    } else if (type === 'flight') {
+      `;    } else if (type === 'flight') {
       html = `
         <div class="dynamic-fields" style="margin-top:4px;">
           <input type="text" class="item-airline" placeholder="Airline" style="width:90px;padding:4px;">
           <input type="text" class="item-from" placeholder="From" style="width:70px;padding:4px;">
           <input type="text" class="item-to" placeholder="To" style="width:70px;padding:4px;">
-          <input type="date" class="item-flight-date" placeholder="Date" style="width:110px;padding:4px;">
+          <input type="date" class="item-flight-date" placeholder="Departure Date" style="width:110px;padding:4px;">
+          <input type="date" class="item-return-date" placeholder="Return Date" style="width:110px;padding:4px;">
+          <label style="margin-left:4px;"><input type="checkbox" class="item-round-trip"> Round Trip</label>
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
       `;
@@ -588,13 +589,14 @@ window.renderInvoices = function(main) {
         item.hotelName = tr.querySelector('.item-hotel-name')?.value || '';
         item.checkin = tr.querySelector('.item-checkin')?.value || '';
         item.checkout = tr.querySelector('.item-checkout')?.value || '';
-      }
-      // Add dynamic fields for flight
+      }      // Add dynamic fields for flight
       if (type === 'flight') {
         item.airline = tr.querySelector('.item-airline')?.value || '';
         item.from = tr.querySelector('.item-from')?.value || '';
         item.to = tr.querySelector('.item-to')?.value || '';
         item.flightDate = tr.querySelector('.item-flight-date')?.value || '';
+        item.returnDate = tr.querySelector('.item-return-date')?.value || '';
+        item.isRoundTrip = tr.querySelector('.item-round-trip')?.checked || false;
         item.class = tr.querySelector('.item-class')?.value || '';
       }
       // Add dynamic fields for transfer

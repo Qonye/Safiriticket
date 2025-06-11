@@ -92,15 +92,34 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       grandTotal += totalRow;
 
       const flightDate = item.flightDate || '';
+      const returnDate = item.returnDate || '';
+      const isRoundTrip = item.isRoundTrip || false;
       const airline = item.airline || '';
       const from = item.from || '';
       const to = item.to || '';
       const route = `${from}${from && to ? ' - ' : ''}${to}`; // Added space for better readability
 
+      // Format travel dates to show both departure and return if available
+      let travelDates = '';
+      if (flightDate) {
+        travelDates = new Date(flightDate).toLocaleDateString();
+        if (returnDate && isRoundTrip) {
+          travelDates += ` - ${new Date(returnDate).toLocaleDateString()} (Round Trip)`;
+        } else if (returnDate) {
+          travelDates += ` - ${new Date(returnDate).toLocaleDateString()}`;
+        } else if (isRoundTrip) {
+          travelDates += ' (Round Trip)';
+        }
+      } else if (returnDate) {
+        travelDates = `Return: ${new Date(returnDate).toLocaleDateString()}`;
+      } else {
+        travelDates = 'N/A';
+      }
+
       htmlContent += `
         <tr>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.description || clientName}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${flightDate ? new Date(flightDate).toLocaleDateString() : 'N/A'}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${travelDates}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${airline}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${route}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>

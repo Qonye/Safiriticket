@@ -110,7 +110,6 @@ window.fillQuotationTemplate = function(template, quotation) {
   
   // Replace currency symbol placeholder if present
   html = html.replace(/{{currencySymbol}}/g, currencySymbol);
-
   // Items (show description, price, service fee, and subtotal in correct columns)
   const itemsHtml = (quotation.items || []).map(item => {
     let desc = item.description || '';
@@ -120,7 +119,9 @@ window.fillQuotationTemplate = function(template, quotation) {
     if (item.airline) desc += ` | Airline: ${item.airline}`;
     if (item.from) desc += ` | From: ${item.from}`;
     if (item.to) desc += ` | To: ${item.to}`;
-    if (item.flightDate) desc += ` | Flight Date: ${item.flightDate}`;
+    if (item.flightDate) desc += ` | Departure: ${item.flightDate}`;
+    if (item.returnDate) desc += ` | Return: ${item.returnDate}`;
+    if (item.isRoundTrip) desc += ` | Round Trip: Yes`;
     if (item.class) desc += ` | Class: ${item.class}`;
     // Add more fields as needed
 

@@ -379,14 +379,15 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
           <input type="date" class="item-checkout" placeholder="Check-out" style="width:110px;padding:4px;">
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
-      `;
-    } else if (type === 'flight') {
+      `;    } else if (type === 'flight') {
       html = `
         <div class="dynamic-fields" style="margin-top:4px;">
           <input type="text" class="item-airline" placeholder="Airline" style="width:90px;padding:4px;">
           <input type="text" class="item-from" placeholder="From" style="width:70px;padding:4px;">
           <input type="text" class="item-to" placeholder="To" style="width:70px;padding:4px;">
-          <input type="date" class="item-flight-date" placeholder="Date" style="width:110px;padding:4px;">
+          <input type="date" class="item-flight-date" placeholder="Departure Date" style="width:110px;padding:4px;">
+          <input type="date" class="item-return-date" placeholder="Return Date" style="width:110px;padding:4px;">
+          <label style="margin-left:4px;"><input type="checkbox" class="item-round-trip"> Round Trip</label>
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
       `;
@@ -489,17 +490,20 @@ function renderSystemQuotationForm(container, onQuotationAdded) {
         const checkout = tr.querySelector('.item-checkout')?.value;
         if (hotelName) item.hotelName = hotelName;
         if (checkin) item.checkin = checkin;
-        if (checkout) item.checkout = checkout;
-      } else if (type === 'flight') {
+        if (checkout) item.checkout = checkout;      } else if (type === 'flight') {
         const airline = tr.querySelector('.item-airline')?.value.trim();
         const from = tr.querySelector('.item-from')?.value.trim();
         const to = tr.querySelector('.item-to')?.value.trim();
         const flightDate = tr.querySelector('.item-flight-date')?.value;
+        const returnDate = tr.querySelector('.item-return-date')?.value;
+        const isRoundTrip = tr.querySelector('.item-round-trip')?.checked;
         const flightClass = tr.querySelector('.item-class')?.value.trim();
         if (airline) item.airline = airline;
         if (from) item.from = from;
         if (to) item.to = to;
         if (flightDate) item.flightDate = flightDate;
+        if (returnDate) item.returnDate = returnDate;
+        if (isRoundTrip) item.isRoundTrip = isRoundTrip;
         if (flightClass) item.class = flightClass;
       } else if (type === 'transfer') {
         const from = tr.querySelector('.item-from')?.value.trim();
@@ -617,14 +621,15 @@ function viewQuotationModal(id) {
                 <li>
                   <b>${item.description || ''}</b>
                   (${item.quantity} x $${item.price})
-                  ${typeof item.serviceFee === 'number' && item.serviceFee > 0 ? `, Service Fee: $${item.serviceFee}` : ''}
-                  ${item.hotelName ? `, Hotel: ${item.hotelName}` : ''}
+                  ${typeof item.serviceFee === 'number' && item.serviceFee > 0 ? `, Service Fee: $${item.serviceFee}` : ''}                  ${item.hotelName ? `, Hotel: ${item.hotelName}` : ''}
                   ${item.checkin ? `, Check-in: ${item.checkin}` : ''}
                   ${item.checkout ? `, Check-out: ${item.checkout}` : ''}
                   ${item.airline ? `, Airline: ${item.airline}` : ''}
                   ${item.from ? `, From: ${item.from}` : ''}
                   ${item.to ? `, To: ${item.to}` : ''}
                   ${item.flightDate ? `, Flight Date: ${item.flightDate}` : ''}
+                  ${item.returnDate ? `, Return Date: ${item.returnDate}` : ''}
+                  ${item.isRoundTrip ? ', Round Trip: Yes' : ''}
                   ${item.class ? `, Class: ${item.class}` : ''}
                 </li>
               `).join('')}

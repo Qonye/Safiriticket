@@ -148,10 +148,11 @@ window.renderServices = function(main) {
     const data = {
       name: "Flight",
       type: "flight",
-      description: "Flight booking service",
-      fields: [
+      description: "Flight booking service",      fields: [
         { key: "description", label: "Description", inputType: "text", required: true },
-        { key: "travelDate", label: "Travel Date", inputType: "date", required: true },
+        { key: "travelDate", label: "Departure Date", inputType: "date", required: true },
+        { key: "returnDate", label: "Return Date", inputType: "date", required: false },
+        { key: "isRoundTrip", label: "Round Trip", inputType: "checkbox", required: false },
         { key: "airline", label: "Airline", inputType: "text", required: true },
         { key: "route", label: "Route", inputType: "text", required: true },
         { key: "class", label: "Class", inputType: "text", required: true },
