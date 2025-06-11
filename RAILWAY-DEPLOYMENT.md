@@ -1,6 +1,7 @@
 # Railway Deployment Setup
 
 ## Overview
+
 This application requires persistent file storage for PDF uploads. Railway's default filesystem is ephemeral, so we need to use Railway Volumes for persistence.
 
 ## Railway Volume Setup
@@ -16,6 +17,7 @@ This application requires persistent file storage for PDF uploads. Railway's def
 ### 2. Environment Variables
 
 Railway automatically provides these environment variables when a volume is attached:
+
 - `RAILWAY_VOLUME_NAME`: Name of the volume
 - `RAILWAY_VOLUME_MOUNT_PATH`: Mount path of the volume (`/app/uploads`)
 - `RAILWAY_ENVIRONMENT_NAME`: Railway environment identifier
@@ -32,10 +34,12 @@ Railway automatically provides these environment variables when a volume is atta
 ## File Storage Behavior
 
 ### Local Development
+
 - Files are stored in `./uploads/quotations/`
 - Uses relative paths from the server directory
 
 ### Railway Production
+
 - Files are stored in `/app/uploads/quotations/` (on the mounted volume)
 - Volume persists across deployments and container restarts
 - Uses absolute paths within the container
@@ -43,7 +47,9 @@ Railway automatically provides these environment variables when a volume is atta
 ## Troubleshooting
 
 ### Check Volume Mount
+
 The server logs will show:
+
 ```
 Environment detected: Railway
 Railway Volume Mount Path: /app/uploads
@@ -51,6 +57,7 @@ Railway Volume Name: uploads
 ```
 
 ### Verify File Persistence
+
 1. Upload a PDF through the application
 2. Check the server logs for "Using uploads directory: /app/uploads/quotations"
 3. Restart the Railway service
