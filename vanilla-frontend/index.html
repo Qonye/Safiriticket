@@ -4,35 +4,67 @@
   <meta charset="UTF-8">
   <title>SafiriTicket Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="templates/logo.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="templates/logo.png">
+  <link rel="shortcut icon" href="templates/logo.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="templates/logo.png">
+  
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Store login template
+    document.addEventListener('DOMContentLoaded', () => {
+      const template = document.createElement('template');
+      template.id = 'login-template';
+      fetch('templates/login.html')
+        .then(response => response.text())
+        .then(html => {
+          template.innerHTML = html;
+          document.body.appendChild(template);
+          // Initialize auth after template is loaded
+          if (window.auth) window.auth.init();
+        });
+    });
+  </script>
 </head>
 <body>
-  <aside class="sidebar">
-    <img class="sidebar-logo" src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
-    <h2>Admin</h2>
-    <nav>
-      <ul>
-        <li><button data-section="overview">Overview</button></li>
-        <li><button data-section="clients">Clients</button></li>
-        <li><button data-section="quotations">Quotations</button></li>
-        <li><button data-section="invoices">Invoices</button></li>
-        <li><button data-section="financials">Financials</button></li>
-        <li><button data-section="orgsettings">Org Settings</button></li>
-      </ul>
-    </nav>
-    <div class="sidebar-status" id="sidebar-status"></div>
-  </aside>
-  <main class="main-content" id="main-content" style="width:100%;">
-    <!-- Content will be loaded here -->
-  </main>
+  <div id="app" style="display: flex;">
+    <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" aria-label="Toggle Sidebar">&#9776;</button>
+    <aside class="sidebar">
+      <img class="sidebar-logo" src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
+      <h2>Admin</h2>
+      <nav>
+        <ul>
+          <li><button data-section="overview">Overview</button></li>
+          <li><button data-section="clients">Clients</button></li>
+          <li><button data-section="quotations">Quotations</button></li>
+          <li><button data-section="invoices">Invoices</button></li>
+          <li><button data-section="financials">Financials</button></li>
+          <li><button data-section="orgsettings">Org Settings</button></li>
+        </ul>
+      </nav>
+      <div class="sidebar-status" id="sidebar-status"></div>
+    </aside>
+    <main class="main-content" id="main-content" style="width:100%;">
+      <!-- Content will be loaded here -->
+    </main>
+  </div>
+  <script src="config.js"></script>
+  <!-- Add html2pdf.js library for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="modules/pdf-utils.js"></script>
+  <script src="modules/new-pdf-engine.js"></script>
+  <script src="modules/auth.js"></script>
   <script src="modules/clients.js"></script>
   <script src="modules/quotations.js"></script>
   <script src="modules/invoices.js"></script>
   <script src="modules/financials.js"></script>
   <script src="modules/orgsettings.js"></script>
-  <script src="modules/pdf-utils.js"></script>
-  <!-- Add html2pdf.js library for PDF generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="modules/services.js"></script>
+  <!-- Add Chart.js for financial charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="modules/dashboard.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

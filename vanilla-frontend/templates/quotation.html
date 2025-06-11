@@ -2,160 +2,225 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Quotation</title>
   <style>
-    @page { size: A4 portrait; margin: 10mm; }
+    @page { size: A4 portrait; margin: 8mm; } /* Reduce margin for more printable area */
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
       background: #f8f9fa;
-      font-size: 0.8em; /* reduce base font size by 20% */
+      font-size: 0.8em;
     }
     body {
       font-family: Arial, sans-serif;
       min-height: 100vh;
       min-width: 100vw;
       position: relative;
+      margin: 0;
+      padding: 0;
     }
     .container {
       max-width: 700px;
-      min-height: unset; /* remove min-height to allow content to shrink */
       margin: 0 auto;
-      background: rgba(255, 255, 255, 0.95);
+      background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 12px rgba(35,41,70,0.09);
-      padding: 18px 18px 28px; /* further reduced padding */
+      padding: 0 0 24px 0; /* Reduce bottom padding for more space */
       position: relative;
       z-index: 1;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start; /* avoid stretching */
       box-sizing: border-box;
     }
-    .header { display: flex; align-items: center; justify-content: center; margin-bottom: 0; }
-    .logo { height: 48px; display: block; margin: 0 auto 10px auto; } /* reduce logo size */
-    .quote-title { font-size: 1.6rem; color: #eb7b24; margin: 0; letter-spacing: 1px; text-align: center; } /* reduced */
-    .section { margin: 18px 0; } /* reduced */
-    .details-table { width: 100%; margin-bottom: 8px; }
-    .details-table td { padding: 3px 0; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { border: 1px solid #e9c7bf; padding: 8px; }
-    th { background: #e9c7bf; color: #8c241c; font-size: 0.95em; }
-    .total { text-align: right; font-size: 1em; margin-top: 12px; color: #e45424; }
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 24px 24px 0 24px; /* Reduce padding for more content area */
+      background: #fff;
+    }
+    .logo-col {
+      flex: 0 0 120px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+    .logo {
+      height: 64px;
+      width: auto;
+      display: block;
+    }
+    .quote-info-col {
+      flex: 1;
+      text-align: right;
+      padding-left: 24px;
+    }
+    .quote-title {
+      font-size: 2.1rem;
+      color: #eb7b24;
+      margin: 0 0 8px 0;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+    .payable-billed-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 24px 32px 0 32px;
+      align-items: flex-start;
+    }
+    .payable-section {
+      flex: 1;
+      background: none;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      color: #404040;
+      font-size: 1em;
+    }
+    .payable-section strong {
+      color: #eb7b24;
+      font-size: 1.08em;
+    }
+    .billed-section {
+      flex: 1;
+      text-align: right;
+      color: #404040;
+      font-size: 1em;
+      margin-top: 0;
+    }
+    .billed-section strong {
+      color: #eb7b24;
+      font-size: 1.08em;
+    }
+    .section {
+      margin: 18px 24px 0 24px; /* Reduce section margin for more content area */
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px; /* Reduce top margin */
+    }
+    th, td {
+      border: 1px solid rgba(233, 199, 191, 0.05);
+      padding: 7px 6px; /* Reduce cell padding */
+      text-align: center;
+      vertical-align: middle;
+    }
+    th {
+      background: #e9c7bf;
+      color: #be292c;
+      font-size: 1em;
+      font-weight: bold;
+      letter-spacing: 0.04em;
+    }
+    .total-row td {
+      border-top: 2px solid #eb7b24;
+      font-weight: bold;
+      color: #eb7b24;
+      font-size: 1.1em;
+      text-align: right;
+      background: #fff7f7;
+    }
     .footer {
       text-align: center;
       max-width: 700px;
-      margin: 12px auto 0 auto; /* reduce margin */
-      font-size: 0.58em;
-      color: #8c2c2c;
+      margin: 24px auto 0 auto; /* Reduce top margin */
+      font-size: 0.7em;
+      color: #404040;
       background: transparent;
-      line-height: 1.4;
+      line-height: 1.6;
       letter-spacing: 0.01em;
+      border-top: 2px solid #be292c;
+      padding-top: 10px; /* Reduce padding */
     }
-    .accent-bar { height: 5px; width: 100%; background: linear-gradient(90deg, #eb7b24 0%, #e45424 40%, #ee9f64 100%); border-radius: 4px; margin-bottom: 12px; }
-    .items-table { margin-bottom: 0; }
-    .items-row-table { width: 100%; border-collapse: collapse; }
-    .items-row-table td { border: none; padding: 5px 8px 5px 8px; }
-    .items-row-table tr:not(:last-child) td { border-bottom: 1px solid #e9c7bf; }
-    .items-label { color: #8c241c; font-weight: bold; width: 120px; }
-    /* .watermark {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      width: 320px;
-      height: 320px;
-      opacity: 0.07;
-      z-index: 0;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      user-select: none;
-    } */
-    .items-row-table {
-      min-height: 256px;
-      height: 256px;
+    .footer .footer-brand {
+      font-weight: bold;
+      color: #eb7b24;
+      font-size: 1.1em;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
       display: block;
     }
-    .items-row-table tbody {
+    .footer .footer-contact {
+      color: #aaa5a5;
+      font-size: 1em;
+      margin-bottom: 2px;
       display: block;
-      width: 100%;
     }
-    .items-row-table tr {
-      display: table;
-      width: 100%;
-      table-layout: fixed;
-    }
-    .items-row-table .filler-row td {
-      height: 26px;
-      background: #fff;
-      border: none;
-      padding: 0;
+    .footer .footer-website {
+      color: #eb7b24;
+      font-size: 1em;
+      margin-top: 2px;
+      display: block;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="logo.png" alt="Company Logo" class="logo" />
-    <div class="accent-bar"></div>
-    <div class="quote-title">Quotation <span style="font-size:1.1rem;color:#8c241c;">#{{number}}</span></div>
-    <div class="section">
-      <table class="details-table">
-        <tr>
-          <td><strong>Quotation No.:</strong></td>
-          <td>{{number}}</td>
-        </tr>
-        <tr>
-          <td><strong>Client:</strong></td>
-          <td>{{clientName}} ({{clientEmail}})</td>
-        </tr>
-        <tr>
-          <td><strong>Status:</strong></td>
-          <td>{{status}}</td>
-        </tr>
-        <tr>
-          <td><strong>Expires At:</strong></td>
-          <td>{{expiresAt}}</td>
-        </tr>
-      </table>
+    <div class="header-row">
+      <div class="logo-col">
+        <img src="logo.png" alt="Company Logo" class="logo" />
+      </div>
+      <div class="quote-info-col">
+        <div class="quote-title">QUOTATION</div>
+      </div>
     </div>
-    <div class="section" style="flex:1;">
+    <div class="payable-billed-row">
+      <div class="payable-section">
+        <strong>From:</strong><br>
+        Safiri Ticket Ltd<br>
+        United Kingdom: 25 Cabot Square, E14 4QZ, London<br>
+        Kenya: Purshottam Place, Chiromo Rd, Nairobi<br>
+        Email: joe@safiritickets.com, info@safiritickets.com<br>
+        Website: www.safiritickets.com
+      </div>
+      <div class="billed-section">
+        <strong>Billed To:</strong><br>
+        {{clientName}}<br>
+        <span>Expires: <strong>{{expiresAt}}</strong></span><br>
+        <span>Quote #: <strong>{{number}}</strong></span>
+      </div>
+    </div>
+    <div class="section">
       <table class="items-table">
         <thead>
           <tr>
             <th>Description</th>
             <th>Qty</th>
             <th>Price</th>
+            <th>Service Fee</th>
             <th>Subtotal</th>
           </tr>
         </thead>
-      </table>
-      <table class="items-row-table">
         <tbody>
           {{items}}
-          <!-- Filler rows to ensure table fills space if few items -->
-          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
-          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>
-        </tbody>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+          <tr class="filler-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>        <tfoot>
+          <tr class="total-row">
+            <td colspan="4" style="text-align:right;">Total:</td>
+            <td style="text-align:center;">{{currencySymbol}}{{total}}</td>
+          </tr>
+        </tfoot>
       </table>
-      <div class="total">
-        <strong>Total: ${{total}}</strong>
-      </div>
     </div>
-  </div>
-  <div class="footer">
-    <div style="height:3px;width:100%;background:#8c2c2c;margin-bottom:8px;border-radius:2px;"></div>
-    <strong>Safiri Ticket Ltd</strong> |
-    United Kingdom: 25 Cabot Square, E14 4QZ, London |
-    Kenya: Purshottam Place, Chiromo Rd, Nairobi |
-    Direct Line: +254 708 617 889 |
-    United Kingdom Office: +44 7845 446618 |
-    Kenya Office: +254 715 572 312 |
-    Email: joe@safiritickets.com, info@safiritickets.com |
-    Website: www.safiritickets.com
-    <div style="height:3px;width:100%;background:#8c2c2c;margin-top:8px;border-radius:2px;"></div>
+    <div class="footer" style="text-align:center;max-width:700px;margin:0 auto 0 auto;font-size:0.7em;color:#404040;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:2px solid #be292c;padding-top:10px;position:relative;">
+      <span class="footer-brand">Safiri Ticket Ltd</span>
+      <span class="footer-contact">
+        United Kingdom: 25 Cabot Square, E14 4QZ, London &nbsp;|&nbsp;
+        Kenya: Purshottam Place, Chiromo Rd, Nairobi &nbsp;|&nbsp;
+        Direct Line: +254 708 617 889 &nbsp;|&nbsp;
+        UK: +44 7845 446618 &nbsp;|&nbsp;
+        KE: +254 715 572 312 &nbsp;|&nbsp;
+        Email: joe@safiritickets.com, info@safiritickets.com
+      </span>
+      <span class="footer-website">www.safiritickets.com</span>
+    </div>
   </div>
 </body>
 </html>

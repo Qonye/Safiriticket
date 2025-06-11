@@ -1,3 +1,5 @@
+console.log('[pdf-utils.js] Script start parsing.');
+
 // Utility to fetch and use HTML templates for PDF generation and create PDF in the browser
 
 window.loadTemplate = async function(templateName) {
@@ -14,41 +16,83 @@ window.generatePDF = async function(html, options = {}) {
 };
 
 window.previewPDF = async function(html, options = {}) {
-  // Open PDF in a new tab
-  html2pdf().from(html).set({
-    margin: [0, 0, 0, 0],
+  // Ensure all images are loaded before generating PDF
+  const tempDiv = document.createElement('div');
+  // Position off-screen instead of display:none
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.left = '-9999px';
+  tempDiv.style.top = '-9999px';
+  tempDiv.style.width = '800px'; // Give it a defined width, similar to A4 paper width for rendering
+  tempDiv.innerHTML = html;
+  document.body.appendChild(tempDiv);
+
+  // Removed logo src replacement logic
+  // Removed waiting for all images to load (Promise.all block)
+
+  // Use safe margins to avoid truncation
+  // Pass tempDiv.innerHTML instead of tempDiv
+  html2pdf().from(tempDiv.innerHTML).set({
+    margin: [10, 10, 10, 10], // 10mm on all sides
     jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-    html2canvas: { scale: 2, useCORS: true }, // ensure useCORS is set
+    html2canvas: { scale: 2, useCORS: true },
     ...options
   }).outputPdf('bloburl').then(url => {
     window.open(url, '_blank');
+    tempDiv.remove();
   });
 };
 
 window.downloadPDF = async function(html, filename = 'document.pdf', options = {}) {
-  html2pdf().from(html).set({
-    margin: [0, 0, 0, 0],
+  // Ensure all images are loaded before generating PDF
+  const tempDiv = document.createElement('div');
+  // Position off-screen instead of display:none
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.left = '-9999px';
+  tempDiv.style.top = '-9999px';
+  tempDiv.style.width = '800px'; // Give it a defined width
+  tempDiv.innerHTML = html;
+  document.body.appendChild(tempDiv);
+
+  // Removed logo src replacement logic
+  // Removed waiting for all images to load (Promise.all block)
+
+  // Pass tempDiv.innerHTML instead of tempDiv
+  html2pdf().from(tempDiv.innerHTML).set({
+    margin: [10, 10, 10, 10],
     jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-    html2canvas: { scale: 2, useCORS: true }, // ensure useCORS is set
+    html2canvas: { scale: 2, useCORS: true },
     filename,
     ...options
-  }).save();
+  }).save().then(() => tempDiv.remove());
 };
 
-// Helper to fill org details in a template (used by both quotations and invoices)
-window.fillOrgDetails = function(html) {
-  const org = window.currentOrgSettings || {};
-  html = html.replace(/{{orgName}}/g, org.name || '');
-  html = html.replace(/{{orgAddresses}}/g, (org.addresses || []).join(' | '));
-  html = html.replace(/{{orgEmails}}/g, (org.emails || []).join(' | '));
-  html = html.replace(/{{orgPhones}}/g, (org.phones || []).join(' | '));
-  html = html.replace(/{{orgVat}}/g, org.vat || '');
-  html = html.replace(/{{orgWebsite}}/g, org.website || '');
-  html = html.replace(/{{logoUrl}}/g, org.logoUrl || 'https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png');
-  return html;
-};
+/*
+// window.fillInvoiceTemplate and window.renderInvoiceServiceTables
+// have been moved to new-pdf-engine.js to consolidate logic.
+// Keeping them here might lead to conflicts if this script is still loaded
+// and the browser picks up these older versions.
+
+// Helper to fill template placeholders for invoices, including service tables
+// window.fillInvoiceTemplate = function(template, invoice) { ... MOVED ... };
+
+// Helper to group items by type and render service-specific tables for invoices
+// window.renderInvoiceServiceTables = function(items = [], clientName = '') { ... MOVED ... };
+*/
+
+// Helper function to get currency symbol (same as in new-pdf-engine.js)
+function _getCurrencySymbol(currency) {
+  const symbols = {
+    'USD': '$',
+    'EUR': '€',
+    'GBP': '£',
+    'KES': 'KSh',
+    'CAD': 'C$',
+    'AUD': 'A$'
+  };
+  return symbols[currency] || '$';
+}
 
 // Helper to fill template placeholders for quotations
 window.fillQuotationTemplate = function(template, quotation) {
@@ -59,47 +103,44 @@ window.fillQuotationTemplate = function(template, quotation) {
   html = html.replace(/{{status}}/g, quotation.status || '');
   html = html.replace(/{{expiresAt}}/g, quotation.expiresAt ? new Date(quotation.expiresAt).toLocaleDateString() : '');
   html = html.replace(/{{total}}/g, quotation.total || '');
-  // Items (use $ for currency)
-  const itemsHtml = (quotation.items || []).map(item =>
-    `<tr>
-      <td>${item.description || ''}</td>
-      <td>${item.quantity || ''}</td>
-      <td>$${item.price || ''}</td>
-      <td>$${item.quantity && item.price ? Number(item.quantity) * Number(item.price) : ''}</td>
-    </tr>`
-  ).join('');
+  
+  // Get the currency from quotation or default to USD
+  const currency = quotation.currency || 'USD';
+  const currencySymbol = _getCurrencySymbol(currency);
+  
+  // Replace currency symbol placeholder if present
+  html = html.replace(/{{currencySymbol}}/g, currencySymbol);
+  // Items (show description, price, service fee, and subtotal in correct columns)
+  const itemsHtml = (quotation.items || []).map(item => {
+    let desc = item.description || '';
+    if (item.hotelName) desc += ` | Hotel: ${item.hotelName}`;
+    if (item.checkin) desc += ` | Check-in: ${item.checkin}`;
+    if (item.checkout) desc += ` | Check-out: ${item.checkout}`;
+    if (item.airline) desc += ` | Airline: ${item.airline}`;
+    if (item.from) desc += ` | From: ${item.from}`;
+    if (item.to) desc += ` | To: ${item.to}`;
+    if (item.flightDate) desc += ` | Departure: ${item.flightDate}`;
+    if (item.returnDate) desc += ` | Return: ${item.returnDate}`;
+    if (item.isRoundTrip) desc += ` | Round Trip: Yes`;
+    if (item.class) desc += ` | Class: ${item.class}`;
+    // Add more fields as needed
+
+    const price = Number(item.price) || 0;
+    const qty = Number(item.quantity) || 0;
+    const serviceFee = Number(item.serviceFee) || 0;
+    const subtotal = (qty * price) + serviceFee;
+
+    return `<tr>
+      <td>${desc}</td>
+      <td>${qty}</td>
+      <td>${currencySymbol}${price.toFixed(2)}</td>
+      <td>${currencySymbol}${serviceFee.toFixed(2)}</td>
+      <td>${currencySymbol}${subtotal.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
   html = html.replace(/{{items}}/g, itemsHtml);
-  // Fill org details and logo
-  html = window.fillOrgDetails(html);
+
   return html;
 };
 
-// Helper to fill template placeholders for invoices
-window.fillInvoiceTemplate = function(template, invoice) {
-  let html = template;
-  html = html.replace(/{{number}}/g, invoice.number || '');
-  html = html.replace(/{{clientName}}/g, invoice.client?.name || '');
-  html = html.replace(/{{clientEmail}}/g, invoice.client?.email || '');
-  html = html.replace(/{{status}}/g, invoice.status || '');
-  html = html.replace(/{{dueDate}}/g, invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '');
-  html = html.replace(/{{paidAmount}}/g, invoice.paidAmount || 0);
-  html = html.replace(/{{amountDue}}/g, Math.max((invoice.total || 0) - (invoice.paidAmount || 0), 0));
-  html = html.replace(/{{total}}/g, invoice.total || '');
-  // Items
-  const itemsHtml = (invoice.items || []).map(item =>
-    `<tr>
-      <td>${item.description || ''}</td>
-      <td>${item.quantity || ''}</td>
-      <td>$${item.price || ''}</td>
-      <td>$${item.quantity && item.price ? Number(item.quantity) * Number(item.price) : ''}</td>
-    </tr>`
-  ).join('');
-  html = html.replace(/{{items}}/g, itemsHtml);
-  // Fill org details and logo
-  html = window.fillOrgDetails(html);
-  return html;
-};
-
-// Example usage in your frontend modules:
-// const html = await loadTemplate('quotation'); // loads quotation.html
-// const html = await loadTemplate('invoice');   // loads invoice.html
+console.log('[pdf-utils.js] Script end parsing. window.fillInvoiceTemplate defined:', typeof window.fillInvoiceTemplate, 'window.renderInvoiceServiceTables defined:', typeof window.renderInvoiceServiceTables);
