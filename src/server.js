@@ -885,10 +885,9 @@ process.on('SIGTERM', () => {
     console.log('SIGTERM received, shutting down gracefully');
     server.close(() => {
         console.log('Process terminated');
-        mongoose.connection.close(false, () => {
-            console.log('MongoDB connection closed');
-            process.exit(0);
-        });
+        mongoose.connection.close();
+        console.log('MongoDB connection closed');
+        process.exit(0);
     });
 });
 
@@ -896,9 +895,8 @@ process.on('SIGINT', () => {
     console.log('SIGINT received, shutting down gracefully');
     server.close(() => {
         console.log('Process terminated');
-        mongoose.connection.close(false, () => {
-            console.log('MongoDB connection closed');
-            process.exit(0);
-        });
+        mongoose.connection.close();
+        console.log('MongoDB connection closed');
+        process.exit(0);
     });
 });
