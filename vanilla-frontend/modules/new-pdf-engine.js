@@ -77,6 +77,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
             <th>Travel Dates</th>
             <th>Airline</th>
             <th>Route</th>
+            <th>Class</th>
             <th>Amount</th>
             <th>Service Fee</th>
             <th>Total</th>
@@ -97,6 +98,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       const airline = item.airline || '';
       const from = item.from || '';
       const to = item.to || '';
+      const flightClass = item.class || '';
       const route = `${from}${from && to ? ' - ' : ''}${to}`; // Added space for better readability
 
       // Format travel dates to show both departure and return if available
@@ -122,6 +124,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${travelDates}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${airline}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${route}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${flightClass}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${fee.toLocaleString()}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${totalRow.toLocaleString()}</td>
@@ -130,7 +133,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     });
     htmlContent += `
         </tbody>
-        <tfoot><tr><td colspan="6" style="text-align:right;font-weight:bold;color:#be292c;">Flight Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
+        <tfoot><tr><td colspan="7" style="text-align:right;font-weight:bold;color:#be292c;">Flight Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
       </table>
     `;
   } else {
@@ -219,6 +222,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
         <thead>
           <tr>
             <th>Name</th>
+            <th>Transfer Date</th>
             <th>From</th>
             <th>To</th>
             <th>Amount</th>
@@ -236,10 +240,12 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       grandTotal += totalRow;
       const from = item.from || '';
       const to = item.to || '';
+      const transferDate = item.transferDate || '';
 
       htmlContent += `
         <tr>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.description || clientName}</td>
+          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${transferDate ? new Date(transferDate).toLocaleDateString() : 'N/A'}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${from}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${to}</td>
           <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>
@@ -250,7 +256,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     });
     htmlContent += `
         </tbody>
-        <tfoot><tr><td colspan="5" style="text-align:right;font-weight:bold;color:#be292c;">Transfer Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
+        <tfoot><tr><td colspan="6" style="text-align:right;font-weight:bold;color:#be292c;">Transfer Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
       </table>
     `;
   } else {

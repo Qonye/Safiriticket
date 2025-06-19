@@ -239,15 +239,16 @@ window.renderInvoices = function(main) {
           <input type="text" class="item-to" placeholder="To" style="width:70px;padding:4px;">
           <input type="date" class="item-flight-date" placeholder="Departure Date" style="width:110px;padding:4px;">
           <input type="date" class="item-return-date" placeholder="Return Date" style="width:110px;padding:4px;">
+          <input type="text" class="item-class" placeholder="Class" style="width:80px;padding:4px;">
           <label style="margin-left:4px;"><input type="checkbox" class="item-round-trip"> Round Trip</label>
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
-      `;
-    } else if (type === 'transfer') {
+      `;    } else if (type === 'transfer') {
       html = `
         <div class="dynamic-fields" style="margin-top:4px;">
           <input type="text" class="item-from" placeholder="From" style="width:90px;padding:4px;">
           <input type="text" class="item-to" placeholder="To" style="width:90px;padding:4px;">
+          <input type="date" class="item-transfer-date" placeholder="Transfer Date" style="width:110px;padding:4px;">
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
       `;
@@ -598,11 +599,11 @@ window.renderInvoices = function(main) {
         item.returnDate = tr.querySelector('.item-return-date')?.value || '';
         item.isRoundTrip = tr.querySelector('.item-round-trip')?.checked || false;
         item.class = tr.querySelector('.item-class')?.value || '';
-      }
-      // Add dynamic fields for transfer
+      }      // Add dynamic fields for transfer
       if (type === 'transfer') {
         item.from = tr.querySelector('.item-from')?.value || '';
         item.to = tr.querySelector('.item-to')?.value || '';
+        item.transferDate = tr.querySelector('.item-transfer-date')?.value || '';
       }
       // ...add more types as needed...
       return item;
