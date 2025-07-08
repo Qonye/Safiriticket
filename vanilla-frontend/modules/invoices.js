@@ -239,7 +239,12 @@ window.renderInvoices = function(main) {
           <input type="text" class="item-to" placeholder="To" style="width:70px;padding:4px;">
           <input type="date" class="item-flight-date" placeholder="Departure Date" style="width:110px;padding:4px;">
           <input type="date" class="item-return-date" placeholder="Return Date" style="width:110px;padding:4px;">
-          <input type="text" class="item-class" placeholder="Class" style="width:80px;padding:4px;">
+          <select class="item-class" style="width:90px;padding:4px;">
+            <option value="">Class</option>
+            <option value="Economy">Economy</option>
+            <option value="Business">Business</option>
+            <option value="First Class">First Class</option>
+          </select>
           <label style="margin-left:4px;"><input type="checkbox" class="item-round-trip"> Round Trip</label>
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
