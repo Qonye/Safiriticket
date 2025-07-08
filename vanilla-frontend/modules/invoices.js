@@ -649,6 +649,10 @@ window.renderInvoices = function(main) {
         paymentDetails,
         quotation: quotationId || undefined
       };
+      
+      // Debug: Log the items to see if transferDate is included
+      console.log('Invoice items being sent:', items);
+      console.log('Full invoice data being sent:', data);
       fetch(`${window.API_BASE_URL}/api/invoices`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

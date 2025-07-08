@@ -442,6 +442,10 @@ app.get('/api/invoices', async (req, res) => {
 });
 
 app.post('/api/invoices', async (req, res) => {
+  // Debug: Log the incoming request body
+  console.log('Creating invoice with data:', JSON.stringify(req.body, null, 2));
+  console.log('Items in request:', req.body.items);
+  
   const invoice = new Invoice(req.body);
   if (!invoice.number) {
     invoice.number = await getNextNumber(Invoice, 'INV-');
@@ -452,7 +456,15 @@ app.post('/api/invoices', async (req, res) => {
   if (invoice.status === 'Paid' && (!invoice.paidAmount || invoice.paidAmount < invoice.total)) {
     invoice.paidAmount = invoice.total;
   }
+  
+  // Debug: Log the invoice object before saving
+  console.log('Invoice object before save:', JSON.stringify(invoice.toObject(), null, 2));
+  
   await invoice.save();
+  
+  // Debug: Log the saved invoice
+  console.log('Saved invoice:', JSON.stringify(invoice.toObject(), null, 2));
+  
   res.status(201).json(invoice);
 });
 

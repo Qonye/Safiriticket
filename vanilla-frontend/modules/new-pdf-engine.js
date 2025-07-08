@@ -69,21 +69,22 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
   if (grouped.flight && grouped.flight.length > 0) {
     let total = 0;
     htmlContent += `
-      <h3 style="margin-top:32px;margin-bottom:8px;">✈️ Flight</h3>
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Travel Dates</th>
-            <th>Airline</th>
-            <th>Route</th>
-            <th>Class</th>
-            <th>Amount</th>
-            <th>Service Fee</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
+      <div style="margin-top: 24px; margin-bottom: 16px;">
+        <h3 style="margin: 0 0 12px 0; color: #be292c; font-size: 1.2em; font-weight: 500; letter-spacing: 0.5px;">✈️ FLIGHT SERVICES</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Passenger Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Travel Dates</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Airline</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Route</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Class</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
     grouped.flight.forEach(item => {
       const amount = Number(item.price) || 0;
@@ -120,21 +121,27 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
 
       htmlContent += `
         <tr>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.description || clientName}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${travelDates}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${airline}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${route}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${flightClass}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${fee.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${totalRow.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${travelDates}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${airline}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${route}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${flightClass}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     htmlContent += `
         </tbody>
-        <tfoot><tr><td colspan="7" style="text-align:right;font-weight:bold;color:#be292c;">Flight Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="7" style="text-align:right;font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">Flight Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
       </table>
+    </div>
     `;
   } else {
     console.log('[_renderInvoiceServiceTables] No flight items to render or grouped.flight is empty.');
@@ -144,20 +151,21 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
   if (grouped.hotel && grouped.hotel.length > 0) {
     let total = 0;
     htmlContent += `
-      <h3 style="margin-top:32px;margin-bottom:8px;">🏨 Hotel</h3>
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Stay Dates</th>
-            <th>Hotel</th>
-            <th>Amount per Night</th>
-            <th>No. of Days</th>
-            <th>Service Fee</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
+      <div style="margin-top: 24px; margin-bottom: 16px;">
+        <h3 style="margin: 0 0 12px 0; color: #be292c; font-size: 1.2em; font-weight: 500; letter-spacing: 0.5px;">🏨 HOTEL ACCOMMODATION</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Guest Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Stay Dates</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Hotel</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount per Night</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">No. of Days</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
     grouped.hotel.forEach(item => {
       const amount = Number(item.price) || 0; // Assuming price is per night
@@ -194,20 +202,26 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       grandTotal += totalRow;
       htmlContent += `
         <tr>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.description || clientName}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${stayDates}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${hotelName}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${nights}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${fee.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${totalRow.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${stayDates}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${hotelName}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${nights}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     htmlContent += `
         </tbody>
-        <tfoot><tr><td colspan="6" style="text-align:right;font-weight:bold;color:#be292c;">Hotel Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="6" style="text-align:right;font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">Hotel Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
       </table>
+    </div>
     `;
   } else {
     console.log('[_renderInvoiceServiceTables] No hotel items to render or grouped.hotel is empty.');
@@ -217,20 +231,21 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
   if (grouped.transfer && grouped.transfer.length > 0) {
     let total = 0;
     htmlContent += `
-      <h3 style="margin-top:32px;margin-bottom:8px;">🚐 Transfers</h3>
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Transfer Date</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Amount</th>
-            <th>Service Fee</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
+      <div style="margin-top: 24px; margin-bottom: 16px;">
+        <h3 style="margin: 0 0 12px 0; color: #be292c; font-size: 1.2em; font-weight: 500; letter-spacing: 0.5px;">🚐 TRANSFER SERVICES</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Passenger Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Transfer Date</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">From</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">To</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
     grouped.transfer.forEach(item => {
       const amount = Number(item.price) || 0;
@@ -240,24 +255,43 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       grandTotal += totalRow;
       const from = item.from || '';
       const to = item.to || '';
-      const transferDate = item.transferDate || '';
+      const transferDate = item.transferDate || item.date || item.transferDateTime || '';
+
+      // Format transfer date with better error handling
+      let formattedTransferDate = 'TBD';
+      if (transferDate && transferDate.trim() !== '') {
+        try {
+          const date = new Date(transferDate);
+          if (!isNaN(date.getTime())) {
+            formattedTransferDate = date.toLocaleDateString();
+          }
+        } catch (error) {
+          console.warn('Invalid transfer date:', transferDate);
+        }
+      }
 
       htmlContent += `
         <tr>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${item.description || clientName}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${transferDate ? new Date(transferDate).toLocaleDateString() : 'N/A'}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${from}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${to}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${amount.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${fee.toLocaleString()}</td>
-          <td style="font-family: Montserrat, sans-serif; font-size: 1.05em;">${currencySymbol}${totalRow.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${formattedTransferDate}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${from}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${to}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
     htmlContent += `
         </tbody>
-        <tfoot><tr><td colspan="6" style="text-align:right;font-weight:bold;color:#be292c;">Transfer Subtotal:</td><td style="font-weight:bold;color:#be292c;">${currencySymbol}${total.toLocaleString()}</td></tr></tfoot>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="6" style="text-align:right;font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">Transfer Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
       </table>
+    </div>
     `;
   } else {
     console.log('[_renderInvoiceServiceTables] No transfer items to render or grouped.transfer is empty.');

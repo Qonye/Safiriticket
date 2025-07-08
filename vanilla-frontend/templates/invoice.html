@@ -26,8 +26,8 @@
       max-width: 680px; /* Reduced from 700px */
       margin: 0 auto;
       background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(35,41,70,0.09);
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       padding: 0 0 24px 0; /* Reduce bottom padding for more space */
       position: relative;
       z-index: 1;
@@ -40,7 +40,7 @@
       align-items: flex-start;
       justify-content: space-between;
       padding: 24px 24px 0 24px; /* Reduce padding for more content area */
-      background: #fff;
+      background: linear-gradient(135deg, #fff 0%, #fafbfc 100%);
     }
     .logo-col {
       flex: 0 0 120px;
@@ -63,7 +63,7 @@
       color: #be292c;
       margin: 0 0 8px 0;
       letter-spacing: 1px;
-      font-weight: bold;
+      font-weight: 500;
     }
     .client-label {
       color: #404040;
@@ -83,25 +83,32 @@
     }
     .section {
       margin: 18px 24px 0 24px; /* Reduce section margin for more content area */
+      background: linear-gradient(135deg, #fff 0%, #fafbfc 100%);
+      border-radius: 3px;
+      padding: 16px;
     }
     .items-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 12px; /* Reduce top margin */
+      background: #fff;
+      border-radius: 3px;
+      overflow: hidden;
     }
     th, td {
-      border: 1px solid rgba(233, 199, 191, 0.05);
-      padding: 6px 4px; /* Reduced padding, especially horizontal */
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 10px 8px; /* Increased padding for better readability */
       text-align: center;
       vertical-align: middle;
       word-break: break-word; /* Added to help break long words if necessary */
     }
     th {
-      background: #e9c7bf;
+      background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
       color: #be292c;
       font-size: 1em;
-      font-weight: bold;
+      font-weight: 600;
       letter-spacing: 0.04em;
+      padding: 12px 8px;
     }
     /* Targeting td elements specifically within items-table for font size adjustment */
     .items-table td {
@@ -109,8 +116,8 @@
         font-size: 0.95em; /* Reduced from 1.05em */
     }
     .total-row td {
-      border-top: 2px solid #be292c;
-      font-weight: bold;
+      border-top: 1px solid #be292c;
+      font-weight: 600;
       text-align: center;
       max-width: 700px;
       margin: 24px auto 0 auto; /* Reduce top margin */
@@ -119,7 +126,6 @@
       background: transparent;
       line-height: 1.6;
       letter-spacing: 0.01em;
-      border-top: 2px solid #be292c;
       padding-top: 10px; /* Reduce padding */
     }
     .footer .footer-brand {
@@ -163,8 +169,8 @@
     </div>
     <div class="section">
       {{serviceTables}}
-    </div>    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px;">
-      <strong style="color:#be292c;font-size:1.08em;">PAYMENT DETAILS:</strong><br>
+    </div>    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 20px;">
+      <strong style="color:#be292c;font-size:1.08em; font-weight: 500;">PAYMENT DETAILS:</strong><br>
       ACCOUNT NAME: {{paymentAccountName}}<br>
       ACCOUNT NO: {{paymentAccountNumber}}<br>
       BANK NAME: {{paymentBankName}}<br>
@@ -172,7 +178,7 @@
       CURRENCY: {{paymentCurrency}}<br>
       <span style="color:#aaa5a5;font-size:0.97em;">{{paymentAdditionalInfo}}</span>
     </div>
-    <div class="footer" style="text-align:center;max-width:700px;margin:32px auto 0 auto;font-size:0.7em;color:#404040;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:2px solid #be292c;padding-top:16px;">
+    <div class="footer" style="text-align:center;max-width:700px;margin:32px auto 0 auto;font-size:0.7em;color:#404040;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:1px solid #be292c;padding-top:16px;">
       <span class="footer-brand" style="font-weight:bold;color:#be292c;font-size:1.1em;letter-spacing:0.04em;margin-bottom:4px;display:block;">Safiri Ticket Ltd</span>
       <span class="footer-contact" style="color:#aaa5a5;font-size:1em;margin-bottom:2px;display:block;">
         United Kingdom: 25 Cabot Square, E14 4QZ, London &nbsp;|&nbsp;
@@ -184,13 +190,13 @@
       </span>
       <span class="footer-website" style="color:#be292c;font-size:1em;margin-top:2px;display:block;">www.safiritickets.com</span>
     </div>
-    <div class="invoice-user-info" style="display: flex; justify-content: space-between; align-items: center; margin: 12px 24px 0 24px; padding-top: 8px; border-top: 1px solid rgba(233, 199, 191, 0.05);">
+          <div class="invoice-user-info" style="display: flex; justify-content: space-between; align-items: center; margin: 12px 24px 0 24px; padding-top: 8px; border-top: 1px solid rgba(0, 0, 0, 0.08);">
       <div style="flex: 1;">
-        <strong style="color:#be292c;font-size:1.08em; margin-bottom: 4px;">Date Created:</strong>
+        <strong style="color:#be292c;font-size:1.08em; margin-bottom: 4px; font-weight: 500;">Date Created:</strong>
         <div style="color: #404040; font-size: 1em;">{{creationDate}}</div>
       </div>
       <div style="flex: 1; text-align: right;">
-        <strong style="color:#be292c;font-size:1.08em; margin-bottom: 4px;">Created By:</strong>
+        <strong style="color:#be292c;font-size:1.08em; margin-bottom: 4px; font-weight: 500;">Created By:</strong>
         <div style="color: #404040; font-size: 1em;">{{createdBy}}</div>
       </div>
     </div>
