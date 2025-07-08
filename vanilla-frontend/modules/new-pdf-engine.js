@@ -101,6 +101,18 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       const to = item.to || '';
       const flightClass = item.class || '';
       const route = `${from}${from && to ? ' - ' : ''}${to}`; // Added space for better readability
+      
+      // Debug: Log flight item data
+      console.log('Flight item data:', {
+        description: item.description,
+        airline: airline,
+        from: from,
+        to: to,
+        flightDate: flightDate,
+        returnDate: returnDate,
+        class: flightClass,
+        route: route
+      });
 
       // Format travel dates to show both departure and return if available
       let travelDates = '';
