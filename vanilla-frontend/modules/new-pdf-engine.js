@@ -69,19 +69,19 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
   if (grouped.flight && grouped.flight.length > 0) {
     let total = 0;
     htmlContent += `
-      <div style="margin-top: 24px; margin-bottom: 16px;">
-        <h3 style="margin: 0 0 12px 0; color: #be292c; font-size: 1.2em; font-weight: 500; letter-spacing: 0.5px;">✈️ FLIGHT SERVICES</h3>
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">✈️ FLIGHT SERVICES</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
           <thead>
             <tr>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Passenger Name</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Travel Dates</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Airline</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Route</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Class</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Passenger Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Travel Dates</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Airline</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Route</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Class</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -121,14 +121,14 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
 
       htmlContent += `
         <tr>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${travelDates}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${airline}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${route}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${flightClass}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${travelDates}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${airline}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${route}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${flightClass}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
@@ -136,8 +136,8 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
         </tbody>
         <tfoot>
           <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
-            <td colspan="7" style="text-align:right;font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">Flight Subtotal:</td>
-            <td style="font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+            <td colspan="7" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">Flight Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
           </tr>
         </tfoot>
       </table>
@@ -151,18 +151,18 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
   if (grouped.hotel && grouped.hotel.length > 0) {
     let total = 0;
     htmlContent += `
-      <div style="margin-top: 24px; margin-bottom: 16px;">
-        <h3 style="margin: 0 0 12px 0; color: #be292c; font-size: 1.2em; font-weight: 500; letter-spacing: 0.5px;">🏨 HOTEL ACCOMMODATION</h3>
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">🏨 HOTEL ACCOMMODATION</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
           <thead>
             <tr>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Guest Name</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Stay Dates</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Hotel</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount per Night</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">No. of Days</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Guest Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Stay Dates</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Hotel</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount per Night</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">No. of Days</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -202,13 +202,13 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       grandTotal += totalRow;
       htmlContent += `
         <tr>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${stayDates}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${hotelName}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${nights}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${stayDates}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${hotelName}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${nights}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
@@ -216,8 +216,8 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
         </tbody>
         <tfoot>
           <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
-            <td colspan="6" style="text-align:right;font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">Hotel Subtotal:</td>
-            <td style="font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+            <td colspan="6" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">Hotel Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
           </tr>
         </tfoot>
       </table>
@@ -231,18 +231,18 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
   if (grouped.transfer && grouped.transfer.length > 0) {
     let total = 0;
     htmlContent += `
-      <div style="margin-top: 24px; margin-bottom: 16px;">
-        <h3 style="margin: 0 0 12px 0; color: #be292c; font-size: 1.2em; font-weight: 500; letter-spacing: 0.5px;">🚐 TRANSFER SERVICES</h3>
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">🚐 TRANSFER SERVICES</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
           <thead>
             <tr>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Passenger Name</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Transfer Date</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">From</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">To</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 1em; font-weight: 600; letter-spacing: 0.04em; padding: 12px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Passenger Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Transfer Date</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">From</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">To</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -272,13 +272,13 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
 
       htmlContent += `
         <tr>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${formattedTransferDate}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${from}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${to}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
-          <td style="font-family: 'Segoe UI', sans-serif; font-size: 1em; padding: 10px 8px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${formattedTransferDate}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${from}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${to}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: 'Segoe UI', sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
         </tr>
       `;
     });
@@ -286,8 +286,8 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
         </tbody>
         <tfoot>
           <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
-            <td colspan="6" style="text-align:right;font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">Transfer Subtotal:</td>
-            <td style="font-weight:600;color:#be292c;font-size:1.1em;padding:16px 8px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+            <td colspan="6" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">Transfer Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
           </tr>
         </tfoot>
       </table>
