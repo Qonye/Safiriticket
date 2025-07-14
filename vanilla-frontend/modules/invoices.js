@@ -199,8 +199,10 @@ window.renderInvoices = function(main) {
         const checkin = tr.querySelector('.item-checkin')?.value;
         const checkout = tr.querySelector('.item-checkout')?.value;
         if (checkin && checkout) {
-          const nights = (new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24);
-          subtotal = price * (nights > 0 ? nights : 1);
+          const nights = Math.max(1, Math.round((new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24)));
+          // Update the quantity field to show calculated nights
+          tr.querySelector('.item-qty').value = nights;
+          subtotal = price * nights;
         }
         serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
       } else {
@@ -595,6 +597,12 @@ window.renderInvoices = function(main) {
         item.hotelName = tr.querySelector('.item-hotel-name')?.value || '';
         item.checkin = tr.querySelector('.item-checkin')?.value || '';
         item.checkout = tr.querySelector('.item-checkout')?.value || '';
+        
+        // Calculate nights from check-in/check-out dates for hotels
+        if (item.checkin && item.checkout) {
+          const nights = Math.max(1, Math.round((new Date(item.checkout) - new Date(item.checkin)) / (1000 * 60 * 60 * 24)));
+          item.quantity = nights; // Override quantity with calculated nights
+        }
       }      // Add dynamic fields for flight
       if (type === 'flight') {
         item.airline = tr.querySelector('.item-airline')?.value || '';
