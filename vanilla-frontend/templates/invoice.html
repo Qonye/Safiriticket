@@ -159,10 +159,11 @@
       <div class="logo-col">
         <img src="https://safiritickets.com/wp-content/uploads/2025/07/safiri-logo-1.png" alt="Safiri Logo" class="logo">
       </div>
-      <div class="invoice-info-col">
-        <div class="invoice-title">INVOICE</div>
-        <!-- Removed duplicate invoice details table here -->
-      </div>
+    </div>
+    <div class="invoice-title-row" style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 8px; margin-bottom: 8px;">
+      <div style="flex: 1; height: 1px; background: #be292c; opacity: 0.25; margin-right: 16px;"></div>
+      <div class="invoice-title" style="font-family: 'Montserrat', sans-serif; font-size: 2.1rem; color: #be292c; letter-spacing: 1px; font-weight: 500; text-align: center; margin: 0; padding: 0 8px; background: #fff;">INVOICE</div>
+      <div style="flex: 1; height: 1px; background: #be292c; opacity: 0.25; margin-left: 16px;"></div>
     </div>
     <!-- Billed To and Invoice Details Row -->
     <div class="billed-details-row" style="display: flex; justify-content: space-between; align-items: center; margin: 24px 32px 0 32px;">
@@ -171,14 +172,14 @@
         <span style="font-family: 'Montserrat', sans-serif;">{{clientName}}</span>
       </div>
       <div style="text-align: right;">
-        <table style="border-collapse: collapse; font-family: 'Montserrat', sans-serif; display: inline-block; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px;">
+        <table style="border-collapse: collapse; font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 8px;">
           <tr>
-            <td style="padding: 4px 8px; text-align: right; color: #404040; font-size: 0.9em; font-weight: 500; background: transparent;">Due Date:</td>
-            <td style="padding: 4px 8px; text-align: left; color: #be292c; font-size: 0.9em; font-weight: 600; background: transparent;">{{dueDate}}</td>
+            <td style="padding: 4px 8px; text-align: right; color: #404040; font-size: 0.9em; font-weight: 500;">Due Date:</td>
+            <td style="padding: 4px 8px; text-align: left; color: #be292c; font-size: 0.9em; font-weight: 600;">{{dueDate}}</td>
           </tr>
           <tr>
-            <td style="padding: 4px 8px; text-align: right; color: #404040; font-size: 0.9em; font-weight: 500; background: transparent;">Invoice #:</td>
-            <td style="padding: 4px 8px; text-align: left; color: #be292c; font-size: 0.9em; font-weight: 600; background: transparent;">{{number}}</td>
+            <td style="padding: 4px 8px; text-align: right; color: #404040; font-size: 0.9em; font-weight: 500;">Invoice #:</td>
+            <td style="padding: 4px 8px; text-align: left; color: #be292c; font-size: 0.9em; font-weight: 600;">{{number}}</td>
           </tr>
         </table>
       </div>

@@ -70,7 +70,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">✈️ FLIGHT</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">FLIGHT</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
           <thead>
             <tr>
@@ -164,7 +164,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">🏨 HOTEL</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">HOTEL</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
           <thead>
             <tr>
@@ -244,7 +244,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">🚐 TRANSFERS</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">TRANSFERS</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
           <thead>
             <tr>
