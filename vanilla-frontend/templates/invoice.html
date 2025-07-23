@@ -14,7 +14,7 @@
       font-size: 0.8em;
     }
     body {
-      font-family: 'Montserrat', sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       min-height: 100vh;
       min-width: 100vw;
       position: relative;
@@ -59,7 +59,7 @@
       padding-left: 24px;
     }
     .invoice-title {
-      font-family: 'Montserrat', sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       font-size: 2.1rem;
       color: #be292c;
       margin: 0 0 8px 0;
@@ -67,7 +67,7 @@
       font-weight: 500;
     }
     .client-label {
-      font-family: 'Montserrat', sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       color: #404040;
       font-size: 1.1em;
       margin-top: 8px;
@@ -114,7 +114,7 @@
     }
     /* Targeting td elements specifically within items-table for font size adjustment */
     .items-table td {
-        font-family: Montserrat, sans-serif; /* Keep Montserrat if desired */
+        font-family: Arial, Helvetica, sans-serif;
         font-size: 0.95em; /* Reduced from 1.05em */
     }
     .total-row td {
@@ -131,7 +131,7 @@
       padding-top: 10px; /* Reduce padding */
     }
     .footer .footer-brand {
-      font-family: 'Montserrat', sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       font-weight: bold;
       color: #be292c;
       font-size: 1.1em;
@@ -162,17 +162,17 @@
     </div>
     <div class="invoice-title-row" style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 8px; margin-bottom: 8px;">
       <div style="flex: 1; height: 1px; background: #be292c; opacity: 0.25; margin-right: 16px;"></div>
-      <div class="invoice-title" style="font-family: 'Montserrat', sans-serif; font-size: 2.1rem; color: #be292c; letter-spacing: 1px; font-weight: 500; text-align: center; margin: 0; padding: 0 8px; background: #fff;">INVOICE</div>
+      <div class="invoice-title" style="font-family: Arial, Helvetica, sans-serif; font-size: 2.1rem; color: #be292c; letter-spacing: 1px; font-weight: 500; text-align: center; margin: 0; padding: 0 8px; background: #fff;">INVOICE</div>
       <div style="flex: 1; height: 1px; background: #be292c; opacity: 0.25; margin-left: 16px;"></div>
     </div>
     <!-- Billed To and Invoice Details Row -->
     <div class="billed-details-row" style="display: flex; justify-content: space-between; align-items: center; margin: 24px 32px 0 32px;">
-      <div class="billed-section" style="flex:1; text-align:left; color:#404040; font-size:1em; font-family: 'Montserrat', sans-serif;">
-        <strong style="color:#be292c;font-size:1.08em; font-family: 'Montserrat', sans-serif;">Billed To:</strong><br>
-        <span style="font-family: 'Montserrat', sans-serif;">{{clientName}}</span>
+      <div class="billed-section" style="flex:1; text-align:left; color:#404040; font-size:1em; font-family: Arial, Helvetica, sans-serif;">
+        <strong style="color:#be292c;font-size:1.08em; font-family: Arial, Helvetica, sans-serif;">Billed To:</strong><br>
+        <span style="font-family: Arial, Helvetica, sans-serif;">{{clientName}}</span>
       </div>
       <div style="text-align: right;">
-        <table style="border-collapse: collapse; font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 8px;">
+        <table style="border-collapse: collapse; font-family: Arial, Helvetica, sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 8px;">
           <tr>
             <td style="padding: 4px 8px; text-align: right; color: #404040; font-size: 0.9em; font-weight: 500;">Due Date:</td>
             <td style="padding: 4px 8px; text-align: left; color: #be292c; font-size: 0.9em; font-weight: 600;">{{dueDate}}</td>
@@ -186,18 +186,18 @@
     </div>
     <div class="section">
       {{serviceTables}}
-    </div>    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 20px; font-family: 'Montserrat', sans-serif;">
-      <strong style="color:#be292c;font-size:1.08em; font-weight: 500; font-family: 'Montserrat', sans-serif;">PAYMENT DETAILS:</strong><br>
-      <span style="font-family: 'Montserrat', sans-serif;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
-      <span style="font-family: 'Montserrat', sans-serif;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
-      <span style="font-family: 'Montserrat', sans-serif;">BANK NAME: {{paymentBankName}}</span><br>
-      <span style="font-family: 'Montserrat', sans-serif;">SWIFT CODE: {{paymentSwiftCode}}</span><br>
-      <span style="font-family: 'Montserrat', sans-serif;">CURRENCY: {{paymentCurrency}}</span><br>
-      <span style="color:#aaa5a5;font-size:0.97em; font-family: 'Montserrat', sans-serif;">{{paymentAdditionalInfo}}</span>
+    </div>    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 20px; font-family: Arial, Helvetica, sans-serif;">
+      <strong style="color:#be292c;font-size:1.08em; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">PAYMENT DETAILS:</strong><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">BANK NAME: {{paymentBankName}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">SWIFT CODE: {{paymentSwiftCode}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">CURRENCY: {{paymentCurrency}}</span><br>
+      <span style="color:#aaa5a5;font-size:0.97em; font-family: Arial, Helvetica, sans-serif;">{{paymentAdditionalInfo}}</span>
     </div>
-    <div class="footer" style="text-align:center;max-width:700px;margin:32px auto 0 auto;font-size:0.7em;color:#404040;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:1px solid #be292c;padding-top:16px; font-family: 'Montserrat', sans-serif;">
-      <span class="footer-brand" style="font-weight:bold;color:#be292c;font-size:1.1em;letter-spacing:0.04em;margin-bottom:4px;display:block; font-family: 'Montserrat', sans-serif;">Safiri Ticket Ltd</span>
-      <span class="footer-contact" style="color:#aaa5a5;font-size:1em;margin-bottom:2px;display:block; font-family: 'Montserrat', sans-serif;">
+    <div class="footer" style="text-align:center;max-width:700px;margin:32px auto 0 auto;font-size:0.7em;color:#404040;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:1px solid #be292c;padding-top:16px; font-family: Arial, Helvetica, sans-serif;">
+      <span class="footer-brand" style="font-weight:bold;color:#be292c;font-size:1.1em;letter-spacing:0.04em;margin-bottom:4px;display:block; font-family: Arial, Helvetica, sans-serif;">Safiri Ticket Ltd</span>
+      <span class="footer-contact" style="color:#aaa5a5;font-size:1em;margin-bottom:2px;display:block; font-family: Arial, Helvetica, sans-serif;">
         United Kingdom: 25 Cabot Square, E14 4QZ, London &nbsp;|&nbsp;
         Kenya: Purshottam Place, Chiromo Rd, Nairobi &nbsp;|&nbsp;
         Direct Line: +254 708 617 889 &nbsp;|&nbsp;
@@ -205,16 +205,16 @@
         KE: +254 715 572 312 &nbsp;|&nbsp;
         Email: joe@safiritickets.com, info@safiritickets.com
       </span>
-      <span class="footer-website" style="color:#be292c;font-size:1em;margin-top:2px;display:block; font-family: 'Montserrat', sans-serif;">www.safiritickets.com</span>
+      <span class="footer-website" style="color:#be292c;font-size:1em;margin-top:2px;display:block; font-family: Arial, Helvetica, sans-serif;">www.safiritickets.com</span>
     </div>
-          <div class="invoice-user-info" style="display: flex; justify-content: space-between; align-items: center; margin: 12px 24px 0 24px; padding-top: 8px; border-top: 1px solid rgba(0, 0, 0, 0.08); font-family: 'Montserrat', sans-serif;">
+          <div class="invoice-user-info" style="display: flex; justify-content: space-between; align-items: center; margin: 12px 24px 0 24px; padding-top: 8px; border-top: 1px solid rgba(0, 0, 0, 0.08); font-family: Arial, Helvetica, sans-serif;">
       <div style="flex: 1;">
-        <strong style="color:#be292c;font-size:1.08em; margin-bottom: 4px; font-weight: 500; font-family: 'Montserrat', sans-serif;">Date Created:</strong>
-        <div style="color: #404040; font-size: 1em; font-family: 'Montserrat', sans-serif;">{{creationDate}}</div>
+        <strong style="color:#be292c;font-size:1.08em; margin-bottom: 4px; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">Date Created:</strong>
+        <div style="color: #404040; font-size: 1em; font-family: Arial, Helvetica, sans-serif;">{{creationDate}}</div>
       </div>
       <div style="flex: 1; text-align: right;">
-        <strong style="color:#be292c;font-size:1.08em; margin-bottom: 4px; font-weight: 500; font-family: 'Montserrat', sans-serif;">Created By:</strong>
-        <div style="color: #404040; font-size: 1em; font-family: 'Montserrat', sans-serif;">{{createdBy}}</div>
+        <strong style="color:#be292c;font-size:1.08em; margin-bottom: 4px; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">Created By:</strong>
+        <div style="color: #404040; font-size: 1em; font-family: Arial, Helvetica, sans-serif;">{{createdBy}}</div>
       </div>
     </div>
   </div>
