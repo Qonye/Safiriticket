@@ -396,7 +396,7 @@ window.newPdfEngine = {
       html = _fillInvoiceTemplate(html, invoiceData, currentUser); // This is the call
       console.log('[newPdfEngine] RETURNED from window.fillInvoiceTemplate. HTML (first 50 chars):', typeof html === 'string' ? html.substring(0, 50) + '...' : 'HTML is not a string or is null/undefined after call');
       
-      const filename = `invoice-${invoiceData.number || 'details'}.pdf`;
+      const filename = `${invoiceData.number || 'INV-details'}.pdf`;
       console.log(`[newPdfEngine] Action: ${action.charAt(0).toUpperCase() + action.slice(1)}, filename: ${filename}`);
 
       if (action === 'preview') {

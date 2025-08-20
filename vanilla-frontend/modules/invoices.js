@@ -63,7 +63,8 @@ window.renderInvoices = function(main) {
         <button type="button" id="add-invoice-item-btn" style="padding:6px 14px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Add Item</button>
         <span id="invoice-items-total" style="margin-left:24px;font-weight:bold;color:#8c241c;">Total: $0</span>
       </div>
-      <button type="submit" form="invoice-form" style="margin-top:14px;padding:8px 18px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Add Invoice</button>
+      <button type="submit" id="invoice-submit-btn" form="invoice-form" style="margin-top:14px;padding:8px 18px;background:#8c241c;color:#fff;border:none;border-radius:6px;cursor:pointer;">Add Invoice</button>
+      <button type="button" id="invoice-cancel-edit-btn" style="margin-top:14px;padding:8px 18px;background:#b47572;color:#fff;border:none;border-radius:6px;cursor:pointer;display:none;">Cancel Edit</button>
       <div id="invoice-form-msg" style="margin-top:8px;font-size:0.98em;"></div>
     </div>
     <div style="margin-bottom:18px;display:flex;gap:16px;align-items:center;">
@@ -84,6 +85,11 @@ window.renderInvoices = function(main) {
     </div>
     <div id="invoices-list">Loading...</div>
   `;
+
+  // Track edit state
+  let editingInvoiceId = null;
+  let originalQuotationId = null;
+  let editingInvoiceStatus = null;
 
   // Populate client dropdown
   fetch(`${window.API_BASE_URL}/api/clients`, { credentials: 'include' })
@@ -324,6 +330,90 @@ window.renderInvoices = function(main) {
 
   document.getElementById('add-invoice-item-btn').onclick = () => addInvoiceItemRow();
 
+  // Infer payment method option key from paymentDetails
+  function inferPaymentMethodFromDetails(details = {}) {
+    const candidates = [
+      { key: 'usd-dtb', currency: 'USD', bankName: 'DIAMOND TRUST BANK' },
+      { key: 'kes-dtb', currency: 'KES', bankName: 'DIAMOND TRUST BANK' },
+      { key: 'usd-NCBA', currency: 'USD', bankName: 'NCBA BANK KENYA' },
+      { key: 'gbp-barclays', currency: 'GBP', bankName: 'Barclays Bank UK' }
+    ];
+    const found = candidates.find(c => (
+      (details.currency || '').toUpperCase() === c.currency &&
+      (details.bankName || '').toUpperCase() === c.bankName.toUpperCase()
+    ));
+    return found ? found.key : 'usd-dtb';
+  }
+
+  // Populate form for editing an existing invoice
+  async function populateFormForEdit(invoice) {
+    if (!invoice) return;
+    editingInvoiceId = invoice._id;
+    originalQuotationId = invoice.quotation?._id || invoice.quotation || null;
+    editingInvoiceStatus = invoice.status || 'Unpaid';
+
+    // Header fields
+    const clientSelect = document.getElementById('invoice-client-select');
+    if (invoice.client && invoice.client._id) clientSelect.value = invoice.client._id;
+    const dueDateInput = document.querySelector('input[name="dueDate"]');
+    if (invoice.dueDate) dueDateInput.value = new Date(invoice.dueDate).toISOString().slice(0,10);
+    const currencySelect = document.getElementById('invoice-currency-select');
+    currencySelect.value = invoice.currency || 'USD';
+    const paymentMethodSelect = document.getElementById('invoice-payment-method-select');
+    paymentMethodSelect.value = inferPaymentMethodFromDetails(invoice.paymentDetails || {});
+
+    // Items
+    const tbody = document.getElementById('invoice-items-tbody');
+    tbody.innerHTML = '';
+    for (const item of (invoice.items || [])) {
+      await addInvoiceItemRow(item.description || '', Number(item.quantity) || 1, Number(item.price) || 0, '', item.type || '');
+      const lastRow = tbody.lastElementChild;
+      // Set dynamic field values if present
+      const serviceFeeEl = lastRow.querySelector('.item-service-fee');
+      if (serviceFeeEl && typeof item.serviceFee !== 'undefined') serviceFeeEl.value = Number(item.serviceFee) || 0;
+      if (item.type === 'hotel') {
+        if (lastRow.querySelector('.item-hotel-name')) lastRow.querySelector('.item-hotel-name').value = item.hotelName || '';
+        if (lastRow.querySelector('.item-checkin')) lastRow.querySelector('.item-checkin').value = item.checkin || '';
+        if (lastRow.querySelector('.item-checkout')) lastRow.querySelector('.item-checkout').value = item.checkout || '';
+      }
+      if (item.type === 'flight') {
+        if (lastRow.querySelector('.item-airline')) lastRow.querySelector('.item-airline').value = item.airline || '';
+        if (lastRow.querySelector('.item-from')) lastRow.querySelector('.item-from').value = item.from || '';
+        if (lastRow.querySelector('.item-to')) lastRow.querySelector('.item-to').value = item.to || '';
+        if (lastRow.querySelector('.item-flight-date')) lastRow.querySelector('.item-flight-date').value = item.flightDate || '';
+        if (lastRow.querySelector('.item-return-date')) lastRow.querySelector('.item-return-date').value = item.returnDate || '';
+        if (lastRow.querySelector('.item-class')) lastRow.querySelector('.item-class').value = item.class || '';
+        if (lastRow.querySelector('.item-round-trip')) lastRow.querySelector('.item-round-trip').checked = !!item.isRoundTrip;
+      }
+      if (item.type === 'transfer') {
+        if (lastRow.querySelector('.item-from')) lastRow.querySelector('.item-from').value = item.from || '';
+        if (lastRow.querySelector('.item-to')) lastRow.querySelector('.item-to').value = item.to || '';
+        if (lastRow.querySelector('.item-transfer-date')) lastRow.querySelector('.item-transfer-date').value = item.transferDate || '';
+      }
+    }
+    updateInvoiceSubtotalsAndTotal();
+
+    // Switch submit to Save mode and show cancel
+    const submitBtn = document.getElementById('invoice-submit-btn');
+    submitBtn.textContent = 'Save Invoice';
+    document.getElementById('invoice-cancel-edit-btn').style.display = '';
+    document.getElementById('invoice-form-msg').textContent = `Editing invoice ${invoice.number || invoice._id}`;
+  }
+
+  // Cancel edit resets form to add mode
+  document.getElementById('invoice-cancel-edit-btn').onclick = function() {
+    editingInvoiceId = null;
+    originalQuotationId = null;
+    document.getElementById('invoice-form').reset();
+    const tbody = document.getElementById('invoice-items-tbody');
+    tbody.innerHTML = '';
+    addInvoiceItemRow();
+    updateInvoiceSubtotalsAndTotal();
+    document.getElementById('invoice-submit-btn').textContent = 'Add Invoice';
+    this.style.display = 'none';
+    document.getElementById('invoice-form-msg').textContent = '';
+  };
+
   // When a quotation is selected, fill in items and client
   document.getElementById('invoice-quotation-select').addEventListener('change', function() {
     const qid = this.value;
@@ -350,6 +440,17 @@ window.renderInvoices = function(main) {
     fetch(url, { credentials: 'include' })
       .then(r => r.json())
       .then(invoices => {
+        // Sort latest first: by createdAt desc, fallback to invoice number numeric part
+        invoices.sort((a, b) => {
+          const ad = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (bd !== ad) return bd - ad;
+          const am = a.number && a.number.match(/(\d+)$/);
+          const bm = b.number && b.number.match(/(\d+)$/);
+          const an = am ? parseInt(am[1], 10) : 0;
+          const bn = bm ? parseInt(bm[1], 10) : 0;
+          return bn - an;
+        });
         window.invoices = invoices; // Store invoices globally
         if (!invoices.length) {
           document.getElementById('invoices-list').innerHTML = '<p>No invoices found.</p>';
@@ -540,7 +641,7 @@ window.renderInvoices = function(main) {
             }
             if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
               const currentUser = window.auth.getUserInfo();
-              await window.newPdfEngine.generateInvoice(invoice, 'download', { filename: `invoice-${invoice.number || invoice._id}.pdf` }, currentUser);
+              await window.newPdfEngine.generateInvoice(invoice, 'download', { filename: `${invoice.number || 'INV-details'}.pdf` }, currentUser);
             } else {
               console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
               alert('Error: PDF download functionality is currently unavailable. Please check console for details.');
@@ -568,7 +669,18 @@ window.renderInvoices = function(main) {
           };
         });
 
-        // (Optional) Add edit functionality for other fields as needed
+        // Edit invoice (load into form)
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.onclick = async function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            const invoice = window.invoices.find(inv => inv._id === id);
+            await populateFormForEdit(invoice);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+        });
+
+        // (Optional) Further edit fields inline as needed
       });
   }
 
@@ -643,7 +755,9 @@ window.renderInvoices = function(main) {
         });
     } else {
       submitInvoice(clientId);
-    }    function submitInvoice(clientId) {
+    }
+
+    function submitInvoice(clientId) {
       if (!clientId || clientId === "") {
         document.getElementById('invoice-form-msg').textContent = 'Client is required.';
         return;
@@ -654,22 +768,24 @@ window.renderInvoices = function(main) {
       
       const data = {
         client: clientId,
-        status: "Unpaid",
+        status: editingInvoiceId ? editingInvoiceStatus || 'Unpaid' : "Unpaid",
         dueDate: form.dueDate.value,
         items,
         total,
         currency,
         paymentDetails,
-        quotation: quotationId || undefined
+        quotation: editingInvoiceId ? (originalQuotationId || undefined) : (quotationId || undefined)
       };
       
       // Debug: Log the items to see if transferDate is included
       console.log('Invoice items being sent:', items);
       console.log('Full invoice data being sent:', data);
-      fetch(`${window.API_BASE_URL}/api/invoices`, {
-        method: 'POST',
+      const url = editingInvoiceId ? `${window.API_BASE_URL}/api/invoices/${editingInvoiceId}` : `${window.API_BASE_URL}/api/invoices`;
+      const method = editingInvoiceId ? 'PUT' : 'POST';
+      fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Ensure session cookie is sent
+        credentials: 'include',
         body: JSON.stringify(data)
       })
         .then(async r => {
@@ -678,7 +794,7 @@ window.renderInvoices = function(main) {
             document.getElementById('invoice-form-msg').textContent = resp.error ? `Error: ${resp.error}` : 'Error adding invoice.';
             return;
           }
-          document.getElementById('invoice-form-msg').textContent = 'Invoice added!';
+          document.getElementById('invoice-form-msg').textContent = editingInvoiceId ? 'Invoice updated!' : 'Invoice added!';
           form.reset();
           // Remove all item rows except one
           const tbody = document.getElementById('invoice-items-tbody');
@@ -691,6 +807,14 @@ window.renderInvoices = function(main) {
           setTimeout(() => {
             document.getElementById('invoice-form-msg').textContent = '';
           }, 1500);
+          // Exit edit mode if applicable
+          if (editingInvoiceId) {
+            editingInvoiceId = null;
+            originalQuotationId = null;
+            editingInvoiceStatus = null;
+            document.getElementById('invoice-submit-btn').textContent = 'Add Invoice';
+            document.getElementById('invoice-cancel-edit-btn').style.display = 'none';
+          }
         })
         .catch(() => {
           document.getElementById('invoice-form-msg').textContent = 'Error adding invoice.';
@@ -811,7 +935,7 @@ async function renderInvoicePreview(invoice) {
     html2canvas: { scale: 2 }
   });
   
-  window.downloadPDF(html, `invoice-${invoice.number || invoice._id}.pdf`, {
+  window.downloadPDF(html, `${invoice.number || invoice._id}.pdf`, {
     margin: [0, 0, 0, 0],
     jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
