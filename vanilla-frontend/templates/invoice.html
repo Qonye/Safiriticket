@@ -106,7 +106,6 @@
       vertical-align: middle !important;
       word-break: break-word !important;
       font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif !important;
-      color: #2e2e2e !important;
     }
     th {
       background: #f3f5f7 !important;
@@ -120,6 +119,12 @@
     .items-table td {
       font-size: 1.05em !important;
       line-height: 1.4 !important;
+      color: #6b7280 !important; /* Softer gray for body cells */
+    }
+    /* Emphasize totals/footer rows */
+    .items-table tfoot td {
+      color: #2e2e2e !important;
+      font-weight: 600 !important;
     }
     /* Targeting td elements specifically within items-table for font size adjustment */
     .items-table td {
