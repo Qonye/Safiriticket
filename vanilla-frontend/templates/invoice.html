@@ -12,9 +12,11 @@
       padding: 0;
       background: #f8f9fa;
       font-size: 0.8em;
+      /* Modern, clean font stack similar to the reference */
+      font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
     }
     body {
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
       min-height: 100vh;
       min-width: 100vw;
       position: relative;
@@ -98,19 +100,26 @@
       overflow: hidden;
     }
     th, td {
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      padding: 10px 8px; /* Increased padding for better readability */
-      text-align: center;
-      vertical-align: middle;
-      word-break: break-word; /* Added to help break long words if necessary */
+      border: 1px solid #e6e9ef !important;
+      padding: 10px 12px !important;
+      text-align: center !important;
+      vertical-align: middle !important;
+      word-break: break-word !important;
+      font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif !important;
+      color: #2e2e2e !important;
     }
     th {
-      background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
-      color: #be292c;
-      font-size: 1em;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      padding: 12px 8px;
+      background: #f3f5f7 !important;
+      color: #2e2e2e !important;
+      font-size: 0.95em !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.02em !important;
+      padding: 12px 12px !important;
+    }
+    /* Increase font size specifically for item rows */
+    .items-table td {
+      font-size: 1.05em !important;
+      line-height: 1.4 !important;
     }
     /* Targeting td elements specifically within items-table for font size adjustment */
     .items-table td {
@@ -131,7 +140,7 @@
       padding-top: 10px; /* Reduce padding */
     }
     .footer .footer-brand {
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
       font-weight: bold;
       color: #be292c;
       font-size: 1.1em;
@@ -140,7 +149,7 @@
       display: block;
     }
     .footer .footer-contact {
-      color: #aaa5a5;
+      color: #6b7280;
       font-size: 1em;
       margin-bottom: 2px;
       display: block;

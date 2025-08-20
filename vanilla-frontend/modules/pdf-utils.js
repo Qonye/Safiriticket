@@ -22,7 +22,8 @@ window.previewPDF = async function(html, options = {}) {
   tempDiv.style.position = 'absolute';
   tempDiv.style.left = '-9999px';
   tempDiv.style.top = '-9999px';
-  tempDiv.style.width = '800px'; // Give it a defined width, similar to A4 paper width for rendering
+  // A4 effective content width at 96 DPI ~ 794px
+  tempDiv.style.width = '794px';
   tempDiv.innerHTML = html;
   document.body.appendChild(tempDiv);
 
@@ -32,10 +33,11 @@ window.previewPDF = async function(html, options = {}) {
   // Use safe margins to avoid truncation
   // Pass tempDiv.innerHTML instead of tempDiv
   html2pdf().from(tempDiv.innerHTML).set({
-    margin: [10, 10, 10, 10], // 10mm on all sides
-    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    margin: [10, 10, 10, 10],
+    image: { type: 'jpeg', quality: 0.98 },
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait', compress: true },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-    html2canvas: { scale: 2, useCORS: true },
+    html2canvas: { scale: 3, useCORS: true, letterRendering: true },
     ...options
   }).outputPdf('bloburl').then(url => {
     window.open(url, '_blank');
@@ -50,7 +52,8 @@ window.downloadPDF = async function(html, filename = 'document.pdf', options = {
   tempDiv.style.position = 'absolute';
   tempDiv.style.left = '-9999px';
   tempDiv.style.top = '-9999px';
-  tempDiv.style.width = '800px'; // Give it a defined width
+  // A4 effective content width at 96 DPI ~ 794px
+  tempDiv.style.width = '794px';
   tempDiv.innerHTML = html;
   document.body.appendChild(tempDiv);
 
@@ -60,9 +63,10 @@ window.downloadPDF = async function(html, filename = 'document.pdf', options = {
   // Pass tempDiv.innerHTML instead of tempDiv
   html2pdf().from(tempDiv.innerHTML).set({
     margin: [10, 10, 10, 10],
-    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait' },
+    image: { type: 'jpeg', quality: 0.98 },
+    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait', compress: true },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-    html2canvas: { scale: 2, useCORS: true },
+    html2canvas: { scale: 3, useCORS: true, letterRendering: true },
     filename,
     ...options
   }).save().then(() => tempDiv.remove());
