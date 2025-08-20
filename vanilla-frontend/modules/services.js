@@ -18,6 +18,8 @@ window.renderServices = function(main) {
               <option value="flight">Flight</option>
               <option value="transfer">Transfer</option>
               <option value="activity">Activity</option>
+              <option value="visa">Visa services</option>
+              <option value="insurance">Travel insurance</option>
               <option value="fee">Fee/Other</option>
             </select>
           </label>

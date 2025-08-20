@@ -265,6 +265,37 @@ window.renderInvoices = function(main) {
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
       `;
+    } else if (type === 'activity') {
+      html = `
+        <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-activity-name" placeholder="Activity Name" style="width:110px;padding:4px;">
+          <input type="date" class="item-activity-date" placeholder="Date" style="width:110px;padding:4px;">
+          <input type="number" class="item-participants" placeholder="Participants" style="width:90px;padding:4px;">
+          <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
+        </div>
+      `;
+    } else if (type === 'visa') {
+      html = `
+        <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-visa-type" placeholder="Visa Type" style="width:110px;padding:4px;">
+          <input type="text" class="item-nationality" placeholder="Nationality" style="width:90px;padding:4px;">
+          <input type="text" class="item-passport-no" placeholder="Passport No" style="width:100px;padding:4px;">
+          <input type="date" class="item-processing-date" placeholder="Processing Date" style="width:110px;padding:4px;">
+          <input type="date" class="item-expiry-date" placeholder="Expiry Date" style="width:110px;padding:4px;">
+          <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
+        </div>
+      `;
+    } else if (type === 'insurance') {
+      html = `
+        <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-provider" placeholder="Provider" style="width:110px;padding:4px;">
+          <input type="text" class="item-policy-no" placeholder="Policy No" style="width:100px;padding:4px;">
+          <input type="date" class="item-coverage-from" placeholder="Coverage From" style="width:110px;padding:4px;">
+          <input type="date" class="item-coverage-to" placeholder="Coverage To" style="width:110px;padding:4px;">
+          <input type="text" class="item-plan" placeholder="Plan" style="width:90px;padding:4px;">
+          <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
+        </div>
+      `;
     }
     // Add more types as needed...
 
@@ -291,6 +322,12 @@ window.renderInvoices = function(main) {
     `;
     document.getElementById('invoice-items-tbody').appendChild(tr);
 
+    // If a description was provided (e.g., when editing), set it
+    const descInput = tr.querySelector('.item-desc');
+    if (typeof desc === 'string' && descInput) {
+      descInput.value = desc;
+    }
+
     // Show dynamic fields if a type is provided (for edit/restore)
     if (productType) renderServiceFields(tr, productType);
 
@@ -304,6 +341,13 @@ window.renderInvoices = function(main) {
       tr.querySelector('.item-desc').style.display = '';
       renderServiceFields(tr, type);
     });
+
+    // Preselect service by type when provided (edit mode)
+    if (productType) {
+      const select = tr.querySelector('.item-product');
+      const match = Array.from(select.options).find(opt => opt.getAttribute('data-type') === productType);
+      if (match) select.value = match.value;
+    }
 
     // Listen for changes in dynamic fields to update subtotal
     tr.addEventListener('input', updateInvoiceSubtotalsAndTotal);
@@ -390,6 +434,26 @@ window.renderInvoices = function(main) {
         if (lastRow.querySelector('.item-to')) lastRow.querySelector('.item-to').value = item.to || '';
         if (lastRow.querySelector('.item-transfer-date')) lastRow.querySelector('.item-transfer-date').value = item.transferDate || '';
       }
+      if (item.type === 'activity') {
+        if (lastRow.querySelector('.item-activity-name')) lastRow.querySelector('.item-activity-name').value = item.activityName || '';
+        if (lastRow.querySelector('.item-activity-date')) lastRow.querySelector('.item-activity-date').value = item.activityDate || '';
+        if (lastRow.querySelector('.item-participants')) lastRow.querySelector('.item-participants').value = item.participants || '';
+      }
+      if (item.type === 'visa') {
+        if (lastRow.querySelector('.item-visa-type')) lastRow.querySelector('.item-visa-type').value = item.visaType || '';
+        if (lastRow.querySelector('.item-nationality')) lastRow.querySelector('.item-nationality').value = item.nationality || '';
+        if (lastRow.querySelector('.item-passport-no')) lastRow.querySelector('.item-passport-no').value = item.passportNo || '';
+        if (lastRow.querySelector('.item-processing-date')) lastRow.querySelector('.item-processing-date').value = item.processingDate || '';
+        if (lastRow.querySelector('.item-expiry-date')) lastRow.querySelector('.item-expiry-date').value = item.expiryDate || '';
+      }
+      if (item.type === 'insurance') {
+        if (lastRow.querySelector('.item-provider')) lastRow.querySelector('.item-provider').value = item.provider || '';
+        if (lastRow.querySelector('.item-policy-no')) lastRow.querySelector('.item-policy-no').value = item.policyNo || '';
+        if (lastRow.querySelector('.item-coverage-from')) lastRow.querySelector('.item-coverage-from').value = item.coverageFrom || '';
+        if (lastRow.querySelector('.item-coverage-to')) lastRow.querySelector('.item-coverage-to').value = item.coverageTo || '';
+        if (lastRow.querySelector('.item-plan')) lastRow.querySelector('.item-plan').value = item.plan || '';
+      }
+      // If no explicit type, at least keep description in place (already set)
     }
     updateInvoiceSubtotalsAndTotal();
 
@@ -693,7 +757,7 @@ window.renderInvoices = function(main) {
       const selected = productSelect ? productSelect.options[productSelect.selectedIndex] : null;
       const type = selected ? selected.getAttribute('data-type') : null;
       let serviceFee = 0;
-      if (type === 'hotel' || type === 'flight' || type === 'transfer') {
+      if (type === 'hotel' || type === 'flight' || type === 'transfer' || type === 'activity' || type === 'visa' || type === 'insurance') {
         serviceFee = Number(tr.querySelector('.item-service-fee')?.value) || 0;
       }
       // Gather dynamic fields
@@ -730,7 +794,28 @@ window.renderInvoices = function(main) {
         item.to = tr.querySelector('.item-to')?.value || '';
         item.transferDate = tr.querySelector('.item-transfer-date')?.value || '';
       }
-      // ...add more types as needed...
+      // Add dynamic fields for activity
+      if (type === 'activity') {
+        item.activityName = tr.querySelector('.item-activity-name')?.value || '';
+        item.activityDate = tr.querySelector('.item-activity-date')?.value || '';
+        item.participants = Number(tr.querySelector('.item-participants')?.value) || 0;
+      }
+      // Add dynamic fields for visa
+      if (type === 'visa') {
+        item.visaType = tr.querySelector('.item-visa-type')?.value || '';
+        item.nationality = tr.querySelector('.item-nationality')?.value || '';
+        item.passportNo = tr.querySelector('.item-passport-no')?.value || '';
+        item.processingDate = tr.querySelector('.item-processing-date')?.value || '';
+        item.expiryDate = tr.querySelector('.item-expiry-date')?.value || '';
+      }
+      // Add dynamic fields for insurance
+      if (type === 'insurance') {
+        item.provider = tr.querySelector('.item-provider')?.value || '';
+        item.policyNo = tr.querySelector('.item-policy-no')?.value || '';
+        item.coverageFrom = tr.querySelector('.item-coverage-from')?.value || '';
+        item.coverageTo = tr.querySelector('.item-coverage-to')?.value || '';
+        item.plan = tr.querySelector('.item-plan')?.value || '';
+      }
       return item;
     }).filter(item => item.description && item.quantity > 0);
 
@@ -780,12 +865,13 @@ window.renderInvoices = function(main) {
       // Debug: Log the items to see if transferDate is included
       console.log('Invoice items being sent:', items);
       console.log('Full invoice data being sent:', data);
+      // Always include credentials and send a proper PUT when editing
       const url = editingInvoiceId ? `${window.API_BASE_URL}/api/invoices/${editingInvoiceId}` : `${window.API_BASE_URL}/api/invoices`;
       const method = editingInvoiceId ? 'PUT' : 'POST';
       fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        credentials: 'include', // keep cookies/session if used by backend
         body: JSON.stringify(data)
       })
         .then(async r => {

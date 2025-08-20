@@ -39,6 +39,9 @@ function _inferType(item) {
   if (item.airline || /flight/i.test(item.description)) return 'flight';
   if (item.hotelName || /hotel/i.test(item.description)) return 'hotel';
   if ((item.from && item.to) || /transfer/i.test(item.description)) return 'transfer';
+  if (item.activityName || /activity/i.test(item.description)) return 'activity';
+  if (item.visaType || item.passportNo || /visa/i.test(item.description)) return 'visa';
+  if (item.provider || item.policyNo || /insurance/i.test(item.description)) return 'insurance';
   return 'Other';
 }
 
@@ -308,6 +311,61 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
   } else {
     console.log('[_renderInvoiceServiceTables] No transfer items to render or grouped.transfer is empty.');
   }
+
+  // Generic tables for any remaining/unhandled types (e.g., activity, visa, insurance, fee/other)
+  const handled = new Set(['flight', 'hotel', 'transfer']);
+  Object.keys(grouped)
+    .filter(type => !handled.has(type))
+    .forEach(type => {
+      const rows = grouped[type];
+      if (!rows || rows.length === 0) return;
+      let total = 0;
+      const heading = (type || 'Other').toString().toUpperCase();
+      htmlContent += `
+        <div style="margin-top: 12px; margin-bottom: 8px;">
+          <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">${heading}</h3>
+          <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
+            <thead>
+              <tr>
+                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Description</th>
+                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Qty</th>
+                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Rate</th>
+                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
+                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      rows.forEach(item => {
+        const description = item.description || '';
+        const quantity = Number(item.quantity) || 1;
+        const price = Number(item.price) || 0;
+        const serviceFee = Number(item.serviceFee) || 0;
+        const totalRow = (price * quantity) + serviceFee;
+        total += totalRow;
+        grandTotal += totalRow;
+        htmlContent += `
+          <tr>
+            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${description}</td>
+            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${quantity}</td>
+            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${price.toLocaleString()}</td>
+            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${serviceFee.toLocaleString()}</td>
+            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+      htmlContent += `
+            </tbody>
+            <tfoot>
+              <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+                <td colspan="4" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${heading} Subtotal:</td>
+                <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      `;
+    });
   
   if (grandTotal > 0) {
     // Adjusted font-size to match table cells (0.95em).
