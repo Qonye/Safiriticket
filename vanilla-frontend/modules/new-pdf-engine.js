@@ -432,10 +432,15 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       const totalRow = amount + fee;
       total += totalRow;
       grandTotal += totalRow;
+      // For activities, use activityName for NAME column and activityDescription for DESCRIPTION column
+      // If activityDescription is empty, use a fallback to avoid empty cells
+      const activityName = item.activityName || item.description || clientName;
+      const activityDescription = item.activityDescription || (item.description && item.description !== activityName ? item.description : '');
+      
       htmlContent += `
         <tr>
-          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${clientName}</td>
-          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || ''}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${activityName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${activityDescription}</td>
           <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
           <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
           <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>

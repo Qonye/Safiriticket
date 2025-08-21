@@ -268,6 +268,8 @@ window.renderInvoices = function(main) {
     } else if (type === 'activity') {
       html = `
         <div class="dynamic-fields" style="margin-top:4px;">
+          <input type="text" class="item-activity-name" placeholder="Activity Name" style="width:120px;padding:4px;">
+          <input type="text" class="item-activity-description" placeholder="Activity Description" style="width:150px;padding:4px;">
           <input type="number" class="item-service-fee" placeholder="Service Fee" style="width:90px;padding:4px;">
         </div>
       `;
@@ -292,6 +294,12 @@ window.renderInvoices = function(main) {
 
     if (html) {
       tr.querySelector('td').insertAdjacentHTML('beforeend', html);
+      
+      // Hide general description field for activities since we have dedicated name/description fields
+      if (type === 'activity') {
+        const descField = tr.querySelector('.item-desc');
+        if (descField) descField.style.display = 'none';
+      }
     }
   }
 
@@ -329,7 +337,14 @@ window.renderInvoices = function(main) {
     tr.querySelector('.item-product').addEventListener('change', function() {
       const selected = this.options[this.selectedIndex];
       const type = selected.getAttribute('data-type');
-      tr.querySelector('.item-desc').style.display = '';
+      
+      // Hide general description field for activities since we have dedicated name/description fields
+      if (type === 'activity') {
+        tr.querySelector('.item-desc').style.display = 'none';
+      } else {
+        tr.querySelector('.item-desc').style.display = '';
+      }
+      
       renderServiceFields(tr, type);
     });
 
@@ -426,7 +441,8 @@ window.renderInvoices = function(main) {
         if (lastRow.querySelector('.item-transfer-date')) lastRow.querySelector('.item-transfer-date').value = item.transferDate || '';
       }
       if (item.type === 'activity') {
-        // Activity only has service fee now - description field will contain the activity name
+        if (lastRow.querySelector('.item-activity-name')) lastRow.querySelector('.item-activity-name').value = item.activityName || '';
+        if (lastRow.querySelector('.item-activity-description')) lastRow.querySelector('.item-activity-description').value = item.activityDescription || '';
       }
       if (item.type === 'visa') {
         if (lastRow.querySelector('.item-destination')) lastRow.querySelector('.item-destination').value = item.destination || '';
@@ -779,7 +795,12 @@ window.renderInvoices = function(main) {
       }
       // Add dynamic fields for activity
       if (type === 'activity') {
-        // Activity uses description field for activity name, only service fee is dynamic
+        item.activityName = tr.querySelector('.item-activity-name')?.value || '';
+        item.activityDescription = tr.querySelector('.item-activity-description')?.value || '';
+        // Use activity name as description if no description is provided
+        if (!item.description && item.activityName) {
+          item.description = item.activityName;
+        }
       }
       // Add dynamic fields for visa
       if (type === 'visa') {
