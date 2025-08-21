@@ -47,10 +47,7 @@ function _inferType(item) {
 
 // Helper function to render service tables (moved and adapted from pdf-utils.js)
 function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'USD') {
-  console.log('[_renderInvoiceServiceTables] ENTERED. Processing items count:', items.length);
-
   if (!items || !items.length) {
-    console.log('[_renderInvoiceServiceTables] No items received or items array is empty, returning empty string.');
     return '';
   }
 
@@ -62,8 +59,6 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     if (!grouped[type]) grouped[type] = [];
     grouped[type].push(item);
   });
-  
-  console.log('[_renderInvoiceServiceTables] Grouped items:', JSON.parse(JSON.stringify(grouped)));
 
   let htmlContent = '';
   let grandTotal = 0;
@@ -238,8 +233,6 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       </table>
     </div>
     `;
-  } else {
-    console.log('[_renderInvoiceServiceTables] No hotel items to render or grouped.hotel is empty.');
   }
 
   // Transfer Table
@@ -308,78 +301,166 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
       </table>
     </div>
     `;
-  } else {
-    console.log('[_renderInvoiceServiceTables] No transfer items to render or grouped.transfer is empty.');
   }
 
-  // Generic tables for any remaining/unhandled types (e.g., activity, visa, insurance, fee/other)
-  const handled = new Set(['flight', 'hotel', 'transfer']);
-  Object.keys(grouped)
-    .filter(type => !handled.has(type))
-    .forEach(type => {
-      const rows = grouped[type];
-      if (!rows || rows.length === 0) return;
-      let total = 0;
-      const heading = (type || 'Other').toString().toUpperCase();
+  // VISA Table
+  if (grouped.visa && grouped.visa.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">VISAS</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">NAME</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">DESTINATION</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">AMOUNT</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">SERVICE FEE</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.visa.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
       htmlContent += `
-        <div style="margin-top: 12px; margin-bottom: 8px;">
-          <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">${heading}</h3>
-          <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
-            <thead>
-              <tr>
-                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Description</th>
-                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Qty</th>
-                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Rate</th>
-                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Service Fee</th>
-                <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-      rows.forEach(item => {
-        const description = item.description || '';
-        const quantity = Number(item.quantity) || 1;
-        const price = Number(item.price) || 0;
-        const serviceFee = Number(item.serviceFee) || 0;
-        const totalRow = (price * quantity) + serviceFee;
-        total += totalRow;
-        grandTotal += totalRow;
-        htmlContent += `
-          <tr>
-            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${description}</td>
-            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${quantity}</td>
-            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${price.toLocaleString()}</td>
-            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${serviceFee.toLocaleString()}</td>
-            <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
-          </tr>
-        `;
-      });
-      htmlContent += `
-            </tbody>
-            <tfoot>
-              <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
-                <td colspan="4" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${heading} Subtotal:</td>
-                <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.destination || ''}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
       `;
     });
-  
-  if (grandTotal > 0) {
-    // Adjusted font-size to match table cells (0.95em).
-    htmlContent += `<div style="text-align:right; font-weight:bold; margin-top:16px; font-family: Arial, Helvetica, sans-serif; font-size: 1.05em; padding-right: 16px;">🧾 Grand Total: ${currencySymbol}${grandTotal.toLocaleString()}</div>`;
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="4" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">TOTAL</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
   }
 
-  console.log('[_renderInvoiceServiceTables] Final HTML generated (first 300 chars):', htmlContent.substring(0, 300) + (htmlContent.length > 300 ? '...' : ''));
+  // TRAVEL INSURANCE Table
+  if (grouped.insurance && grouped.insurance.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">TRAVEL INSURANCE</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">NAME</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">DESTINATION</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">DATES</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">AMOUNT</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">SERVICE FEE</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.insurance.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      
+      // Format dates for insurance
+      let datesDisplay = '';
+      if (item.coverageFrom && item.coverageTo) {
+        const fromDate = new Date(item.coverageFrom).toLocaleDateString();
+        const toDate = new Date(item.coverageTo).toLocaleDateString();
+        datesDisplay = `${fromDate} - ${toDate}`;
+      }
+      
+      htmlContent += `
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.destination || ''}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${datesDisplay}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="5" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">TOTAL</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
+  }
+
+  // ACTIVITIES Table
+  if (grouped.activity && grouped.activity.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">ACTIVITIES</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">NAME</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">DESCRIPTION</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">AMOUNT</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">SERVICE FEE</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center;">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.activity.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      htmlContent += `
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${clientName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || ''}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="4" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">TOTAL</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
+  }
+  
   return htmlContent;
 }
 
 // Helper function to fill template placeholders (moved and adapted from pdf-utils.js)
 function _fillInvoiceTemplate(template, invoice, currentUser = null) {
   let html = template;
-  console.log('[_fillInvoiceTemplate] Attempting to render service tables. invoice.items count:', (invoice.items || []).length);
 
   html = html.replace(/{{number}}/g, invoice.number || '');
   html = html.replace(/{{clientName}}/g, invoice.client?.name || '');
@@ -395,10 +476,8 @@ function _fillInvoiceTemplate(template, invoice, currentUser = null) {
   if (currentUser) {
     // Use name first, then username, then fallback to 'System'
     const creatorName = currentUser.name || currentUser.username || 'System';
-    console.log('[_fillInvoiceTemplate] Setting creator name to:', creatorName);
     html = html.replace(/{{createdBy}}/g, creatorName);
   } else {
-    console.log('[_fillInvoiceTemplate] No currentUser provided, using System as creator');
     html = html.replace(/{{createdBy}}/g, 'System');
   }
 
@@ -421,41 +500,23 @@ function _fillInvoiceTemplate(template, invoice, currentUser = null) {
 
   const serviceTablesHtml = _renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || '', currency); // Call local _renderInvoiceServiceTables with currency
   
-  console.log('[_fillInvoiceTemplate] HTML returned by _renderInvoiceServiceTables (first 300 chars):', serviceTablesHtml.substring(0, 300) + (serviceTablesHtml.length > 300 ? '...' : ''));
-  if (serviceTablesHtml.trim() === '') {
-    console.warn('[_fillInvoiceTemplate] _renderInvoiceServiceTables returned an EMPTY string.');
-  }
-
-  console.log('[_fillInvoiceTemplate] HTML before replacing {{serviceTables}} (contains placeholder?):', html.includes('{{serviceTables}}'));
   html = html.replace(/{{serviceTables}}/g, serviceTablesHtml);
-  console.log('[_fillInvoiceTemplate] HTML after attempting to replace {{serviceTables}} (contains placeholder?):', html.includes('{{serviceTables}}'));
+  
+  // Use invoice total from backend instead of calculated total
+  const invoiceTotal = invoice.total || 0;
+  html = html.replace(/{{total}}/g, `${currencySymbol}${invoiceTotal.toLocaleString()}`);
   
   return html;
 }
 
 window.newPdfEngine = {
   generateInvoice: async function(invoiceData, action = 'preview', options = {}, currentUser = null) {
-    console.log('[newPdfEngine] Generating invoice. Action:', action); // Basic entry log
     try {
       let html = await window.loadTemplate('invoice');
-      console.log('[newPdfEngine] Loaded template HTML (first 50 chars):', typeof html === 'string' ? html.substring(0, 50) + '...' : 'HTML is not a string or is null/undefined');
       
-      console.log('[newPdfEngine] invoiceData.items count before fillInvoiceTemplate:', (invoiceData && invoiceData.items ? invoiceData.items.length : 'N/A'));
-      
-      console.log('[newPdfEngine] typeof window.fillInvoiceTemplate before call:', typeof window.fillInvoiceTemplate);
-      if (typeof window.fillInvoiceTemplate === 'function') {
-        console.log('[newPdfEngine] Source of window.fillInvoiceTemplate (first 300 chars):\n', window.fillInvoiceTemplate.toString().substring(0, 300));
-      } else {
-        console.error('[newPdfEngine] ERROR: window.fillInvoiceTemplate is NOT a function! Check if pdf-utils.js is loaded correctly and defines it.');
-        return; // Stop further execution
-      }
-
-      console.log('[newPdfEngine] CALLING window.fillInvoiceTemplate now...');
-      html = _fillInvoiceTemplate(html, invoiceData, currentUser); // This is the call
-      console.log('[newPdfEngine] RETURNED from window.fillInvoiceTemplate. HTML (first 50 chars):', typeof html === 'string' ? html.substring(0, 50) + '...' : 'HTML is not a string or is null/undefined after call');
+      html = _fillInvoiceTemplate(html, invoiceData, currentUser);
       
       const filename = `${invoiceData.number || 'INV-details'}.pdf`;
-      console.log(`[newPdfEngine] Action: ${action.charAt(0).toUpperCase() + action.slice(1)}, filename: ${filename}`);
 
       if (action === 'preview') {
         await window.previewPDF(html, options); // Corrected: populatedHtml to html
