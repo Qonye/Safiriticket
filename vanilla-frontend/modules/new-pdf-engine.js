@@ -502,9 +502,19 @@ function _fillInvoiceTemplate(template, invoice, currentUser = null) {
   
   html = html.replace(/{{serviceTables}}/g, serviceTablesHtml);
   
-  // Use invoice total from backend instead of calculated total
-  const invoiceTotal = invoice.total || 0;
-  html = html.replace(/{{total}}/g, `${currencySymbol}${invoiceTotal.toLocaleString()}`);
+  // Calculate grand total from service tables
+  let grandTotal = 0;
+  if (invoice.items && invoice.items.length > 0) {
+    invoice.items.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const serviceFee = Number(item.serviceFee) || 0;
+      const quantity = Number(item.quantity) || 1;
+      grandTotal += (amount * quantity) + serviceFee;
+    });
+  }
+  
+  // Replace grand total placeholder
+  html = html.replace(/{{grandTotal}}/g, `${currencySymbol}${grandTotal.toLocaleString()}`);
   
   return html;
 }

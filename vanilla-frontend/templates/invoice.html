@@ -200,7 +200,18 @@
     </div>
     <div class="section">
       {{serviceTables}}
-    </div>    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 20px; font-family: Arial, Helvetica, sans-serif;">
+    </div>
+    
+    <!-- Grand Total Section -->
+    <div class="section" style="text-align: right; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #fafbfc 100%); border-radius: 3px; padding: 20px; font-family: Arial, Helvetica, sans-serif; position: relative; z-index: 10;">
+      <div style="display: inline-block; background: #f3f5f7; border: 1px solid #e6e9ef; border-radius: 3px; padding: 12px 16px; position: relative;">
+        <div style="font-family: Arial, Helvetica, sans-serif; font-size: 1.1em; font-weight: 600; color: #2e2e2e; letter-spacing: 0.02em;">
+          GRAND TOTAL: {{grandTotal}}
+        </div>
+      </div>
+    </div>
+    
+    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 20px; font-family: Arial, Helvetica, sans-serif;">
       <strong style="color:#be292c;font-size:1.08em; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">PAYMENT DETAILS:</strong><br>
       <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
       <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
