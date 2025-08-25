@@ -507,6 +507,32 @@ function _fillInvoiceTemplate(template, invoice, currentUser = null) {
   
   html = html.replace(/{{serviceTables}}/g, serviceTablesHtml);
   
+  // Apply compact styling based on content volume
+  const itemTypes = new Set();
+  let totalItems = 0;
+  if (invoice.items && invoice.items.length > 0) {
+    invoice.items.forEach(item => {
+      const type = _inferType(item);
+      itemTypes.add(type);
+      totalItems += Number(item.quantity) || 1;
+    });
+  }
+  
+  // Apply compact styling based on complexity
+  if (itemTypes.size > 2 || totalItems > 8) {
+    // Apply compact styling for many service types or many items
+    html = html.replace(/class="container"/g, 'class="container compact"');
+    html = html.replace(/class="section"/g, 'class="section compact"');
+    html = html.replace(/class="items-table"/g, 'class="items-table compact"');
+  }
+  
+  // Apply extra compact styling for very complex invoices
+  if (itemTypes.size > 4 || totalItems > 15) {
+    html = html.replace(/class="container compact"/g, 'class="container compact extra-compact"');
+    html = html.replace(/class="section compact"/g, 'class="section compact extra-compact"');
+    html = html.replace(/class="items-table compact"/g, 'class="items-table compact extra-compact"');
+  }
+  
   // Calculate grand total from service tables
   let grandTotal = 0;
   if (invoice.items && invoice.items.length > 0) {
