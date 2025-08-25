@@ -30,14 +30,30 @@ window.previewPDF = async function(html, options = {}) {
   // Removed logo src replacement logic
   // Removed waiting for all images to load (Promise.all block)
 
-  // Use safe margins to avoid truncation
-  // Pass tempDiv.innerHTML instead of tempDiv
+  // Enhanced page break prevention and layout optimization
   html2pdf().from(tempDiv.innerHTML).set({
-    margin: [10, 10, 10, 10],
+    margin: [5, 5, 5, 5], // Reduced margins to fit more content
     image: { type: 'jpeg', quality: 0.98 },
-    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait', compress: true },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-    html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+    jsPDF: { 
+      format: 'a4', 
+      unit: 'mm', 
+      orientation: 'portrait', 
+      compress: true,
+      precision: 16 // Higher precision for better layout
+    },
+    pagebreak: { 
+      mode: ['avoid-all', 'css', 'legacy'],
+      before: '.page-break-before',
+      after: '.page-break-after',
+      avoid: '.avoid-break'
+    },
+    html2canvas: { 
+      scale: 3, 
+      useCORS: true, 
+      letterRendering: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
+    },
     ...options
   }).outputPdf('bloburl').then(url => {
     window.open(url, '_blank');
@@ -60,13 +76,30 @@ window.downloadPDF = async function(html, filename = 'document.pdf', options = {
   // Removed logo src replacement logic
   // Removed waiting for all images to load (Promise.all block)
 
-  // Pass tempDiv.innerHTML instead of tempDiv
+  // Enhanced page break prevention and layout optimization
   html2pdf().from(tempDiv.innerHTML).set({
-    margin: [10, 10, 10, 10],
+    margin: [5, 5, 5, 5], // Reduced margins to fit more content
     image: { type: 'jpeg', quality: 0.98 },
-    jsPDF: { format: 'a4', unit: 'mm', orientation: 'portrait', compress: true },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-    html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+    jsPDF: { 
+      format: 'a4', 
+      unit: 'mm', 
+      orientation: 'portrait', 
+      compress: true,
+      precision: 16 // Higher precision for better layout
+    },
+    pagebreak: { 
+      mode: ['avoid-all', 'css', 'legacy'],
+      before: '.page-break-before',
+      after: '.page-break-after',
+      avoid: '.avoid-break'
+    },
+    html2canvas: { 
+      scale: 3, 
+      useCORS: true, 
+      letterRendering: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
+    },
     filename,
     ...options
   }).save().then(() => tempDiv.remove());
