@@ -39,8 +39,10 @@ window.renderInvoices = function(main) {
             <select name="paymentMethod" id="invoice-payment-method-select" style="padding:6px;width:180px;">
               <option value="usd-dtb">USD - Diamond Trust Bank</option>
               <option value="kes-dtb">KES - Diamond Trust Bank</option>
+              <option value="gbp-dtb">GBP - Diamond Trust Bank</option>
               <option value="usd-NCBA">USD - NCBA Bank</option>
-              <option value="gbp-barclays">GBP - Barckays Bank UK</option>
+              <option value="kes-NCBA">KES - NCBA Bank</option>
+              <option value="gbp-barclays">GBP - Barclays Bank UK</option>
             </select>
           </label>
         </div>
@@ -145,19 +147,33 @@ window.renderInvoices = function(main) {
         swiftCode: 'DTKEKENA',
         currency: 'USD',
         additionalInfo: '(Please use your name or invoice number as payment reference)'
-      },      'kes-dtb': {
+      },  'kes-dtb': {
         accountName: 'JUNGLE DWELLERS LTD',
         accountNumber: '0254001001',
         bankName: 'DIAMOND TRUST BANK',
         swiftCode: 'DTKEKENA',
         currency: 'KES',
         additionalInfo: '(Please use your name or invoice number as payment reference)'
+      },      'gbp-dtb': {
+        accountName: 'JUNGLE DWELLERS LTD',
+        accountNumber: '0254001003',
+        bankName: 'DIAMOND TRUST BANK',
+        swiftCode: 'DTKEKENA',
+        currency: 'GBP',
+        additionalInfo: '(Please use your name or invoice number as payment reference)'
+      },      'kes-NCBA': {
+        accountName: 'JUNGLE DWELLERS LTD',
+        accountNumber: '8816130017',
+        bankName: 'NCBA BANK KENYA',
+        swiftCode: 'CBAFKENX',
+        currency: 'KES',
+        additionalInfo: '( Bank Code: 07 - 000, P.O. Box 44599-00100 Nairobi, Kenya,NCBA Center, Mara and Ragati Roads Upperhill, Please use your name or invoice number as payment reference)'
       },
       'usd-NCBA': {
         accountName: 'JUNGLE DWELLERS LTD',
-        accountNumber: '8816130022 ',
+        accountNumber: '8816130022',
         bankName: 'NCBA BANK KENYA',
-        swiftCode: ' CBAFKENX',
+        swiftCode: 'CBAFKENX',
         currency: 'USD',
         additionalInfo: '( Bank Code: 07 - 000, P.O. Box 44599-00100 Nairobi, Kenya,NCBA Center, Mara and Ragati Roads Upperhill, Please use your name or invoice number as payment reference)'
       },
