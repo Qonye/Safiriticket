@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safiri Tickets - Invoice Terms & Conditions</title>
+    <title>Safiri Tickets - Quotation Terms & Conditions</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.7;
+            line-height: 1.6;
             margin: 0;
-            padding: 40px;
+            padding: 20px;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: #2c3e50;
             min-height: 100vh;
         }
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
-            padding: 50px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
             border: 1px solid #e8e8e8;
             position: relative;
             overflow: hidden;
@@ -35,7 +35,7 @@
             pointer-events: none;
         }
         .watermark img {
-            width: 600px;
+            width: 400px;
             height: auto;
             filter: grayscale(100%);
         }
@@ -45,39 +45,39 @@
         }
         .logo {
             text-align: left;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #8c241c;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #8c241c;
         }
         .logo img {
-            height: 90px;
+            height: 70px;
             width: auto;
-            margin: 0 auto 15px auto;
+            margin: 0 auto 12px auto;
             display: block;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
         .logo h1 {
             color: #8c241c;
-            font-size: 2.4em;
-            margin: 0 0 8px 0;
+            font-size: 2em;
+            margin: 0 0 6px 0;
             font-weight: 700;
             letter-spacing: -0.5px;
         }
         .logo .subtitle {
             color: #8c241c;
-            font-size: 1.5em;
-            margin-top: 8px;
+            font-size: 1.3em;
+            margin-top: 6px;
             font-weight: 600;
             opacity: 0.9;
         }
         h2 {
             color: #8c241c;
-            font-size: 1.8em;
-            margin-top: 35px;
-            margin-bottom: 18px;
+            font-size: 1.5em;
+            margin-top: 25px;
+            margin-bottom: 15px;
             font-weight: 700;
             position: relative;
-            padding-left: 15px;
+            padding-left: 12px;
         }
         h2::before {
             content: '';
@@ -85,25 +85,25 @@
             left: 0;
             top: 50%;
             transform: translateY(-50%);
-            width: 4px;
-            height: 25px;
+            width: 3px;
+            height: 20px;
             background: #8c241c;
             border-radius: 2px;
         }
         h3 {
             color: #8c241c;
-            font-size: 1.4em;
-            margin-top: 30px;
-            margin-bottom: 15px;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 12px;
             font-weight: 600;
         }
         ul {
-            margin: 12px 0;
-            padding-left: 25px;
+            margin: 10px 0;
+            padding-left: 20px;
         }
         li {
-            margin: 10px 0;
-            line-height: 1.6;
+            margin: 8px 0;
+            line-height: 1.5;
             position: relative;
         }
         li::marker {
@@ -170,6 +170,109 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(140, 36, 28, 0.4);
         }
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+            }
+            .container {
+                padding: 20px;
+                border-radius: 8px;
+                max-width: 100%;
+            }
+            .watermark img {
+                width: 250px;
+            }
+            .logo img {
+                height: 50px;
+            }
+            .logo h1 {
+                font-size: 1.6em;
+            }
+            .logo .subtitle {
+                font-size: 1.1em;
+            }
+            h2 {
+                font-size: 1.3em;
+                margin-top: 20px;
+                margin-bottom: 12px;
+                padding-left: 10px;
+            }
+            h2::before {
+                width: 2px;
+                height: 16px;
+            }
+            h3 {
+                font-size: 1.1em;
+                margin-top: 15px;
+                margin-bottom: 10px;
+            }
+            ul {
+                padding-left: 15px;
+            }
+            li {
+                margin: 6px 0;
+                font-size: 0.9em;
+            }
+            .contact-info {
+                padding: 20px;
+                margin-top: 30px;
+            }
+            .contact-info h3 {
+                font-size: 1.3em;
+                margin-bottom: 15px;
+            }
+            .contact-row {
+                flex-direction: column;
+            }
+            .contact-item {
+                margin: 5px 0;
+                padding: 8px;
+            }
+            .print-btn {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+                font-size: 13px;
+            }
+            .container {
+                padding: 15px;
+            }
+            .watermark img {
+                width: 200px;
+            }
+            .logo img {
+                height: 40px;
+            }
+            .logo h1 {
+                font-size: 1.4em;
+            }
+            .logo .subtitle {
+                font-size: 1em;
+            }
+            h2 {
+                font-size: 1.2em;
+                padding-left: 8px;
+            }
+            h3 {
+                font-size: 1em;
+            }
+            li {
+                font-size: 0.85em;
+            }
+            .contact-info {
+                padding: 15px;
+            }
+        }
+        
         @media print {
             .print-btn {
                 display: none;
@@ -180,6 +283,9 @@
             .container {
                 box-shadow: none;
                 padding: 20px;
+            }
+            .watermark {
+                display: none;
             }
         }
     </style>
@@ -195,59 +301,51 @@
         <div class="content">
             <div class="logo">
                 <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
-                <div class="subtitle">Invoice Terms & Conditions</div>
+                <div class="subtitle">Quotation Terms & Conditions</div>
             </div>
 
-        <h2>1. Payment Terms</h2>
+        <h2>1. Validity of Quotation</h2>
         <ul>
-            <li><strong>Corporate clients with approved credit facilities:</strong> payment is due within the agreed period stated on the invoice or service agreement.</li>
-            <li><strong>Corporate clients without credit facilities and individual clients:</strong> full payment is due immediately upon receipt of the invoice.</li>
-            <li>Late payments may attract interest at 10% per month until settlement.</li>
+            <li>All fares and rates are subject to availability at the time of booking.</li>
+            <li>Prices are valid only for the period stated in this quotation and may change without prior notice due to airline, hotel, or supplier adjustments.</li>
         </ul>
 
-        <h2>2. Currency & Bank Details</h2>
+        <h2>2. Bookings & Confirmations</h2>
         <ul>
-            <li>All payments must be made in the currency specified on the invoice and to the bank account indicated.</li>
-            <li>Safiri Tickets will not be held liable for payments made to the wrong account or in a different currency.</li>
-            <li>Any bank charges or currency conversion costs arising from incorrect payment are the responsibility of the client.</li>
-            <li>Failure to pay as instructed may lead to cancellation of bookings, suspension of services, and withdrawal of any credit facilities.</li>
+            <li>A booking is only confirmed once payment is received and tickets/services have been issued.</li>
+            <li>Name changes, date changes, or re-routings are subject to airline/supplier rules and additional fees.</li>
         </ul>
 
-        <h2>3. Cancellations & Refunds</h2>
+        <h2>3. Payment Terms</h2>
         <ul>
-            <li>All cancellations and refunds are subject to airline, hotel, or supplier rules.</li>
-            <li>Safiri Tickets service fees are strictly non-refundable.</li>
-            <li>Approved refunds are processed in accordance with supplier timelines (which may take up to 6-12 weeks).</li>
+            <li><strong>Corporate Clients with approved credit facilities:</strong> payment is due within the agreed period stated in the service agreement or invoice.</li>
+            <li><strong>Corporate Clients without credit facilities & Individual Clients:</strong> full payment is required prior to ticketing or service confirmation.</li>
         </ul>
 
-        <h2>4. Liability</h2>
+        <h2>4. Cancellations & Refunds</h2>
+        <ul>
+            <li>Cancellations are subject to airline, hotel, or supplier policies.</li>
+            <li>Safiri Tickets service fees are non-refundable.</li>
+            <li>Refunds, where permitted, are processed based on supplier timelines.</li>
+        </ul>
+
+        <h2>5. Liability</h2>
         <ul>
             <li>Safiri Tickets acts only as an agent for airlines, hotels, and other travel suppliers.</li>
-            <li>We are not responsible for delays, cancellations, or circumstances beyond our control.</li>
+            <li>We are not responsible for delays, cancellations, force majeure events, or circumstances beyond our control.</li>
             <li>Our liability is limited to the service fees charged by Safiri Tickets.</li>
         </ul>
 
-        <h2>5. Travel Documents</h2>
+        <h2>6. Travel Documents</h2>
         <ul>
-            <li>The client/traveler is responsible for ensuring valid passports, visas, vaccinations, and all other required travel authorizations.</li>
+            <li>It is the responsibility of each traveler to ensure possession of valid passports, visas, vaccinations, and any other required travel documents before departure.</li>
         </ul>
 
-        <h2>6. Data Protection & Confidentiality</h2>
+        <h2>7. Data Protection & Confidentiality</h2>
         <ul>
-            <li>Client and traveler data is handled in compliance with applicable data protection laws.</li>
-            <li>Information shared with Safiri Tickets is confidential and will only be used for booking, ticketing, and service delivery, unless disclosure is required by law.</li>
-        </ul>
-
-        <h2>7. Indemnity</h2>
-        <ul>
-            <li>The client agrees to indemnify and hold harmless Safiri Tickets, its employees, and agents from any claims, losses, damages, penalties, or expenses arising from:
-                <ul>
-                    <li>Incorrect or incomplete information provided by the client or traveler.</li>
-                    <li>Failure to obtain necessary travel documents, visas, or clearances.</li>
-                    <li>Breach of these Terms & Conditions by the client.</li>
-                    <li>Any actions or omissions of third-party suppliers engaged on the client's behalf.</li>
-                </ul>
-            </li>
+            <li>Safiri Tickets handles client and traveler information in compliance with applicable data protection laws.</li>
+            <li>Personal and corporate data shared with us will be used solely for booking, ticketing, and travel management purposes.</li>
+            <li>All client information is treated as confidential and will not be disclosed to third parties except where required by law or necessary to complete travel arrangements.</li>
         </ul>
 
         <div class="contact-info">
@@ -259,7 +357,7 @@
                 </div>
                 <div class="contact-item">
                     <strong>Kenya Office:</strong><br>
-                    +254 116 626268
+                    +254 116626268
                 </div>
             </div>
             <div class="contact-row">
