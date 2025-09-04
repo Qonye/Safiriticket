@@ -2,5 +2,9 @@
 /invoice-terms    /invoice-terms.html    200
 /quotation-terms  /quotation-terms.html  200
 
+# Test direct access
+/invoice-terms.html    /invoice-terms.html    200
+/quotation-terms.html  /quotation-terms.html  200
+
 # Fallback for SPA routing (if needed)
 /*    /index.html   200
