@@ -22,6 +22,26 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             border: 1px solid #e8e8e8;
+            position: relative;
+            overflow: hidden;
+        }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            opacity: 0.08;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .watermark img {
+            width: 600px;
+            height: auto;
+            filter: grayscale(100%);
+        }
+        .content {
+            position: relative;
+            z-index: 2;
         }
         .logo {
             text-align: left;
@@ -168,10 +188,15 @@
     <button class="print-btn" onclick="window.print()">Print</button>
     
     <div class="container">
-        <div class="logo">
-            <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
-            <div class="subtitle">Invoice Terms & Conditions</div>
+        <div class="watermark">
+            <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Watermark" />
         </div>
+        
+        <div class="content">
+            <div class="logo">
+                <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
+                <div class="subtitle">Invoice Terms & Conditions</div>
+            </div>
 
         <h2>1. Payment Terms</h2>
         <ul>
@@ -234,7 +259,7 @@
                 </div>
                 <div class="contact-item">
                     <strong>Kenya Office:</strong><br>
-                    +254 116626268
+                    +254 116 626268
                 </div>
             </div>
             <div class="contact-row">
@@ -257,6 +282,7 @@
                     2nd floor Gallant mall, Parklands Rd, Nairobi
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </body>
