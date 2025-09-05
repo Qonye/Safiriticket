@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jungle Dwellers - Invoice Terms & Conditions</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: #fefefe;
+            color: #2c3e50;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .watermark {
+            position: absolute;
+            top: 10%;
+            right: 0%;
+            opacity: 0.5;
+            z-index: 1;
+            pointer-events: none;
+            overflow: visible;
+            width: 350px;
+            height: 300px;
+        }
+        .watermark img {
+            width: 300px;
+            height: auto;
+            transform: rotate(-15deg);
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+        .content {
+            position: relative;
+            z-index: 2;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+        }
+        .logo img {
+            height: 80px;
+            width: auto;
+            margin-right: 20px;
+        }
+        .main-title {
+            color: #2d5016;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 30px 0 20px 0;
+            text-align: center;
+        }
+        .section-title {
+            color: #2d5016;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin: 30px 0 15px 0;
+        }
+        .section-content {
+            margin-bottom: 20px;
+        }
+        .section-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .section-content li {
+            margin: 8px 0;
+            line-height: 1.5;
+            color: #333;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            position: relative;
+        }
+        .contact-info {
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.8;
+        }
+        .safari-footer {
+            width: 100%;
+            height: 100px;
+            position: relative;
+            margin-top: 20px;
+            margin-left: -40px;
+            margin-right: -40px;
+            overflow: hidden;
+            transition: none;
+        }
+        .safari-footer img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: bottom;
+            display: block;
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2d5016;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);
+            transition: all 0.3s ease;
+        }
+        .print-btn:hover {
+            background: #1a3a0f;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45, 80, 22, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+            }
+            .container {
+                padding: 20px;
+                max-width: 100%;
+            }
+            .watermark img {
+                width: 200px;
+                right: -80px;
+                top: -15px;
+            }
+            .logo img {
+                height: 60px;
+            }
+            .main-title {
+                font-size: 2em;
+            }
+            .section-title {
+                font-size: 1.2em;
+            }
+        }
+        
+        @media print {
+            .print-btn {
+                display: none;
+            }
+            body {
+                padding: 0;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Print</button>
+    
+    <div class="container">
+        <div class="watermark">
+            <img src="LIon head.png" alt="Jungle Dwellers Watermark" />
+        </div>
+        
+        <div class="content">
+            <div class="logo">
+                <img src="JD - Logo 1.png" alt="Jungle Dwellers Holiday Gurus Logo" />
+            </div>
+
+            <h1 class="main-title">Invoice Terms & Conditions</h1>
+
+            <div class="section-content">
+                <h3 class="section-title">1. Payment Due Date</h3>
+                <ul>
+                    <li>All invoices are payable in full by the due date indicated on the invoice.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">2. Currency & Bank Account</h3>
+                <ul>
+                    <li>Payment must be made in the currency and to the bank account stated on the invoice.</li>
+                    <li>Jungle Dwellers shall not be liable for losses arising from payments made to the wrong account or in the wrong currency.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">3. Deposits & Balances</h3>
+                <ul>
+                    <li>Where a deposit is specified, the balance must be paid within the timeline stated on the invoice or quotation.</li>
+                    <li>Failure to pay on time may result in cancellation of services without refund of amounts already paid.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">4. Late Payments</h3>
+                <ul>
+                    <li>Any overdue amounts will attract interest at 2% per month (24% per annum) until full settlement is received.</li>
+                    <li>The Company reserves the right to withhold documents, tickets, vouchers, or deny service until all outstanding amounts are cleared.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">5. Non-Payment</h3>
+                <ul>
+                    <li>In the event of non-payment, Jungle Dwellers reserves the right to cancel all services and recover any costs, including legal fees, collection charges, and penalties, from the client.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">6. Cancellations & Refunds</h3>
+                <ul>
+                    <li>Cancellations are subject to the company's Quotation Terms & Conditions and supplier policies.</li>
+                    <li>Refunds (if applicable) will only be processed after deducting cancellation fees and non-refundable deposits.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">7. Liability</h3>
+                <ul>
+                    <li>The Company acts as an agent for airlines, hotels, transport providers, and activity operators.</li>
+                    <li>Liability is limited to amounts paid directly to Jungle Dwellers and does not extend to third-party delays, cancellations, or force majeure events.</li>
+                </ul>
+            </div>
+
+            <div class="footer">
+                <div class="contact-info">
+                    <strong>Jungle Dwellers,</strong><br>
+                    Gallant mall, Nairobi-Kenya<br>
+                    Email: info@jungledwellers.net | Tel: +254 715 572312 / +44 7450 440529<br>
+                    Web: www.jungledwellers.net
+                </div>
+                <div class="safari-footer">
+                    <img src="bottom image.png" alt="Safari Animal Silhouette" />
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
