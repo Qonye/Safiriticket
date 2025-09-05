@@ -9,7 +9,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             margin: 0;
-            padding: 20px;
             background: #fefefe;
             color: #2c3e50;
             min-height: 100vh;
@@ -20,7 +19,8 @@
             background: white;
             padding: 40px;
             position: relative;
-            overflow: hidden;
+            padding-top: 20px;
+            padding-bottom: 20px;
         }
         .watermark {
             position: absolute;
@@ -61,7 +61,8 @@
             font-size: 2.5em;
             font-weight: 700;
             margin: 30px 0 20px 0;
-            text-align: center;
+            text-align: left;
+            text-decoration: underline;
         }
         .section-title {
             color: #2d5016;
@@ -98,18 +99,12 @@
         }
         .safari-footer {
             width: 100%;
-            height: 100px;
             position: relative;
             margin-top: 20px;
-            margin-left: -40px;
-            margin-right: -40px;
-            overflow: hidden;
-            transition: none;
         }
         .safari-footer img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            height: auto;
             object-position: bottom;
             display: block;
         }
@@ -136,7 +131,6 @@
         
         @media (max-width: 768px) {
             body {
-                padding: 10px;
                 font-size: 14px;
             }
             .container {
@@ -156,6 +150,10 @@
             }
             .section-title {
                 font-size: 1.2em;
+            }
+            .safari-footer {
+                margin-left: -20px;
+                margin-right: -20px;
             }
         }
         
