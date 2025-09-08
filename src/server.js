@@ -29,7 +29,7 @@ cloudinary.v2.config({
 // MongoDB connection
 const connectDB = async () => {
     try {
-        const mongoUri = 'mongodb+srv://Martin:0LN98uAumci1EwCc@cluster0.e1hy26f.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+        const mongoUri = process.env.MONGO_URI;
         await mongoose.connect(mongoUri, {
             useNewUrlParser: true,
             useUnifiedTopology: true

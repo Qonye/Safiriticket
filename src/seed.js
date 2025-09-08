@@ -20,6 +20,11 @@ const ADMIN_USERS = [
         password: 'yousra2025',
         name: 'Yousra Amin',
         role: 'user'
+    },{
+        username: 'Abigail',
+        password: 'Abigail2025',
+        name: 'Abigail Muindi',
+        role: 'user'
     },
 
 
