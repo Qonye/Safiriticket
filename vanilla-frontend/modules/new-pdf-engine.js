@@ -68,7 +68,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">FLIGHT</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Flight</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
           <thead>
             <tr>
@@ -162,7 +162,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">HOTEL</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Hotel</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
           <thead>
             <tr>
@@ -240,7 +240,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">TRANSFERS</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Transfers</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
           <thead>
             <tr>
@@ -308,7 +308,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">VISAS</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Visas</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
           <thead>
             <tr>
@@ -355,16 +355,16 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">TRAVEL INSURANCE</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Travel Insurance</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
           <thead>
             <tr>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">NAME</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 25%;">DESTINATION</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">DATES</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">AMOUNT</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">SERVICE FEE</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 5%;">TOTAL</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 25%;">Destination</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">Dates</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 5%;">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -413,15 +413,15 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
     let total = 0;
     htmlContent += `
       <div style="margin-top: 12px; margin-bottom: 8px;">
-        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">ACTIVITIES</h3>
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Activities</h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
           <thead>
             <tr>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">NAME</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 35%;">DESCRIPTION</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">AMOUNT</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">SERVICE FEE</th>
-              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 5%;">TOTAL</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 30%;">Description</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -451,7 +451,7 @@ function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'US
         </tbody>
         <tfoot>
           <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
-            <td colspan="4" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">TOTAL</td>
+            <td colspan="4" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">Total</td>
             <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
           </tr>
         </tfoot>
