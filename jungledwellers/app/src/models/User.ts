@@ -10,6 +10,7 @@ export interface IUser extends Document {
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
+  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -56,5 +57,26 @@ const UserSchema = new Schema<IUser>({
 // Index for better query performance
 UserSchema.index({ email: 1 });
 UserSchema.index({ isActive: 1 });
+
+// Password hashing middleware
+UserSchema.pre('save', async function(next) {
+  // Only hash the password if it has been modified (or is new)
+  if (!this.isModified('password')) return next();
+
+  try {
+    // Hash password with cost of 12
+    const bcrypt = require('bcryptjs');
+    this.password = await bcrypt.hash(this.password, 12);
+    next();
+  } catch (error: unknown) {
+    next(error instanceof Error ? error : new Error('Password hashing failed'));
+  }
+});
+
+// Method to compare password
+UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  const bcrypt = require('bcryptjs');
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

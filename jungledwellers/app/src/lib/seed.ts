@@ -1,4 +1,10 @@
 // Seed script for Jungle Dwellers CRM
+import dotenv from 'dotenv';
+import { resolve } from 'path';
+
+// Load environment variables from .env.local
+dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import User from '@/models/User';
@@ -7,14 +13,24 @@ import Safari from '@/models/Safari';
 import Booking from '@/models/Booking';
 import Invoice from '@/models/Invoice';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/jungle-dwellers-crm';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('ERROR: MONGODB_URI environment variable is not set in .env.local');
+  process.exit(1);
+}
+
+// TypeScript assertion - we know MONGODB_URI is defined after the check above
+const mongoUri: string = MONGODB_URI;
+
+console.log('Using MongoDB URI:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')); // Log URI with masked credentials
 
 async function connectDB() {
   try {
     if (mongoose.connections[0].readyState) {
       return;
     }
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
   } catch (error) {
     console.error('MongoDB connection error:', error);
