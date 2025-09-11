@@ -106,31 +106,11 @@ export async function PUT(
       }
     }
 
-    
-    // First get the client to update
-    const clientToUpdate = await Client.findById(id);
-    if (!clientToUpdate) {
-      return NextResponse.json(
-        { success: false, error: 'Client not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Update fields manually
-    Object.keys(updateData).forEach(key => {
-      if (key === 'emergencyContact' && updateData[key]) {
-        clientToUpdate.emergencyContact = updateData[key];
-        clientToUpdate.markModified('emergencyContact');
-      } else if (key === 'address' && updateData[key]) {
-        clientToUpdate.address = updateData[key];
-        clientToUpdate.markModified('address');
-      } else {
-        (clientToUpdate as any)[key] = updateData[key];
-      }
-    });
-    
-    // Save the client
-    const client = await clientToUpdate.save();
+    const client = await Client.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
 
     if (!client) {
       return NextResponse.json(
