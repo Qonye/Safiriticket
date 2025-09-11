@@ -5,15 +5,16 @@ import Invoice from '@/models/Invoice';
 // GET /api/invoices/[id] - Get single invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
     
-    const invoice = await Invoice.findById(params.id)
+    const { id } = await params;
+    const invoice = await Invoice.findById(id)
       .populate('client', 'name email phone company address')
       .populate('booking', 'bookingNumber startDate endDate pax specialRequests')
-      .populate('safari', 'name destination duration basePrice description inclusions exclusions itinerary')
+      .populate('safari', 'title description duration basePrice currency inclusions exclusions itinerary')
       .populate('createdBy', 'name email')
       .lean();
     
@@ -40,8 +41,9 @@ export async function GET(
 // PUT /api/invoices/[id] - Update invoice
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     await getDB();
     
@@ -86,13 +88,13 @@ export async function PUT(
     if (status) updateData.status = status;
 
     const invoice = await Invoice.findByIdAndUpdate(
-      params.id,
+      id,
       updateData,
       { new: true, runValidators: true }
     ).populate([
       { path: 'client', select: 'name email phone company address' },
       { path: 'booking', select: 'bookingNumber startDate endDate pax' },
-      { path: 'safari', select: 'name destination duration basePrice' }
+      { path: 'safari', select: 'title description duration basePrice currency' }
     ]);
 
     if (!invoice) {
@@ -124,7 +126,8 @@ export async function DELETE(
   try {
     await getDB();
     
-    const invoice = await Invoice.findByIdAndDelete(params.id);
+    const { id: deleteId } = await params;
+    const invoice = await Invoice.findByIdAndDelete(deleteId);
     
     if (!invoice) {
       return NextResponse.json(

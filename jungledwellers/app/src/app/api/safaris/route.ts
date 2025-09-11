@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
     const searchQuery = search
       ? {
           $or: [
-            { name: { $regex: search, $options: 'i' } },
+            { title: { $regex: search, $options: 'i' } },
             { description: { $regex: search, $options: 'i' } },
-            { destination: { $regex: search, $options: 'i' } }
+            { tags: { $regex: search, $options: 'i' } }
           ]
         }
       : {};
@@ -62,49 +62,41 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json();
     const {
-      name,
+      title,
       description,
-      destination,
       duration,
+      minPax,
       maxPax,
       basePrice,
+      currency = 'USD',
       inclusions,
       exclusions,
       itinerary,
-      accommodation,
-      activities,
-      transportation,
-      meals,
-      parkFees,
-      guides,
+      tags,
       isActive = true
     } = body;
 
     // Validate required fields
-    if (!name || !description || !destination || !duration || !maxPax || !basePrice) {
+    if (!title || !description || !duration || !minPax || !maxPax || !basePrice) {
       return NextResponse.json(
-        { success: false, error: 'Name, description, destination, duration, maxPax, and basePrice are required' },
+        { success: false, error: 'Title, description, duration, minPax, maxPax, and basePrice are required' },
         { status: 400 }
       );
     }
 
     // Create new safari
     const safari = new Safari({
-      name,
+      title,
       description,
-      destination,
       duration: parseInt(duration),
+      minPax: parseInt(minPax),
       maxPax: parseInt(maxPax),
       basePrice: parseFloat(basePrice),
+      currency,
       inclusions: inclusions || [],
       exclusions: exclusions || [],
       itinerary: itinerary || [],
-      accommodation: accommodation || [],
-      activities: activities || [],
-      transportation: transportation || [],
-      meals: meals || [],
-      parkFees: parkFees || [],
-      guides: guides || [],
+      tags: tags || [],
       isActive,
       createdBy: new mongoose.Types.ObjectId() // TODO: Get from auth context
     });

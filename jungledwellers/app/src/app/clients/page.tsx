@@ -7,16 +7,23 @@ interface Client {
   _id: string;
   name: string;
   email: string;
-  phone: string;
-  company: string;
-  address: {
+  phone?: string;
+  company?: string;
+  address?: {
     street?: string;
     city?: string;
     state?: string;
     country?: string;
     postalCode?: string;
   };
-  notes: string;
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
+  notes?: string;
+  isActive: boolean;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -338,7 +345,18 @@ function ClientModal({
     email: client?.email || '',
     phone: client?.phone || '',
     company: client?.company || '',
-    address: client?.address?.street || '',
+    address: {
+      street: client?.address?.street || '',
+      city: client?.address?.city || '',
+      state: client?.address?.state || '',
+      country: client?.address?.country || '',
+      postalCode: client?.address?.postalCode || ''
+    },
+    emergencyContact: {
+      name: client?.emergencyContact?.name || '',
+      phone: client?.emergencyContact?.phone || '',
+      relationship: client?.emergencyContact?.relationship || ''
+    },
     notes: client?.notes || ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -372,7 +390,25 @@ function ClientModal({
     try {
       await onSubmit(formData);
       if (!client) {
-        setFormData({ name: '', email: '', phone: '', company: '', address: '', notes: '' });
+        setFormData({ 
+          name: '', 
+          email: '', 
+          phone: '', 
+          company: '', 
+          address: {
+            street: '',
+            city: '',
+            state: '',
+            country: '',
+            postalCode: ''
+          },
+          emergencyContact: {
+            name: '',
+            phone: '',
+            relationship: ''
+          },
+          notes: '' 
+        });
       }
       setErrors({});
     } catch (error) {
@@ -382,8 +418,18 @@ function ClientModal({
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
+  const handleInputChange = (field: string, value: string, nestedField?: string) => {
+    if (nestedField) {
+      setFormData({ 
+        ...formData, 
+        [field]: { 
+          ...formData[field as keyof typeof formData] as any, 
+          [nestedField]: value 
+        } 
+      });
+    } else {
+      setFormData({ ...formData, [field]: value });
+    }
     if (errors[field]) {
       setErrors({ ...errors, [field]: '' });
     }
@@ -485,18 +531,115 @@ function ClientModal({
           </div>
         </div>
 
-        {/* Address Field */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Address
-          </label>
-          <textarea
-            value={formData.address}
-            onChange={(e) => handleInputChange('address', e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-            placeholder="Enter full address"
-          />
+        {/* Address Fields */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-900">Address Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Street Address
+              </label>
+              <input
+                type="text"
+                value={formData.address.street}
+                onChange={(e) => handleInputChange('address', e.target.value, 'street')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                placeholder="Enter street address"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                City
+              </label>
+              <input
+                type="text"
+                value={formData.address.city}
+                onChange={(e) => handleInputChange('address', e.target.value, 'city')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                placeholder="Enter city"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                State/Province
+              </label>
+              <input
+                type="text"
+                value={formData.address.state}
+                onChange={(e) => handleInputChange('address', e.target.value, 'state')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                placeholder="Enter state/province"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Country
+              </label>
+              <input
+                type="text"
+                value={formData.address.country}
+                onChange={(e) => handleInputChange('address', e.target.value, 'country')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                placeholder="Enter country"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Postal Code
+              </label>
+              <input
+                type="text"
+                value={formData.address.postalCode}
+                onChange={(e) => handleInputChange('address', e.target.value, 'postalCode')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                placeholder="Enter postal code"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Emergency Contact Fields */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-900">Emergency Contact</h3>
+          <p className="text-sm text-gray-600">Required for booking creation</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Name
+              </label>
+              <input
+                type="text"
+                value={formData.emergencyContact.name}
+                onChange={(e) => handleInputChange('emergencyContact', e.target.value, 'name')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                placeholder="Enter emergency contact name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                value={formData.emergencyContact.phone}
+                onChange={(e) => handleInputChange('emergencyContact', e.target.value, 'phone')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                placeholder="Enter emergency contact phone"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Relationship
+              </label>
+              <input
+                type="text"
+                value={formData.emergencyContact.relationship}
+                onChange={(e) => handleInputChange('emergencyContact', e.target.value, 'relationship')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                placeholder="e.g., Spouse, Parent, Friend"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Notes Field */}

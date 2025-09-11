@@ -5,12 +5,13 @@ import Safari from '@/models/Safari';
 // GET /api/safaris/[id] - Get single safari
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
     
-    const safari = await Safari.findById(params.id)
+    const { id } = await params;
+    const safari = await Safari.findById(id)
       .populate('createdBy', 'name email')
       .lean();
     
@@ -37,8 +38,9 @@ export async function GET(
 // PUT /api/safaris/[id] - Update safari
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     await getDB();
     
@@ -72,7 +74,7 @@ export async function PUT(
 
     // Update safari
     const safari = await Safari.findByIdAndUpdate(
-      params.id,
+      id,
       {
         name,
         description,
@@ -123,7 +125,8 @@ export async function DELETE(
   try {
     await getDB();
     
-    const safari = await Safari.findByIdAndDelete(params.id);
+    const { id: deleteId } = await params;
+    const safari = await Safari.findByIdAndDelete(deleteId);
     
     if (!safari) {
       return NextResponse.json(

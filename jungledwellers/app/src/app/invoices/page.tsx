@@ -7,14 +7,13 @@ interface Client {
   _id: string;
   name: string;
   email: string;
-  phone: string;
-  company: string;
+  phone?: string;
+  company?: string;
 }
 
 interface Safari {
   _id: string;
-  name: string;
-  destination: string;
+  title: string;
   duration: number;
   basePrice: number;
 }
@@ -32,7 +31,7 @@ interface InvoiceItem {
   quantity: number;
   unitPrice: number;
   total: number;
-  category: string;
+  category?: 'accommodation' | 'activities' | 'transportation' | 'meals' | 'park_fees' | 'guides' | 'other';
 }
 
 interface Invoice {
@@ -40,17 +39,22 @@ interface Invoice {
   invoiceNumber: string;
   client: Client;
   booking?: Booking;
-  safari: Safari;
-  invoiceDate: string;
+  safari?: Safari;
   dueDate: string;
   items: InvoiceItem[];
   subtotal: number;
   taxRate: number;
   taxAmount: number;
-  totalAmount: number;
-  notes: string;
-  terms: string;
+  discountRate: number;
+  discountAmount: number;
+  total: number;
+  currency: 'USD' | 'EUR' | 'GBP' | 'KES' | 'CAD' | 'AUD';
   status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  paidDate?: string;
+  paymentMethod?: string;
+  notes?: string;
+  termsAndConditions?: string;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -344,7 +348,7 @@ export default function InvoicesPage() {
                           {invoice.invoiceNumber}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {new Date(invoice.invoiceDate).toLocaleDateString()}
+                          {new Date(invoice.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </td>
@@ -361,11 +365,11 @@ export default function InvoicesPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {invoice.safari.name}
+                          {invoice.safari?.title || 'N/A'}
                         </div>
                         <div className="text-sm text-gray-500 flex items-center">
                           <MapPin className="h-3 w-3 mr-1" />
-                          {invoice.safari.destination}
+                          {invoice.safari?.title || 'N/A'}
                         </div>
                       </div>
                     </td>
@@ -385,7 +389,7 @@ export default function InvoicesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatCurrency(invoice.totalAmount)}
+                        {formatCurrency(invoice.total)}
                       </div>
                       {invoice.taxAmount > 0 && (
                         <div className="text-sm text-gray-500">
@@ -608,7 +612,7 @@ function InvoiceModal({
             Invoice {invoice.invoiceNumber}
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {invoice.client.name} - {invoice.safari.name}
+            {invoice.client.name} - {invoice.safari?.title || 'N/A'}
           </p>
         </div>
         <button
@@ -640,7 +644,7 @@ function InvoiceModal({
             <h3 className="text-lg font-medium text-gray-900 mb-4">Invoice Details</h3>
             <div className="text-sm text-gray-600 space-y-1">
               <p><span className="font-medium">Invoice #:</span> {invoice.invoiceNumber}</p>
-              <p><span className="font-medium">Date:</span> {new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+              <p><span className="font-medium">Date:</span> {new Date(invoice.createdAt).toLocaleDateString()}</p>
               <p><span className="font-medium">Due Date:</span> {new Date(invoice.dueDate).toLocaleDateString()}</p>
               <p><span className="font-medium">Status:</span> <span className="capitalize">{invoice.status}</span></p>
             </div>
@@ -716,14 +720,14 @@ function InvoiceModal({
               )}
               <div className="flex justify-between text-lg font-medium border-t border-gray-200 pt-2">
                 <span className="text-gray-900">Total:</span>
-                <span className="text-gray-900">{formatCurrency(invoice.totalAmount)}</span>
+                <span className="text-gray-900">{formatCurrency(invoice.total)}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Notes and Terms */}
-        {(invoice.notes || invoice.terms) && (
+        {(invoice.notes || invoice.termsAndConditions) && (
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             {invoice.notes && (
               <div>
@@ -731,10 +735,10 @@ function InvoiceModal({
                 <p className="text-sm text-gray-600">{invoice.notes}</p>
               </div>
             )}
-            {invoice.terms && (
+            {invoice.termsAndConditions && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Terms</h3>
-                <p className="text-sm text-gray-600">{invoice.terms}</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Terms & Conditions</h3>
+                <p className="text-sm text-gray-600">{invoice.termsAndConditions}</p>
               </div>
             )}
           </div>

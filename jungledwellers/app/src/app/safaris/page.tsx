@@ -1,57 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, MapPin, Calendar, DollarSign, Users, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, Edit, Trash2, MapPin, Calendar, DollarSign, Users } from 'lucide-react';
 
 interface Safari {
   _id: string;
-  name: string;
+  title: string;
   description: string;
-  destination: string;
   duration: number;
+  minPax: number;
   maxPax: number;
   basePrice: number;
-  inclusions: string[];
-  exclusions: string[];
+  currency: string;
+  inclusions: Array<{
+    category: string;
+    description: string;
+    pricePerPerson?: number;
+    priceTotal?: number;
+    quantity?: number;
+    isIncluded: boolean;
+  }>;
+  exclusions: Array<{
+    description: string;
+    reason?: string;
+  }>;
   itinerary: Array<{
     day: number;
-    title: string;
-    description: string;
-    activities: string[];
-  }>;
-  accommodation: Array<{
-    name: string;
     location: string;
-    type: string;
-    nights: number;
-    price: number;
+    activities: string[];
+    accommodation?: string;
+    meals: string[];
+    transportation?: string;
+    notes?: string;
   }>;
-  activities: Array<{
-    name: string;
-    description: string;
-    duration: string;
-    price: number;
-  }>;
-  transportation: Array<{
-    type: string;
-    description: string;
-    price: number;
-  }>;
-  meals: Array<{
-    type: string;
-    description: string;
-    price: number;
-  }>;
-  parkFees: Array<{
-    park: string;
-    description: string;
-    price: number;
-  }>;
-  guides: Array<{
-    name: string;
-    type: string;
-    price: number;
-  }>;
+  tags: string[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -65,7 +47,7 @@ export default function SafarisPage() {
   const [editingSafari, setEditingSafari] = useState<Safari | null>(null);
 
   // Fetch safaris
-  const fetchSafaris = async () => {
+  const fetchSafaris = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -82,20 +64,29 @@ export default function SafarisPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchSafaris();
-  }, [searchTerm]);
+  }, [searchTerm]); // fetchSafaris is stable, doesn't need to be in deps
 
   const handleCreateSafari = async (safariData: any) => {
     try {
+      // Convert string values to proper types
+      const processedData = {
+        ...safariData,
+        duration: parseInt(safariData.duration),
+        minPax: parseInt(safariData.minPax),
+        maxPax: parseInt(safariData.maxPax),
+        basePrice: parseFloat(safariData.basePrice)
+      };
+
       const response = await fetch('/api/safaris', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(safariData),
+        body: JSON.stringify(processedData),
       });
 
       const data = await response.json();
@@ -114,12 +105,21 @@ export default function SafarisPage() {
 
   const handleUpdateSafari = async (safariData: any) => {
     try {
+      // Convert string values to proper types
+      const processedData = {
+        ...safariData,
+        duration: parseInt(safariData.duration),
+        minPax: parseInt(safariData.minPax),
+        maxPax: parseInt(safariData.maxPax),
+        basePrice: parseFloat(safariData.basePrice)
+      };
+
       const response = await fetch(`/api/safaris/${editingSafari?._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(safariData),
+        body: JSON.stringify(processedData),
       });
 
       const data = await response.json();
@@ -237,11 +237,11 @@ export default function SafarisPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {safari.name}
+                      {safari.title}
                     </h3>
                     <p className="text-sm text-gray-600 flex items-center">
                       <MapPin className="h-4 w-4 mr-1" />
-                      {safari.destination}
+                      {safari.tags.join(', ')}
                     </p>
                   </div>
                   <div className="flex space-x-1">
@@ -273,7 +273,7 @@ export default function SafarisPage() {
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <Users className="h-4 w-4 mr-2" />
-                    Max {safari.maxPax} pax
+                    {safari.minPax}-{safari.maxPax} pax
                   </div>
                 </div>
 
@@ -295,6 +295,7 @@ export default function SafarisPage() {
                   <div className="flex justify-between text-xs text-gray-500">
                     <span>Inclusions: {safari.inclusions.length}</span>
                     <span>Itinerary: {safari.itinerary.length} days</span>
+                    <span>Tags: {safari.tags.length}</span>
                   </div>
                 </div>
               </div>
@@ -339,24 +340,20 @@ function SafariModal({
   safari?: Safari; 
   onClose: () => void; 
   onSubmit: (data: any) => void;
-  [key: string]: any;
+  [key: string]: unknown;
 }) {
   const [formData, setFormData] = useState({
-    name: safari?.name || '',
+    title: safari?.title || '',
     description: safari?.description || '',
-    destination: safari?.destination || '',
     duration: safari?.duration?.toString() || '',
+    minPax: safari?.minPax?.toString() || '',
     maxPax: safari?.maxPax?.toString() || '',
     basePrice: safari?.basePrice?.toString() || '',
+    currency: safari?.currency || 'USD',
     inclusions: safari?.inclusions || [],
     exclusions: safari?.exclusions || [],
     itinerary: safari?.itinerary || [],
-    accommodation: safari?.accommodation || [],
-    activities: safari?.activities || [],
-    transportation: safari?.transportation || [],
-    meals: safari?.meals || [],
-    parkFees: safari?.parkFees || [],
-    guides: safari?.guides || [],
+    tags: safari?.tags || [],
     isActive: safari?.isActive !== undefined ? safari.isActive : true
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -366,20 +363,20 @@ function SafariModal({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Safari name is required';
+    if (!formData.title.trim()) {
+      newErrors.title = 'Safari title is required';
     }
 
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
     }
 
-    if (!formData.destination.trim()) {
-      newErrors.destination = 'Destination is required';
-    }
-
     if (!formData.duration || parseInt(formData.duration) < 1) {
       newErrors.duration = 'Duration must be at least 1 day';
+    }
+
+    if (!formData.minPax || parseInt(formData.minPax) < 1) {
+      newErrors.minPax = 'Min pax must be at least 1';
     }
 
     if (!formData.maxPax || parseInt(formData.maxPax) < 1) {
@@ -407,21 +404,17 @@ function SafariModal({
       if (!safari) {
         // Reset form for new safari
         setFormData({
-          name: '',
+          title: '',
           description: '',
-          destination: '',
           duration: '',
+          minPax: '',
           maxPax: '',
           basePrice: '',
+          currency: 'USD',
           inclusions: [],
           exclusions: [],
           itinerary: [],
-          accommodation: [],
-          activities: [],
-          transportation: [],
-          meals: [],
-          parkFees: [],
-          guides: [],
+          tags: [],
           isActive: true
         });
       }
@@ -433,28 +426,28 @@ function SafariModal({
     }
   };
 
-  const handleInputChange = (field: keyof typeof formData, value: any) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | unknown[] | unknown) => {
     setFormData({ ...formData, [field]: value });
     if (errors[field]) {
       setErrors({ ...errors, [field]: '' });
     }
   };
 
-  const addArrayItem = (field: keyof typeof formData, item: any) => {
-    const currentArray = formData[field] as any[];
+  const addArrayItem = (field: keyof typeof formData, item: unknown) => {
+    const currentArray = formData[field] as unknown[];
     setFormData({ ...formData, [field]: [...currentArray, item] });
   };
 
   const removeArrayItem = (field: keyof typeof formData, index: number) => {
-    const currentArray = formData[field] as any[];
+    const currentArray = formData[field] as unknown[];
     setFormData({ 
       ...formData, 
-      [field]: currentArray.filter((_: any, i: number) => i !== index) 
+      [field]: currentArray.filter((_: unknown, i: number) => i !== index) 
     });
   };
 
-  const updateArrayItem = (field: keyof typeof formData, index: number, item: any) => {
-    const currentArray = formData[field] as any[];
+  const updateArrayItem = (field: keyof typeof formData, index: number, item: unknown) => {
+    const currentArray = formData[field] as unknown[];
     const newArray = [...currentArray];
     newArray[index] = item;
     setFormData({ ...formData, [field]: newArray });
@@ -513,42 +506,40 @@ function SafariModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Safari Name *
+                  Safari Title *
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors text-gray-900 ${
-                    errors.name
+                    errors.title
                       ? 'border-red-300 focus:ring-red-500 bg-red-50'
                       : 'border-gray-300 focus:ring-green-500 bg-white'
                   }`}
-                  placeholder="Enter safari name"
+                  placeholder="Enter safari title"
                 />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                {errors.title && (
+                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
                 )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Destination *
+                  Currency
                 </label>
-                <input
-                  type="text"
-                  value={formData.destination}
-                  onChange={(e) => handleInputChange('destination', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors text-gray-900 ${
-                    errors.destination
-                      ? 'border-red-300 focus:ring-red-500 bg-red-50'
-                      : 'border-gray-300 focus:ring-green-500 bg-white'
-                  }`}
-                  placeholder="Enter destination"
-                />
-                {errors.destination && (
-                  <p className="mt-1 text-sm text-red-600">{errors.destination}</p>
-                )}
+                <select
+                  value={formData.currency}
+                  onChange={(e) => handleInputChange('currency', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="KES">KES</option>
+                  <option value="CAD">CAD</option>
+                  <option value="AUD">AUD</option>
+                </select>
               </div>
 
               <div>
@@ -569,6 +560,27 @@ function SafariModal({
                 />
                 {errors.duration && (
                   <p className="mt-1 text-sm text-red-600">{errors.duration}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Min Pax *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.minPax}
+                  onChange={(e) => handleInputChange('minPax', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors text-gray-900 ${
+                    errors.minPax
+                      ? 'border-red-300 focus:ring-red-500 bg-red-50'
+                      : 'border-gray-300 focus:ring-green-500 bg-white'
+                  }`}
+                  placeholder="Enter minimum pax"
+                />
+                {errors.minPax && (
+                  <p className="mt-1 text-sm text-red-600">{errors.minPax}</p>
                 )}
               </div>
 
@@ -660,26 +672,71 @@ function SafariModal({
               </label>
               <div className="space-y-2">
                 {formData.inclusions.map((inclusion, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={inclusion}
-                      onChange={(e) => updateArrayItem('inclusions', index, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                      placeholder="Enter inclusion item"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('inclusions', index)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
+                        <select
+                          value={inclusion.category || ''}
+                          onChange={(e) => updateArrayItem('inclusions', index, { ...inclusion, category: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                        >
+                          <option value="">Select category</option>
+                          <option value="accommodation">Accommodation</option>
+                          <option value="activities">Activities</option>
+                          <option value="transportation">Transportation</option>
+                          <option value="meals">Meals</option>
+                          <option value="park_fees">Park Fees</option>
+                          <option value="guides">Guides</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Price per Person</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={inclusion.pricePerPerson || ''}
+                          onChange={(e) => updateArrayItem('inclusions', index, { ...inclusion, pricePerPerson: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={inclusion.description || ''}
+                        onChange={(e) => updateArrayItem('inclusions', index, { ...inclusion, description: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                        placeholder="Enter inclusion description"
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={inclusion.isIncluded !== false}
+                          onChange={(e) => updateArrayItem('inclusions', index, { ...inclusion, isIncluded: e.target.checked })}
+                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">Included in package</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem('inclusions', index)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
                 <button
                   type="button"
-                  onClick={() => addArrayItem('inclusions', '')}
+                  onClick={() => addArrayItem('inclusions', { category: '', description: '', pricePerPerson: 0, isIncluded: true })}
                   className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-green-500 hover:text-green-600 transition-colors"
                 >
                   + Add Inclusion
@@ -694,17 +751,68 @@ function SafariModal({
               </label>
               <div className="space-y-2">
                 {formData.exclusions.map((exclusion, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                        <input
+                          type="text"
+                          value={exclusion.description || ''}
+                          onChange={(e) => updateArrayItem('exclusions', index, { ...exclusion, description: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                          placeholder="Enter exclusion description"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Reason (optional)</label>
+                        <input
+                          type="text"
+                          value={exclusion.reason || ''}
+                          onChange={(e) => updateArrayItem('exclusions', index, { ...exclusion, reason: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                          placeholder="Enter reason for exclusion"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem('exclusions', index)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => addArrayItem('exclusions', { description: '', reason: '' })}
+                  className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-green-500 hover:text-green-600 transition-colors"
+                >
+                  + Add Exclusion
+                </button>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tags
+              </label>
+              <div className="space-y-2">
+                {formData.tags.map((tag, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <input
                       type="text"
-                      value={exclusion}
-                      onChange={(e) => updateArrayItem('exclusions', index, e.target.value)}
+                      value={tag}
+                      onChange={(e) => updateArrayItem('tags', index, e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                      placeholder="Enter exclusion item"
+                      placeholder="Enter tag"
                     />
                     <button
                       type="button"
-                      onClick={() => removeArrayItem('exclusions', index)}
+                      onClick={() => removeArrayItem('tags', index)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -713,10 +821,10 @@ function SafariModal({
                 ))}
                 <button
                   type="button"
-                  onClick={() => addArrayItem('exclusions', '')}
+                  onClick={() => addArrayItem('tags', '')}
                   className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-green-500 hover:text-green-600 transition-colors"
                 >
-                  + Add Exclusion
+                  + Add Tag
                 </button>
               </div>
             </div>
@@ -729,7 +837,7 @@ function SafariModal({
               <h3 className="text-lg font-medium text-gray-900">Daily Itinerary</h3>
               <button
                 type="button"
-                onClick={() => addArrayItem('itinerary', { day: formData.itinerary.length + 1, title: '', description: '', activities: [] })}
+                onClick={() => addArrayItem('itinerary', { day: formData.itinerary.length + 1, location: '', activities: [], meals: [] })}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 + Add Day
@@ -752,14 +860,14 @@ function SafariModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Day Title
+                      Location
                     </label>
                     <input
                       type="text"
-                      value={day.title}
-                      onChange={(e) => updateArrayItem('itinerary', index, { ...day, title: e.target.value })}
+                      value={day.location}
+                      onChange={(e) => updateArrayItem('itinerary', index, { ...day, location: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                      placeholder="Enter day title"
+                      placeholder="Enter location"
                     />
                   </div>
                   <div>
@@ -778,14 +886,14 @@ function SafariModal({
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    Notes (optional)
                   </label>
                   <textarea
-                    value={day.description}
-                    onChange={(e) => updateArrayItem('itinerary', index, { ...day, description: e.target.value })}
+                    value={day.notes || ''}
+                    onChange={(e) => updateArrayItem('itinerary', index, { ...day, notes: e.target.value })}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                    placeholder="Enter day description"
+                    placeholder="Enter day notes"
                   />
                 </div>
               </div>
@@ -803,59 +911,11 @@ function SafariModal({
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4">Accommodation</h3>
               <div className="space-y-4">
-                {formData.accommodation.map((item, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-900">Accommodation {index + 1}</h4>
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem('accommodation', index)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <input
-                        type="text"
-                        value={item.name}
-                        onChange={(e) => updateArrayItem('accommodation', index, { ...item, name: e.target.value })}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                        placeholder="Name"
-                      />
-                      <input
-                        type="text"
-                        value={item.location}
-                        onChange={(e) => updateArrayItem('accommodation', index, { ...item, location: e.target.value })}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                        placeholder="Location"
-                      />
-                      <input
-                        type="text"
-                        value={item.type}
-                        onChange={(e) => updateArrayItem('accommodation', index, { ...item, type: e.target.value })}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                        placeholder="Type"
-                      />
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.price}
-                        onChange={(e) => updateArrayItem('accommodation', index, { ...item, price: parseFloat(e.target.value) || 0 })}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                        placeholder="Price"
-                      />
-                    </div>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => addArrayItem('accommodation', { name: '', location: '', type: '', nights: 1, price: 0 })}
-                  className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-green-500 hover:text-green-600 transition-colors"
-                >
-                  + Add Accommodation
-                </button>
+                {/* Note: Accommodation pricing will be handled through inclusions */}
+                <div className="text-center text-gray-500 py-8">
+                  <p>Accommodation pricing is managed through the Inclusions section in the Content tab.</p>
+                </div>
+                {/* Accommodation pricing functionality commented out - use inclusions instead */}
               </div>
             </div>
 

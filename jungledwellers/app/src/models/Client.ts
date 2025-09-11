@@ -12,6 +12,11 @@ export interface IClient extends Document {
     country?: string;
     postalCode?: string;
   };
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
   notes?: string;
   isActive: boolean;
   createdBy: mongoose.Types.ObjectId;
@@ -68,6 +73,23 @@ const ClientSchema = new Schema<IClient>({
       type: String,
       trim: true,
       maxlength: [20, 'Postal code cannot be more than 20 characters']
+    }
+  },
+  emergencyContact: {
+    name: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Emergency contact name cannot be more than 100 characters']
+    },
+    phone: {
+      type: String,
+      trim: true,
+      maxlength: [20, 'Emergency contact phone cannot be more than 20 characters']
+    },
+    relationship: {
+      type: String,
+      trim: true,
+      maxlength: [50, 'Relationship cannot be more than 50 characters']
     }
   },
   notes: {

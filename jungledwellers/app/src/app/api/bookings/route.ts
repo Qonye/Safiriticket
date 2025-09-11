@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       searchQuery.$or = [
         { bookingNumber: { $regex: search, $options: 'i' } },
         { 'client.name': { $regex: search, $options: 'i' } },
-        { 'safari.name': { $regex: search, $options: 'i' } }
+        { 'safari.title': { $regex: search, $options: 'i' } }
       ];
     }
     
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Get bookings with pagination and populate references
     const bookings = await Booking.find(searchQuery)
       .populate('client', 'name email phone company')
-      .populate('safari', 'name destination duration basePrice')
+      .populate('safari', 'title description duration basePrice currency')
       .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -75,16 +75,38 @@ export async function POST(request: NextRequest) {
       endDate,
       pax,
       totalPrice,
+      currency = 'USD',
       depositAmount,
+      balanceAmount,
       status = 'pending',
-      notes = '',
-      specialRequests = ''
+      specialRequests = '',
+      paymentStatus = 'pending',
+      paymentMethod
     } = body;
 
     // Validate required fields
     if (!clientId || !safariId || !startDate || !endDate || !pax || !totalPrice) {
       return NextResponse.json(
         { success: false, error: 'Client, Safari, dates, pax, and total price are required' },
+        { status: 400 }
+      );
+    }
+
+    // Get client to retrieve emergency contact
+    const Client = (await import('@/models/Client')).default;
+    const client = await Client.findById(clientId);
+    
+    if (!client) {
+      return NextResponse.json(
+        { success: false, error: 'Client not found' },
+        { status: 400 }
+      );
+    }
+
+    // Validate emergency contact exists on client
+    if (!client.emergencyContact || !client.emergencyContact.name || !client.emergencyContact.phone || !client.emergencyContact.relationship) {
+      return NextResponse.json(
+        { success: false, error: 'Client must have emergency contact information before creating booking' },
         { status: 400 }
       );
     }
@@ -112,10 +134,18 @@ export async function POST(request: NextRequest) {
       endDate: end,
       pax: parseInt(pax),
       totalPrice: parseFloat(totalPrice),
+      currency,
       depositAmount: parseFloat(depositAmount) || 0,
+      balanceAmount: parseFloat(balanceAmount) || (parseFloat(totalPrice) - (parseFloat(depositAmount) || 0)),
       status,
-      notes,
       specialRequests,
+      emergencyContact: {
+        name: client.emergencyContact.name,
+        phone: client.emergencyContact.phone,
+        relationship: client.emergencyContact.relationship
+      },
+      paymentStatus,
+      paymentMethod,
       createdBy: new mongoose.Types.ObjectId() // TODO: Get from auth context
     });
 
@@ -124,7 +154,7 @@ export async function POST(request: NextRequest) {
     // Populate the booking for response
     await booking.populate([
       { path: 'client', select: 'name email phone company' },
-      { path: 'safari', select: 'name destination duration basePrice' }
+      { path: 'safari', select: 'title description duration basePrice currency' }
     ]);
 
     return NextResponse.json({

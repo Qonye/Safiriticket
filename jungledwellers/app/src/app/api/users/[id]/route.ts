@@ -6,13 +6,14 @@ import { IUser } from '@/models/User';
 // GET /api/users/[id] - Get user by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
     const User = (await import('@/models/User')).default;
     
-    const user = await User.findById(params.id).select('-password');
+    const { id } = await params;
+    const user = await User.findById(id).select('-password');
     
     if (!user) {
       return NextResponse.json(
@@ -37,8 +38,9 @@ export async function GET(
 // PUT /api/users/[id] - Update user
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     await getDB();
     const User = (await import('@/models/User')).default;
@@ -46,7 +48,7 @@ export async function PUT(
     const body = await request.json();
     const { name, email, role, isActive, password } = body;
 
-    const user = await User.findById(params.id);
+    const user = await User.findById(id);
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
@@ -95,13 +97,14 @@ export async function PUT(
 // DELETE /api/users/[id] - Delete user
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
     const User = (await import('@/models/User')).default;
     
-    const user = await User.findById(params.id);
+    const { id: deleteId } = await params;
+    const user = await User.findById(deleteId);
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'User not found' },

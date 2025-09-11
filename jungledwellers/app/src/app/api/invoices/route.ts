@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const invoices = await Invoice.find(searchQuery)
       .populate('client', 'name email phone company address')
       .populate('booking', 'bookingNumber startDate endDate pax')
-      .populate('safari', 'name destination duration basePrice')
+      .populate('safari', 'title description duration basePrice currency')
       .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     await invoiceData.populate([
       { path: 'client', select: 'name email phone company address' },
       { path: 'booking', select: 'bookingNumber startDate endDate pax' },
-      { path: 'safari', select: 'name destination duration basePrice' }
+      { path: 'safari', select: 'title description duration basePrice currency' }
     ]);
 
     return NextResponse.json({

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // Base safari package
     items.push({
-      description: `${booking.safari.name} - ${booking.safari.destination}`,
+      description: `${booking.safari.title} - ${booking.safari.duration} days safari`,
       quantity: booking.pax,
       unitPrice: booking.safari.basePrice,
       total: booking.safari.basePrice * booking.pax,

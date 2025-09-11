@@ -5,12 +5,13 @@ import Booking from '@/models/Booking';
 // GET /api/bookings/[id] - Get single booking
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
     
-    const booking = await Booking.findById(params.id)
+    const { id } = await params;
+    const booking = await Booking.findById(id)
       .populate('client', 'name email phone company address')
       .populate('safari', 'name destination duration basePrice description inclusions exclusions itinerary')
       .populate('createdBy', 'name email')
@@ -39,8 +40,9 @@ export async function GET(
 // PUT /api/bookings/[id] - Update booking
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     await getDB();
     
@@ -81,7 +83,7 @@ export async function PUT(
     if (specialRequests !== undefined) updateData.specialRequests = specialRequests;
 
     const booking = await Booking.findByIdAndUpdate(
-      params.id,
+      id,
       updateData,
       { new: true, runValidators: true }
     ).populate([
@@ -118,7 +120,8 @@ export async function DELETE(
   try {
     await getDB();
     
-    const booking = await Booking.findByIdAndDelete(params.id);
+    const { id: deleteId } = await params;
+    const booking = await Booking.findByIdAndDelete(deleteId);
     
     if (!booking) {
       return NextResponse.json(

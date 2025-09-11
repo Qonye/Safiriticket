@@ -61,7 +61,10 @@ export async function POST(request: NextRequest) {
     await getDB();
     
     const body = await request.json();
-    const { name, email, phone, company, address, notes } = body;
+    const { name, email, phone, company, address, emergencyContact, notes } = body;
+    
+    // Debug logging
+    console.log('Creating client with data:', { name, email, phone, company, address, emergencyContact, notes });
 
     // Validate required fields
     if (!name || !email) {
@@ -81,18 +84,39 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new client
-    const client = new Client({
+    const clientData: any = {
       name,
       email,
-      phone: phone || '',
-      company: company || '',
-      address: {
-        street: address || ''
-      },
-      notes: notes || '',
+      phone: phone || undefined,
+      company: company || undefined,
+      notes: notes || undefined,
       createdBy: new mongoose.Types.ObjectId() // TODO: Get from auth context
-    });
+    };
 
+    // Handle address object
+    if (address && typeof address === 'object') {
+      clientData.address = {
+        street: address.street || undefined,
+        city: address.city || undefined,
+        state: address.state || undefined,
+        country: address.country || undefined,
+        postalCode: address.postalCode || undefined
+      };
+    }
+
+    // Handle emergency contact object
+    if (emergencyContact && typeof emergencyContact === 'object') {
+      if (emergencyContact.name || emergencyContact.phone || emergencyContact.relationship) {
+        const emergencyContactData: any = {};
+        if (emergencyContact.name) emergencyContactData.name = emergencyContact.name;
+        if (emergencyContact.phone) emergencyContactData.phone = emergencyContact.phone;
+        if (emergencyContact.relationship) emergencyContactData.relationship = emergencyContact.relationship;
+        
+        clientData.emergencyContact = emergencyContactData;
+      }
+    }
+
+    const client = new Client(clientData);
     await client.save();
 
     return NextResponse.json({

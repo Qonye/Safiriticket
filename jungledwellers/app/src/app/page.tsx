@@ -1,6 +1,43 @@
-import { MapPin, Calendar, FileText, DollarSign, Plus, Activity } from "lucide-react";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { MapPin, Calendar, FileText, DollarSign, Plus, Activity, Users } from "lucide-react";
+
+interface DashboardStats {
+  totalSafaris: number;
+  activeBookings: number;
+  pendingInvoices: number;
+  totalRevenue: number;
+}
 
 export default function Home() {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalSafaris: 0,
+    activeBookings: 0,
+    pendingInvoices: 0,
+    totalRevenue: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/dashboard');
+        const data = await response.json();
+        
+        if (data.success) {
+          setStats(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <div className="p-6">
       {/* Page Header */}
@@ -19,7 +56,9 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Total Safaris</h3>
-              <p className="text-3xl font-bold text-green-600">0</p>
+              <p className="text-3xl font-bold text-green-600">
+                {loading ? '...' : stats.totalSafaris}
+              </p>
             </div>
             <MapPin className="h-8 w-8 text-green-500" />
           </div>
@@ -28,7 +67,9 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Active Bookings</h3>
-              <p className="text-3xl font-bold text-blue-600">0</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {loading ? '...' : stats.activeBookings}
+              </p>
             </div>
             <Calendar className="h-8 w-8 text-blue-500" />
           </div>
@@ -37,7 +78,9 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Pending Invoices</h3>
-              <p className="text-3xl font-bold text-yellow-600">0</p>
+              <p className="text-3xl font-bold text-yellow-600">
+                {loading ? '...' : stats.pendingInvoices}
+              </p>
             </div>
             <FileText className="h-8 w-8 text-yellow-500" />
           </div>
@@ -46,7 +89,9 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Total Revenue</h3>
-              <p className="text-3xl font-bold text-purple-600">$0</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {loading ? '...' : `$${stats.totalRevenue.toLocaleString()}`}
+              </p>
             </div>
             <DollarSign className="h-8 w-8 text-purple-500" />
           </div>

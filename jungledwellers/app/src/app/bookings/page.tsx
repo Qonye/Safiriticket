@@ -7,16 +7,16 @@ interface Client {
   _id: string;
   name: string;
   email: string;
-  phone: string;
-  company: string;
+  phone?: string;
+  company?: string;
 }
 
 interface Safari {
   _id: string;
-  name: string;
-  destination: string;
+  title: string;
   duration: number;
   basePrice: number;
+  currency: string;
 }
 
 interface Booking {
@@ -28,10 +28,19 @@ interface Booking {
   endDate: string;
   pax: number;
   totalPrice: number;
-  depositAmount: number;
+  currency: 'USD' | 'EUR' | 'GBP' | 'KES' | 'CAD' | 'AUD';
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  notes: string;
-  specialRequests: string;
+  specialRequests?: string;
+  emergencyContact: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
+  paymentStatus: 'pending' | 'partial' | 'paid' | 'refunded';
+  paymentMethod?: string;
+  depositAmount?: number;
+  balanceAmount?: number;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -336,11 +345,11 @@ export default function BookingsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {booking.safari.name}
+                          {booking.safari.title}
                         </div>
                         <div className="text-sm text-gray-500 flex items-center">
                           <MapPin className="h-3 w-3 mr-1" />
-                          {booking.safari.destination}
+                          {booking.safari.title}
                         </div>
                       </div>
                     </td>
@@ -362,7 +371,7 @@ export default function BookingsPage() {
                       <div className="text-sm font-medium text-gray-900">
                         ${booking.totalPrice.toLocaleString()}
                       </div>
-                      {booking.depositAmount > 0 && (
+                      {booking.depositAmount && booking.depositAmount > 0 && (
                         <div className="text-sm text-gray-500">
                           Deposit: ${booking.depositAmount.toLocaleString()}
                         </div>
@@ -453,10 +462,18 @@ function BookingModal({
     endDate: booking?.endDate ? new Date(booking.endDate).toISOString().split('T')[0] : '',
     pax: booking?.pax?.toString() || '',
     totalPrice: booking?.totalPrice?.toString() || '',
+    currency: booking?.currency || 'USD',
     depositAmount: booking?.depositAmount?.toString() || '',
+    balanceAmount: booking?.balanceAmount?.toString() || '',
     status: booking?.status || 'pending',
-    notes: booking?.notes || '',
-    specialRequests: booking?.specialRequests || ''
+    paymentStatus: booking?.paymentStatus || 'pending',
+    paymentMethod: booking?.paymentMethod || '',
+    specialRequests: booking?.specialRequests || '',
+    emergencyContact: {
+      name: booking?.emergencyContact?.name || '',
+      phone: booking?.emergencyContact?.phone || '',
+      relationship: booking?.emergencyContact?.relationship || ''
+    }
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -529,10 +546,18 @@ function BookingModal({
           endDate: '',
           pax: '',
           totalPrice: '',
+          currency: 'USD',
           depositAmount: '',
+          balanceAmount: '',
           status: 'pending',
-          notes: '',
-          specialRequests: ''
+          paymentStatus: 'pending',
+          paymentMethod: '',
+          specialRequests: '',
+          emergencyContact: {
+            name: '',
+            phone: '',
+            relationship: ''
+          }
         });
         setSelectedSafari(null);
       }
@@ -619,7 +644,7 @@ function BookingModal({
               <option value="">Select a safari</option>
               {safaris.map((safari) => (
                 <option key={safari._id} value={safari._id}>
-                  {safari.name} - {safari.destination} (${safari.basePrice})
+                  {safari.title} - {safari.duration} days (${safari.basePrice} {safari.currency})
                 </option>
               ))}
             </select>
@@ -753,18 +778,7 @@ function BookingModal({
         </div>
 
         {/* Notes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Notes
-          </label>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => handleInputChange('notes', e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-            placeholder="Additional notes about the booking"
-          />
-        </div>
+        {/* Notes field removed - doesn't exist in backend model */}
 
         {/* Special Requests */}
         <div>

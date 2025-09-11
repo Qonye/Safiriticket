@@ -6,12 +6,15 @@ import mongoose from 'mongoose';
 // GET /api/clients/[id] - Get single client
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
     
-    const client = await Client.findById(params.id).lean();
+    const { id } = await params;
+    
+    // Try without .lean() first to see if that's the issue
+    const client = await Client.findById(id);
     
     if (!client) {
       return NextResponse.json(
@@ -20,9 +23,13 @@ export async function GET(
       );
     }
 
+    
+    // Convert to plain object for response
+    const clientData = client.toObject();
+
     return NextResponse.json({
       success: true,
-      data: client
+      data: clientData
     });
   } catch (error) {
     console.error('Error fetching client:', error);
@@ -36,13 +43,15 @@ export async function GET(
 // PUT /api/clients/[id] - Update client
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
     
+    const { id } = await params;
     const body = await request.json();
-    const { name, email, phone, company, address, notes } = body;
+    const { name, email, phone, company, address, emergencyContact, notes } = body;
+    
 
     // Validate required fields
     if (!name || !email) {
@@ -55,7 +64,7 @@ export async function PUT(
     // Check if client with email already exists (excluding current client)
     const existingClient = await Client.findOne({ 
       email, 
-      _id: { $ne: params.id } 
+      _id: { $ne: id } 
     });
     
     if (existingClient) {
@@ -66,20 +75,62 @@ export async function PUT(
     }
 
     // Update client
-    const client = await Client.findByIdAndUpdate(
-      params.id,
-      {
-        name,
-        email,
-        phone: phone || '',
-        company: company || '',
-        address: {
-          street: address || ''
-        },
-        notes: notes || ''
-      },
-      { new: true, runValidators: true }
-    );
+    const updateData: any = {
+      name,
+      email,
+      phone: phone || undefined,
+      company: company || undefined,
+      notes: notes || undefined
+    };
+
+    // Handle address object
+    if (address && typeof address === 'object') {
+      updateData.address = {
+        street: address.street || undefined,
+        city: address.city || undefined,
+        state: address.state || undefined,
+        country: address.country || undefined,
+        postalCode: address.postalCode || undefined
+      };
+    }
+
+    // Handle emergency contact object
+    if (emergencyContact && typeof emergencyContact === 'object') {
+      if (emergencyContact.name || emergencyContact.phone || emergencyContact.relationship) {
+        const emergencyContactData: any = {};
+        if (emergencyContact.name) emergencyContactData.name = emergencyContact.name;
+        if (emergencyContact.phone) emergencyContactData.phone = emergencyContact.phone;
+        if (emergencyContact.relationship) emergencyContactData.relationship = emergencyContact.relationship;
+        
+        updateData.emergencyContact = emergencyContactData;
+      }
+    }
+
+    
+    // First get the client to update
+    const clientToUpdate = await Client.findById(id);
+    if (!clientToUpdate) {
+      return NextResponse.json(
+        { success: false, error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Update fields manually
+    Object.keys(updateData).forEach(key => {
+      if (key === 'emergencyContact' && updateData[key]) {
+        clientToUpdate.emergencyContact = updateData[key];
+        clientToUpdate.markModified('emergencyContact');
+      } else if (key === 'address' && updateData[key]) {
+        clientToUpdate.address = updateData[key];
+        clientToUpdate.markModified('address');
+      } else {
+        (clientToUpdate as any)[key] = updateData[key];
+      }
+    });
+    
+    // Save the client
+    const client = await clientToUpdate.save();
 
     if (!client) {
       return NextResponse.json(
@@ -87,6 +138,7 @@ export async function PUT(
         { status: 404 }
       );
     }
+
 
     return NextResponse.json({
       success: true,
@@ -105,12 +157,13 @@ export async function PUT(
 // DELETE /api/clients/[id] - Delete client
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
     
-    const client = await Client.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const client = await Client.findByIdAndDelete(id);
     
     if (!client) {
       return NextResponse.json(
