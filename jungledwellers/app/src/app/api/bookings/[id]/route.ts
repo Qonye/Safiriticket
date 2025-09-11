@@ -116,7 +116,7 @@ export async function PUT(
 // DELETE /api/bookings/[id] - Delete booking
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await getDB();
