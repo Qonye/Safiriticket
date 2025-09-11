@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { getDB } from '@/lib/db-utils';
 import { fillInvoiceTemplate, generateInvoiceDataFromBooking, InvoiceData } from '@/lib/pdf-utils';
 import Booking from '@/models/Booking';
 import Safari from '@/models/Safari';
@@ -9,6 +10,7 @@ import Invoice from '@/models/Invoice';
 
 export async function POST(request: NextRequest) {
   try {
+    await getDB();
     const { invoiceId, bookingId } = await request.json();
 
     if (!invoiceId && !bookingId) {
@@ -59,11 +61,11 @@ export async function POST(request: NextRequest) {
         items: invoice.items || [],
         subtotal: invoice.subtotal || 0,
         tax: invoice.taxAmount || 0,
-        total: invoice.total || 0, // Use 'total' not 'totalAmount'
+        total: invoice.total || 0,
         currency: invoice.currency || 'USD',
-        createdBy: 'System', // This should come from the user session
-        creationDate: new Date(invoice.createdAt).toLocaleDateString(), // Use 'createdAt' not 'invoiceDate'
-        paymentDetails: {
+        createdBy: 'System',
+        creationDate: new Date(invoice.createdAt).toLocaleDateString(),
+        paymentDetails: invoice.paymentDetails || {
           accountName: 'JUNGLE DWELLERS LTD',
           accountNumber: '0254001002',
           bankName: 'DIAMOND TRUST BANK',

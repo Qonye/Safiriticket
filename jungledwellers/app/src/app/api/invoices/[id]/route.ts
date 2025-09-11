@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db-utils';
 import Invoice from '@/models/Invoice';
+import Client from '@/models/Client';
+import Booking from '@/models/Booking';
+import Safari from '@/models/Safari';
 
 // GET /api/invoices/[id] - Get single invoice
 export async function GET(

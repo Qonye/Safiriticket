@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
 
     // Get safaris with pagination
     const safaris = await Safari.find(searchQuery)
-      .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db-utils';
 import Invoice from '@/models/Invoice';
+import Client from '@/models/Client';
+import Booking from '@/models/Booking';
+import Safari from '@/models/Safari';
 import mongoose from 'mongoose';
 
 // GET /api/invoices - List invoices with search and pagination
@@ -35,7 +38,6 @@ export async function GET(request: NextRequest) {
       .populate('client', 'name email phone company address')
       .populate('booking', 'bookingNumber startDate endDate pax')
       .populate('safari', 'title description duration basePrice currency')
-      .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

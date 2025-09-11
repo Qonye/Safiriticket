@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db-utils';
 import Booking from '@/models/Booking';
+import Client from '@/models/Client';
+import Safari from '@/models/Safari';
 
 // GET /api/bookings/[id] - Get single booking
 export async function GET(
@@ -14,7 +16,6 @@ export async function GET(
     const booking = await Booking.findById(id)
       .populate('client', 'name email phone company address')
       .populate('safari', 'name destination duration basePrice description inclusions exclusions itinerary')
-      .populate('createdBy', 'name email')
       .lean();
     
     if (!booking) {

@@ -87,15 +87,15 @@ export function generateServiceTablesHTML(items: InvoiceItem[], currency: string
     const hasPricedItems = categoryItems.some(item => item.total > 0);
     
     html += `
-      <div class="section" style="margin-bottom: 16px;">
-        <h3 style="color: #2d5016; font-size: 1.2em; font-weight: 600; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif;">
+      <div class="section" style="margin-bottom: 16px; page-break-inside: avoid; break-inside: avoid;">
+        <h3 style="color: #2d5016; font-size: 1.2em; font-weight: 600; margin-bottom: 12px; font-family: Arial, Helvetica, sans-serif; page-break-after: avoid; break-after: avoid;">
           ${category}
         </h3>
         <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px;">
           <thead>
             <tr style="background: #f3f5f7;">
               <th style="border: 1px solid #e6e9ef; padding: 12px; text-align: left; color: #2e2e2e; font-weight: 600; font-size: 0.95em;">Description</th>
-              ${hasPricedItems ? '<th style="border: 1px solid #e6e9ef; padding: 12px; text-align: center; color: #2e2e2e; font-weight: 600; font-size: 0.95em;">Qty</th>' : ''}
+              ${hasPricedItems ? '<th style="border: 1px solid #e6e9ef; padding: 12px; text-align: center; color: #2e2e2e; font-weight: 600; font-size: 0.95em;">Pax</th>' : ''}
               ${hasPricedItems ? '<th style="border: 1px solid #e6e9ef; padding: 12px; text-align: center; color: #2e2e2e; font-weight: 600; font-size: 0.95em;">Unit Price</th>' : ''}
               ${hasPricedItems ? '<th style="border: 1px solid #e6e9ef; padding: 12px; text-align: center; color: #2e2e2e; font-weight: 600; font-size: 0.95em;">Total</th>' : ''}
             </tr>
@@ -109,13 +109,13 @@ export function generateServiceTablesHTML(items: InvoiceItem[], currency: string
       const isHeader = item.description.startsWith('---') && item.description.endsWith('---');
       
       html += `
-        <tr style="${isSubItem ? 'background: #f8f9fa;' : isHeader ? 'background: #2d5016;' : ''}">
-          <td style="border: 1px solid #e6e9ef; padding: ${isHeader ? '12px' : '10px 12px'}; text-align: ${isHeader ? 'center' : 'left'}; color: ${isHeader ? '#ffffff !important' : isSubItem ? '#4b5563' : '#1f2937'}; font-size: ${isHeader ? '1.2em' : '1.0em'}; font-weight: ${isHeader ? '600' : 'normal'}; ${isSubItem ? 'padding-left: 24px;' : ''}">
+        <tr style="${isSubItem ? 'background: #f8f9fa;' : isHeader ? 'background: #2d5016; page-break-inside: avoid; break-inside: avoid;' : ''}">
+          <td style="border: 1px solid #e6e9ef; padding: ${isHeader ? '12px' : '10px 12px'}; text-align: ${isHeader ? 'center' : 'left'}; color: ${isHeader ? '#ffffff !important' : isSubItem ? '#4b5563' : '#1f2937'}; font-size: ${isHeader ? '1.2em' : '1.0em'}; font-weight: ${isHeader ? '600' : 'normal'}; ${isSubItem ? 'padding-left: 24px;' : ''} ${isHeader ? 'page-break-inside: avoid; break-inside: avoid;' : ''}">
             ${item.description}
           </td>
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : item.quantity}</td>` : ''}
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : formatCurrency(item.unitPrice, currency)}</td>` : ''}
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; font-weight: ${isInformational ? 'normal' : '600'}; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : formatCurrency(item.total, currency)}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'}; ${isHeader ? 'page-break-inside: avoid; break-inside: avoid;' : ''}">${isInformational ? '-' : item.quantity}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'}; ${isHeader ? 'page-break-inside: avoid; break-inside: avoid;' : ''}">${isInformational ? '-' : formatCurrency(item.unitPrice, currency)}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; font-weight: ${isInformational ? 'normal' : '600'}; background: ${isHeader ? '#2d5016' : 'transparent'}; ${isHeader ? 'page-break-inside: avoid; break-inside: avoid;' : ''}">${isInformational ? '-' : formatCurrency(item.total, currency)}</td>` : ''}
         </tr>
       `;
     });

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db-utils';
 import Booking from '@/models/Booking';
+import Client from '@/models/Client';
+import Safari from '@/models/Safari';
 import mongoose from 'mongoose';
 
 // GET /api/bookings - List bookings with search and pagination
@@ -34,7 +36,6 @@ export async function GET(request: NextRequest) {
     const bookings = await Booking.find(searchQuery)
       .populate('client', 'name email phone company')
       .populate('safari', 'title description duration basePrice currency')
-      .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
