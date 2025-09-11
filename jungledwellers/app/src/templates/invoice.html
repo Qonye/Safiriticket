@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jungle Dwellers Invoice</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @page { size: A4 portrait; margin: 8mm; }
+    
+    /* Additional page break controls */
+    .page-break-before { page-break-before: always; }
+    .page-break-after { page-break-after: always; }
+    .avoid-break { page-break-inside: avoid; break-inside: avoid; }
+    
+    /* Optimize page margins for compact mode - handled via JavaScript */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #fefefe;
+      font-size: 0.8em;
+      /* Modern, clean font stack similar to the reference */
+      font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
+    }
+    body {
+      font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
+      min-height: 100vh;
+      min-width: 100vw;
+      position: relative;
+      /* Remove default padding/margin for PDF accuracy */
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 680px; /* Reduced from 700px */
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 0 0 24px 0; /* Reduce bottom padding for more space */
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 24px 24px 0 24px; /* Reduce padding for more content area */
+      background: linear-gradient(135deg, #fff 0%, #fafbfc 100%);
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .logo-col {
+      flex: 0 0 120px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+    .logo {
+      height: 64px;
+      width: auto;
+      display: block;
+    }
+    .invoice-info-col {
+      flex: 1;
+      text-align: right;
+      padding-left: 24px;
+    }
+    .invoice-title {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 2.1rem;
+      color: #2d5016; /* Jungle Dwellers green */
+      margin: 0 0 8px 0;
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+    .client-label {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #2c3e50; /* Jungle Dwellers dark blue */
+      font-size: 1.1em;
+      margin-top: 8px;
+      font-weight: bold;
+    }
+    .payable-section {
+      margin: 0;
+      padding: 0;
+      color: #2c3e50;
+      font-size: 1em;
+    }
+    .payable-section strong {
+      color: #2d5016; /* Jungle Dwellers green */
+      font-size: 1.08em;
+    }
+    .section {
+      margin: 18px 24px 0 24px; /* Reduce section margin for more content area */
+      background: linear-gradient(135deg, #fff 0%, #fafbfc 100%);
+      border-radius: 3px;
+      padding: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px; /* Reduce top margin */
+      background: #fff;
+      border-radius: 3px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .items-table th,
+    .items-table td {
+    }
+    
+    /* Dynamic content scaling for many tables */
+    .items-table.compact th,
+    .items-table.compact td {
+      padding: 6px 8px !important;
+      font-size: 0.85em !important;
+    }
+    
+    .items-table.compact th {
+      padding: 8px 8px !important;
+      font-size: 0.9em !important;
+    }
+    
+    .section.compact {
+      margin: 12px 24px 0 24px;
+      padding: 12px;
+    }
+    
+    .section.compact .items-table {
+      margin-top: 8px;
+    }
+    
+    /* Reduce spacing between multiple tables in compact mode */
+    .compact .section + .section {
+      margin-top: 8px;
+    }
+    
+    .extra-compact .section + .section {
+      margin-top: 4px;
+    }
+    
+    /* Ensure tables don't have excessive margins in compact mode */
+    .compact .items-table {
+      margin-bottom: 8px;
+    }
+    
+    .extra-compact .items-table {
+      margin-bottom: 4px;
+    }
+    
+    .container.compact {
+      padding: 0 0 16px 0;
+    }
+    
+    .container.compact .header-row {
+      padding: 16px 24px 0 24px;
+    }
+    
+    .container.compact .invoice-title {
+      font-size: 1.8rem;
+    }
+    
+    .container.compact .billed-details-row {
+      margin: 16px 32px 0 32px;
+    }
+    
+    .container.compact .section {
+      margin: 12px 24px 0 24px;
+      padding: 12px;
+    }
+    
+    /* Extra compact styling for very complex invoices */
+    .container.extra-compact {
+      padding: 0 0 12px 0;
+    }
+    
+    .container.extra-compact .header-row {
+      padding: 12px 24px 0 24px;
+    }
+    
+    .container.extra-compact .invoice-title {
+      font-size: 1.6rem;
+    }
+    
+    .container.extra-compact .billed-details-row {
+      margin: 12px 32px 0 32px;
+    }
+    
+    .container.extra-compact .section {
+      margin: 8px 24px 0 24px;
+      padding: 8px;
+    }
+    
+    .items-table.extra-compact th,
+    .items-table.extra-compact td {
+      padding: 4px 6px !important;
+      font-size: 0.8em !important;
+    }
+    
+    .items-table.extra-compact th {
+      padding: 6px 6px !important;
+      font-size: 0.85em !important;
+    }
+    
+    /* Additional compact optimizations */
+    .compact .invoice-title-row {
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+    
+    .compact .footer {
+      margin: 16px auto 0 auto;
+      padding-top: 12px;
+    }
+    
+    .compact .invoice-user-info {
+      margin: 8px 24px 0 24px;
+      padding-top: 6px;
+    }
+    
+    .extra-compact .invoice-title-row {
+      margin-top: 2px;
+      margin-bottom: 2px;
+    }
+    
+    .extra-compact .footer {
+      margin: 12px auto 0 auto;
+      padding-top: 8px;
+    }
+    
+    .extra-compact .invoice-user-info {
+      margin: 6px 24px 0 24px;
+      padding-top: 4px;
+    }
+    
+    /* Ensure proper spacing for footer sections in compact mode */
+    .compact .section:last-of-type {
+      margin-bottom: 12px;
+    }
+    
+    .extra-compact .section:last-of-type {
+      margin-bottom: 8px;
+    }
+    
+    /* Optimize table header heights in compact mode */
+    .compact .items-table thead th {
+      padding: 8px 8px !important;
+    }
+    
+    .extra-compact .items-table thead th {
+      padding: 6px 6px !important;
+    }
+    
+    /* Additional compact optimizations for text and spacing */
+    .compact .footer-brand {
+      font-size: 1.0em;
+    }
+    
+    .compact .footer-contact {
+      font-size: 0.9em;
+    }
+    
+    .compact .footer-website {
+      font-size: 0.9em;
+    }
+    
+    .extra-compact .footer-brand {
+      font-size: 0.9em;
+    }
+    
+    .extra-compact .footer-contact {
+      font-size: 0.8em;
+    }
+    
+    .extra-compact .footer-website {
+      font-size: 0.8em;
+    }
+    
+    /* Compact payment details section */
+    .compact .section strong {
+      font-size: 1.0em;
+    }
+    
+    .compact .section span {
+      font-size: 0.95em;
+    }
+    
+    .extra-compact .section strong {
+      font-size: 0.95em;
+    }
+    
+    .extra-compact .section span {
+      font-size: 0.9em;
+    }
+    
+    /* Compact grand total section */
+    .compact .section div[style*="font-size: 1.1em"] {
+      font-size: 1.0em !important;
+    }
+    
+    .extra-compact .section div[style*="font-size: 1.1em"] {
+      font-size: 0.9em !important;
+    }
+    
+    /* Compact billed details section */
+    .compact .billed-details-row strong {
+      font-size: 1.0em;
+    }
+    
+    .compact .billed-details-row span {
+      font-size: 0.95em;
+    }
+    
+    .extra-compact .billed-details-row strong {
+      font-size: 0.95em;
+    }
+    
+    .extra-compact .billed-details-row span {
+      font-size: 0.9em;
+    }
+    
+    /* Compact invoice title */
+    .compact .invoice-title {
+      font-size: 1.9rem;
+    }
+    
+    .extra-compact .invoice-title {
+      font-size: 1.7rem;
+    }
+    
+    /* Compact logo sizing */
+    .compact .logo {
+      height: 56px;
+    }
+    
+    .extra-compact .logo {
+      height: 48px;
+    }
+    
+    /* Compact table borders */
+    .compact .items-table th,
+    .compact .items-table td {
+      border-width: 0.5px !important;
+    }
+    
+    .extra-compact .items-table th,
+    .extra-compact .items-table td {
+      border-width: 0.5px !important;
+    }
+    
+    /* Compact table header sizing */
+    .compact .items-table th {
+      font-size: 0.85em !important;
+    }
+    
+    .extra-compact .items-table th {
+      font-size: 0.8em !important;
+    }
+    
+    /* Compact table data sizing */
+    .compact .items-table td {
+      font-size: 0.8em !important;
+    }
+    
+    .extra-compact .items-table td {
+      font-size: 0.75em !important;
+    }
+    
+    /* Compact table spacing */
+    .compact .items-table {
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+    
+    .extra-compact .items-table {
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+    
+    /* Compact table margins */
+    .compact .items-table {
+      margin: 0;
+    }
+    
+    .extra-compact .items-table {
+      margin: 0;
+    }
+    
+    /* Compact table padding */
+    .compact .items-table th,
+    .compact .items-table td {
+      padding: 6px 8px !important;
+    }
+    
+    .extra-compact .items-table th,
+    .extra-compact .items-table td {
+      padding: 4px 6px !important;
+    }
+    
+    /* Compact table header padding */
+    .compact .items-table th {
+      padding: 8px 8px !important;
+    }
+    
+    .extra-compact .items-table th {
+      padding: 6px 6px !important;
+    }
+    th, td {
+      border: 1px solid #e6e9ef !important;
+      padding: 10px 12px !important;
+      text-align: center !important;
+      vertical-align: middle !important;
+      word-break: break-word !important;
+      font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif !important;
+    }
+    th {
+      background: #f3f5f7 !important;
+      color: #2e2e2e !important;
+      font-size: 0.95em !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.02em !important;
+      padding: 12px 12px !important;
+    }
+    /* Increase font size specifically for item rows */
+    .items-table td {
+      font-size: 1.05em !important;
+      line-height: 1.4 !important;
+      color: #6b7280 !important; /* Softer gray for body cells */
+    }
+    /* Emphasize totals/footer rows */
+    .items-table tfoot td {
+      color: #2e2e2e !important;
+      font-weight: 600 !important;
+    }
+    /* Targeting td elements specifically within items-table for font size adjustment */
+    .items-table td {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 0.95em; /* Reduced from 1.05em */
+    }
+    .total-row td {
+      border-top: 1px solid #2d5016; /* Jungle Dwellers green */
+      font-weight: 600;
+      text-align: center;
+      max-width: 700px;
+      margin: 24px auto 0 auto; /* Reduce top margin */
+      font-size: 0.7em;
+      color: #2c3e50; /* Jungle Dwellers dark blue */
+      background: transparent;
+      line-height: 1.6;
+      letter-spacing: 0.01em;
+      padding-top: 10px; /* Reduce padding */
+    }
+    .footer .footer-brand {
+      font-family: Inter, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
+      font-weight: bold;
+      color: #2d5016; /* Jungle Dwellers green */
+      font-size: 1.1em;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .footer .footer-contact {
+      color: #6b7280;
+      font-size: 1em;
+      margin-bottom: 2px;
+      display: block;
+    }
+    .footer .footer-website {
+      color: #2d5016; /* Jungle Dwellers green */
+      font-size: 1em;
+      margin-top: 2px;
+      display: block;
+    }
+    
+    /* Watermark styling */
+    .watermark {
+      position: absolute;
+      top: 10%;
+      right: 0%;
+      opacity: 0.45;
+      z-index: 1;
+      pointer-events: none;
+      overflow: visible;
+      width: 350px;
+      height: 300px;
+    }
+    .watermark img {
+      width: 300px;
+      height: auto;
+      transform: rotate(-15deg);
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+    
+    /* Safari footer image */
+    .safari-footer {
+      width: 100%;
+      position: relative;
+      margin-top: 20px;
+    }
+    .safari-footer img {
+      width: 100%;
+      height: auto;
+      object-position: bottom;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Watermark -->
+    <div class="watermark">
+      <img src="../../public/LIon head.png" alt="Jungle Dwellers Watermark" />
+    </div>
+    
+    <div class="header-row">
+      <div class="logo-col">
+         <img src="../../public/JD - Logo 1.png" alt="Jungle Dwellers Holiday Gurus Logo" class="logo" />
+      </div>
+    </div>
+    <div class="invoice-title-row" style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 8px; margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid;">
+      <div style="flex: 1; height: 1px; background: #2d5016; opacity: 0.25; margin-right: 16px;"></div>
+      <div class="invoice-title" style="font-family: Arial, Helvetica, sans-serif; font-size: 2.1rem; color: #2d5016; letter-spacing: 1px; font-weight: 500; text-align: center; margin: 0; padding: 0 8px; background: #fff;">INVOICE</div>
+      <div style="flex: 1; height: 1px; background: #2d5016; opacity: 0.25; margin-left: 16px;"></div>
+    </div>
+    <!-- Billed To and Invoice Details Row -->
+    <div class="billed-details-row" style="display: flex; justify-content: space-between; align-items: center; margin: 24px 32px 0 32px; page-break-inside: avoid; break-inside: avoid;">
+      <div class="billed-section" style="flex:1; text-align:left; color:#2c3e50; font-size:1em; font-family: Arial, Helvetica, sans-serif;">
+        <strong style="color:#2d5016;font-size:1.08em; font-family: Arial, Helvetica, sans-serif;">Billed To:</strong><br>
+        <span style="font-family: Arial, Helvetica, sans-serif;">{{clientName}}</span>
+      </div>
+      <div style="text-align: right;">
+        <table style="border-collapse: collapse; font-family: Arial, Helvetica, sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 8px;">
+          <tr>
+            <td style="padding: 4px 8px; text-align: right; color: #2c3e50; font-size: 0.9em; font-weight: 500;">Due Date:</td>
+            <td style="padding: 4px 8px; text-align: left; color: #2d5016; font-size: 0.9em; font-weight: 600;">{{dueDate}}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 8px; text-align: right; color: #2c3e50; font-size: 0.9em; font-weight: 500;">Invoice #:</td>
+            <td style="padding: 4px 8px; text-align: left; color: #2d5016; font-size: 0.9em; font-weight: 600;">{{number}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="section">
+      {{serviceTables}}
+    </div>
+    
+    <!-- Grand Total Section -->
+    <div class="section" style="text-align: right; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #fafbfc 100%); border-radius: 3px; padding: 20px; font-family: Arial, Helvetica, sans-serif; position: relative; z-index: 10; page-break-inside: avoid; break-inside: avoid;">
+      <div style="display: inline-block; background: #f3f5f7; border: 1px solid #e6e9ef; border-radius: 3px; padding: 12px 16px; position: relative;">
+        <div style="font-family: Arial, Helvetica, sans-serif; font-size: 1.1em; font-weight: 600; color: #2e2e2e; letter-spacing: 0.02em;">
+          GRAND TOTAL: {{grandTotal}}
+        </div>
+      </div>
+    </div>
+    
+    <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 20px; font-family: Arial, Helvetica, sans-serif; page-break-inside: avoid; break-inside: avoid;">
+      <strong style="color:#2d5016;font-size:1.08em; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">PAYMENT DETAILS:</strong><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">BANK NAME: {{paymentBankName}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">SWIFT CODE: {{paymentSwiftCode}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif;">CURRENCY: {{paymentCurrency}}</span><br>
+      <span style="color:#aaa5a5;font-size:0.97em; font-family: Arial, Helvetica, sans-serif;">{{paymentAdditionalInfo}}</span>
+    </div>
+    <div class="footer" style="text-align:center;max-width:700px;margin:32px auto 0 auto;font-size:0.7em;color:#2c3e50;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:1px solid #2d5016;padding-top:16px; font-family: Arial, Helvetica, sans-serif; page-break-inside: avoid; break-inside: avoid;">
+      <span class="footer-brand" style="font-weight:bold;color:#2d5016;font-size:1.1em;letter-spacing:0.04em;margin-bottom:4px;display:block; font-family: Arial, Helvetica, sans-serif;">Jungle Dwellers Holiday Gurus</span>
+      <span class="footer-contact" style="color:#6b7280;font-size:1em;margin-bottom:2px;display:block; font-family: Arial, Helvetica, sans-serif;">
+        P.O Box 44599 - 00100 Nairobi, Kenya &nbsp;|&nbsp;
+        Email: Sales@jungledwellers.net &nbsp;|&nbsp;
+        Tel: +254 715 572 312 &nbsp;|&nbsp;
+        Web: www.jungledwellers.net
+      </span>
+      <span class="footer-website" style="color:#2d5016;font-size:1em;margin-top:2px;display:block; font-family: Arial, Helvetica, sans-serif;">www.jungledwellers.net</span>
+      <div style="margin-top: 16px; text-align: center;">
+        <a href="https://jungledwellers.net/terms-conditions/" target="_blank" style="display: inline-block; background-color: #f0f0f0; color: #2d5016; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 1.1em; border: 1px solid #ddd;">For our full terms and conditions, please click here.</a>
+      </div>
+    </div>
+          <div class="invoice-user-info" style="display: flex; justify-content: space-between; align-items: center; margin: 12px 24px 0 24px; padding-top: 8px; border-top: 1px solid rgba(0, 0, 0, 0.08); font-family: Arial, Helvetica, sans-serif; page-break-inside: avoid; break-inside: avoid;">
+      <div style="flex: 1;">
+        <strong style="color:#2d5016;font-size:1.08em; margin-bottom: 4px; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">Date Created:</strong>
+        <div style="color: #2c3e50; font-size: 1em; font-family: Arial, Helvetica, sans-serif;">{{creationDate}}</div>
+      </div>
+      <div style="flex: 1; text-align: right;">
+        <strong style="color:#2d5016;font-size:1.08em; margin-bottom: 4px; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">Created By:</strong>
+        <div style="color: #2c3e50; font-size: 1em; font-family: Arial, Helvetica, sans-serif;">{{createdBy}}</div>
+      </div>
+    </div>
+    
+    <!-- Safari Footer Image -->
+    <div class="safari-footer">
+      <img src="../../public/bottom image.png" alt="Safari Animal Silhouette" />
+    </div>
+  </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, FileText, Download, Eye, DollarSign, Calendar, User, MapPin } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, FileText, Download, Eye, DollarSign, Calendar, User, MapPin, Printer } from 'lucide-react';
 
 interface Client {
   _id: string;
@@ -148,6 +148,68 @@ export default function InvoicesPage() {
     } catch (error) {
       console.error('Error deleting invoice:', error);
       alert('Failed to delete invoice');
+    }
+  };
+
+  const generatePDF = async (invoice: Invoice) => {
+    try {
+      const response = await fetch('/api/invoices/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoiceId: invoice._id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const html = await response.text();
+      
+      // Open PDF in new window for printing
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
+  const previewPDF = async (invoice: Invoice) => {
+    try {
+      const response = await fetch('/api/invoices/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoiceId: invoice._id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const html = await response.text();
+      
+      // Open PDF in new window for preview
+      const previewWindow = window.open('', '_blank');
+      if (previewWindow) {
+        previewWindow.document.write(html);
+        previewWindow.document.close();
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
     }
   };
 
@@ -351,11 +413,18 @@ export default function InvoicesPage() {
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {/* TODO: Implement PDF download */}}
+                          onClick={() => generatePDF(invoice)}
                           className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Download PDF"
+                          title="Generate PDF"
                         >
-                          <Download className="h-4 w-4" />
+                          <Printer className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => previewPDF(invoice)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Preview PDF"
+                        >
+                          <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteInvoice(invoice._id)}
