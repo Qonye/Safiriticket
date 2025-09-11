@@ -28,6 +28,11 @@
       /* Remove default padding/margin for PDF accuracy */
       margin: 0;
       padding: 0;
+      /* Improve text rendering for PDF */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      color: #000000; /* Ensure maximum contrast */
     }
     .container {
       max-width: 680px; /* Reduced from 700px */
@@ -411,22 +416,24 @@
     }
     th {
       background: #f3f5f7 !important;
-      color: #2e2e2e !important;
-      font-size: 0.95em !important;
-      font-weight: 600 !important;
+      color: #000000 !important; /* Maximum contrast black */
+      font-size: 1.0em !important; /* Slightly larger */
+      font-weight: 700 !important; /* Bolder */
       letter-spacing: 0.02em !important;
       padding: 12px 12px !important;
+      text-rendering: optimizeLegibility !important;
     }
     /* Increase font size specifically for item rows */
     .items-table td {
-      font-size: 1.05em !important;
+      font-size: 1.1em !important; /* Larger font */
       line-height: 1.4 !important;
-      color: #6b7280 !important; /* Softer gray for body cells */
+      color: #1f2937 !important; /* Darker gray for better contrast */
+      font-weight: 500 !important; /* Medium weight */
     }
     /* Emphasize totals/footer rows */
     .items-table tfoot td {
-      color: #2e2e2e !important;
-      font-weight: 600 !important;
+      color: #000000 !important; /* Maximum contrast */
+      font-weight: 700 !important; /* Bolder */
     }
     /* Targeting td elements specifically within items-table for font size adjustment */
     .items-table td {
@@ -554,12 +561,12 @@
     
     <div class="section" style="text-align: left; margin-top: 12px; margin-bottom: 12px; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 16px; font-family: Arial, Helvetica, sans-serif;">
       <strong style="color:#2d5016;font-size:1.1em; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">PAYMENT DETAILS:</strong><br><br>
-      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.0em; color: #1f2937; font-weight: 500;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
-      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.0em; color: #1f2937; font-weight: 500;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
-      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.0em; color: #1f2937; font-weight: 500;">BANK NAME: {{paymentBankName}}</span><br>
-      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.0em; color: #1f2937; font-weight: 500;">SWIFT CODE: {{paymentSwiftCode}}</span><br>
-      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.0em; color: #1f2937; font-weight: 500;">CURRENCY: {{paymentCurrency}}</span><br><br>
-      <span style="color:#4b5563;font-size:0.95em; font-family: Arial, Helvetica, sans-serif; font-style: italic;">{{paymentAdditionalInfo}}</span>
+      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.1em; color: #000000; font-weight: 600;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.1em; color: #000000; font-weight: 600;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.1em; color: #000000; font-weight: 600;">BANK NAME: {{paymentBankName}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.1em; color: #000000; font-weight: 600;">SWIFT CODE: {{paymentSwiftCode}}</span><br>
+      <span style="font-family: Arial, Helvetica, sans-serif; font-size: 1.1em; color: #000000; font-weight: 600;">CURRENCY: {{paymentCurrency}}</span><br><br>
+      <span style="color:#1f2937;font-size:1.0em; font-family: Arial, Helvetica, sans-serif; font-style: italic; font-weight: 500;">{{paymentAdditionalInfo}}</span>
     </div>
     <div class="footer" style="text-align:center;max-width:700px;margin:32px auto 0 auto;font-size:0.7em;color:#2c3e50;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:1px solid #2d5016;padding-top:16px; font-family: Arial, Helvetica, sans-serif;">
       <span class="footer-brand" style="font-weight:bold;color:#2d5016;font-size:1.1em;letter-spacing:0.04em;margin-bottom:4px;display:block; font-family: Arial, Helvetica, sans-serif;">Jungle Dwellers Holiday Gurus</span>

@@ -110,12 +110,12 @@ export function generateServiceTablesHTML(items: InvoiceItem[], currency: string
       
       html += `
         <tr style="${isSubItem ? 'background: #f8f9fa;' : isHeader ? 'background: #2d5016;' : ''}">
-          <td style="border: 1px solid #e6e9ef; padding: ${isHeader ? '12px' : '10px 12px'}; text-align: ${isHeader ? 'center' : 'left'}; color: ${isHeader ? '#ffffff' : isSubItem ? '#4b5563' : '#1f2937'}; font-size: ${isHeader ? '1.2em' : '1.0em'}; font-weight: ${isHeader ? '600' : 'normal'}; ${isSubItem ? 'padding-left: 24px;' : ''}">
+          <td style="border: 1px solid #e6e9ef; padding: ${isHeader ? '12px' : '10px 12px'}; text-align: ${isHeader ? 'center' : 'left'}; color: ${isHeader ? '#ffffff !important' : isSubItem ? '#4b5563' : '#1f2937'}; font-size: ${isHeader ? '1.2em' : '1.0em'}; font-weight: ${isHeader ? '600' : 'normal'}; ${isSubItem ? 'padding-left: 24px;' : ''}">
             ${item.description}
           </td>
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : item.quantity}</td>` : ''}
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : formatCurrency(item.unitPrice, currency)}</td>` : ''}
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff' : '#2e2e2e'}; font-size: 0.95em; font-weight: ${isInformational ? 'normal' : '600'}; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : formatCurrency(item.total, currency)}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : item.quantity}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : formatCurrency(item.unitPrice, currency)}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff !important' : '#2e2e2e'}; font-size: 0.95em; font-weight: ${isInformational ? 'normal' : '600'}; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : formatCurrency(item.total, currency)}</td>` : ''}
         </tr>
       `;
     });

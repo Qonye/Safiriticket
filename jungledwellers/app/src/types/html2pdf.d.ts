@@ -9,10 +9,15 @@ declare module 'html2pdf.js' {
     };
     html2canvas?: {
       scale?: number;
+      dpi?: number;
       useCORS?: boolean;
       letterRendering?: boolean;
       allowTaint?: boolean;
       backgroundColor?: string;
+      width?: number;
+      height?: number;
+      scrollX?: number;
+      scrollY?: number;
     };
     jsPDF?: {
       format?: string;

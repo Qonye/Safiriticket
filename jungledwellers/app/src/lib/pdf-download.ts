@@ -19,10 +19,15 @@ export interface PDFOptions {
   };
   html2canvas?: {
     scale: number;
+    dpi?: number;
     useCORS: boolean;
     letterRendering: boolean;
     allowTaint: boolean;
     backgroundColor: string;
+    width?: number;
+    height?: number;
+    scrollX?: number;
+    scrollY?: number;
   };
   jsPDF?: {
     format: string;
@@ -39,18 +44,18 @@ export interface PDFOptions {
   };
 }
 
-// Default PDF options optimized for invoices
+// Default PDF options optimized for high-quality invoices
 const DEFAULT_PDF_OPTIONS: PDFOptions = {
   margin: [5, 5, 5, 5],
   image: { 
-    type: 'jpeg', 
-    quality: 0.98 
+    type: 'png', // PNG for better quality than JPEG
+    quality: 1.0   // Maximum quality
   },
   jsPDF: { 
     format: 'a4', 
     unit: 'mm', 
     orientation: 'portrait', 
-    compress: true,
+    compress: false, // Disable compression for better quality
     precision: 16
   },
   pagebreak: { 
@@ -60,11 +65,16 @@ const DEFAULT_PDF_OPTIONS: PDFOptions = {
     avoid: '.avoid-break'
   },
   html2canvas: { 
-    scale: 3, 
+    scale: 4,        // Increased from 3 to 4 for higher resolution
+    dpi: 300,        // High DPI for crisp text
     useCORS: true, 
     letterRendering: true,
     allowTaint: true,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    width: 2480,     // A4 width at 300 DPI (210mm * 300/25.4)
+    height: 3508,    // A4 height at 300 DPI (297mm * 300/25.4)
+    scrollX: 0,
+    scrollY: 0
   }
 };
 
@@ -90,7 +100,7 @@ export async function previewPDF(html: string, options: Partial<PDFOptions> = {}
   tempDiv.style.position = 'absolute';
   tempDiv.style.left = '-9999px';
   tempDiv.style.top = '-9999px';
-  tempDiv.style.width = '794px'; // A4 width at 96 DPI
+  tempDiv.style.width = '210mm'; // A4 width in mm for better scaling
   tempDiv.innerHTML = html;
   document.body.appendChild(tempDiv);
 
@@ -126,7 +136,7 @@ export async function downloadPDF(
   tempDiv.style.position = 'absolute';
   tempDiv.style.left = '-9999px';
   tempDiv.style.top = '-9999px';
-  tempDiv.style.width = '794px'; // A4 width at 96 DPI
+  tempDiv.style.width = '210mm'; // A4 width in mm for better scaling
   tempDiv.innerHTML = html;
   document.body.appendChild(tempDiv);
 
@@ -162,7 +172,7 @@ export async function generatePDFBlob(
   tempDiv.style.position = 'absolute';
   tempDiv.style.left = '-9999px';
   tempDiv.style.top = '-9999px';
-  tempDiv.style.width = '794px'; // A4 width at 96 DPI
+  tempDiv.style.width = '210mm'; // A4 width in mm for better scaling
   tempDiv.innerHTML = html;
   document.body.appendChild(tempDiv);
 

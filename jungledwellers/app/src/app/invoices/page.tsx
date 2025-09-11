@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, FileText, Download, Eye, DollarSign, Calendar, User, MapPin, Printer } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, Edit, Trash2, FileText, Download, Eye, DollarSign, Calendar, User, MapPin, Printer, X, Save } from 'lucide-react';
 import { previewPDF as previewPDFUtil, downloadPDF as downloadPDFUtil } from '@/lib/pdf-download';
 
 interface Client {
@@ -68,32 +68,63 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [loadingPDF, setLoadingPDF] = useState<string | null>(null);
+  const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalInvoices, setTotalInvoices] = useState(0);
+
+  // Debounced search state
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  // Debounce search term to reduce API calls
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page on search
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Reset to first page when status filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
 
   // Fetch invoices
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
+      if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
       if (statusFilter) params.append('status', statusFilter);
+      params.append('page', currentPage.toString());
+      params.append('limit', '20'); // Load 20 invoices per page
       
       const response = await fetch(`/api/invoices?${params}`);
       const data = await response.json();
       
       if (data.success) {
         setInvoices(data.data);
+        setTotalPages(data.pagination?.pages || 1);
+        setTotalInvoices(data.pagination?.total || 0);
       }
     } catch (error) {
       console.error('Error fetching invoices:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearchTerm, statusFilter, currentPage]);
 
-  // Fetch bookings for invoice generation
+  // Fetch bookings for invoice generation (only essential data)
   const fetchBookings = async () => {
     try {
-      const response = await fetch('/api/bookings');
+      const params = new URLSearchParams();
+      params.append('limit', '100'); // Limit to recent bookings
+      params.append('status', 'confirmed'); // Only confirmed bookings
+      
+      const response = await fetch(`/api/bookings?${params}`);
       const data = await response.json();
       
       if (data.success) {
@@ -104,13 +135,22 @@ export default function InvoicesPage() {
     }
   };
 
+  // Fetch invoices on mount and when debounced search or filters change
   useEffect(() => {
     fetchInvoices();
-    fetchBookings();
-  }, [searchTerm, statusFilter]);
+  }, [fetchInvoices]);
+
+  // Fetch bookings only when needed (when modal opens)
+  const handleOpenCreateModal = async () => {
+    setShowCreateModal(true);
+    if (bookings.length === 0) {
+      await fetchBookings();
+    }
+  };
 
   const handleGenerateFromBooking = async (bookingId: string) => {
     try {
+      setGeneratingInvoice(bookingId);
       const response = await fetch('/api/invoices/generate-from-booking', {
         method: 'POST',
         headers: {
@@ -130,6 +170,8 @@ export default function InvoicesPage() {
     } catch (error) {
       console.error('Error generating invoice:', error);
       alert('Failed to generate invoice');
+    } finally {
+      setGeneratingInvoice(null);
     }
   };
 
@@ -158,6 +200,7 @@ export default function InvoicesPage() {
 
   const generatePDF = async (invoice: Invoice) => {
     try {
+      setLoadingPDF(invoice._id);
       const response = await fetch('/api/invoices/generate-pdf', {
         method: 'POST',
         headers: {
@@ -180,11 +223,14 @@ export default function InvoicesPage() {
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setLoadingPDF(null);
     }
   };
 
   const previewPDF = async (invoice: Invoice) => {
     try {
+      setLoadingPDF(invoice._id + '_preview');
       const response = await fetch('/api/invoices/generate-pdf', {
         method: 'POST',
         headers: {
@@ -206,6 +252,8 @@ export default function InvoicesPage() {
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setLoadingPDF(null);
     }
   };
 
@@ -250,7 +298,7 @@ export default function InvoicesPage() {
         <div className="flex justify-between items-center">
           <div className="flex space-x-4">
             <button 
-              onClick={() => setShowCreateModal(true)}
+              onClick={handleOpenCreateModal}
               className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -403,31 +451,55 @@ export default function InvoicesPage() {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => setEditingInvoice(invoice)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="flex items-center px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-xs font-medium"
                           title="View/Edit invoice"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
                         </button>
                         <button
                           onClick={() => generatePDF(invoice)}
-                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Generate PDF"
+                          disabled={loadingPDF === invoice._id}
+                          className="flex items-center px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Download PDF"
                         >
-                          <Printer className="h-4 w-4" />
+                          {loadingPDF === invoice._id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600 mr-1"></div>
+                              PDF...
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="h-3 w-3 mr-1" />
+                              PDF
+                            </>
+                          )}
                         </button>
                         <button
                           onClick={() => previewPDF(invoice)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          disabled={loadingPDF === invoice._id + '_preview'}
+                          className="flex items-center px-3 py-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Preview PDF"
                         >
-                          <Eye className="h-4 w-4" />
+                          {loadingPDF === invoice._id + '_preview' ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600 mr-1"></div>
+                              Preview...
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-3 w-3 mr-1" />
+                              Preview
+                            </>
+                          )}
                         </button>
                         <button
                           onClick={() => handleDeleteInvoice(invoice._id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="flex items-center px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-medium"
                           title="Delete invoice"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -437,15 +509,44 @@ export default function InvoicesPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center text-sm text-gray-700">
+              Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, totalInvoices)} of {totalInvoices} invoices
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Generate from Booking Modal */}
       {showCreateModal && (
-        <div className="mt-6">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
           <GenerateInvoiceModal
             bookings={bookings}
             onClose={() => setShowCreateModal(false)}
             onGenerate={handleGenerateFromBooking}
+            isGenerating={generatingInvoice}
             data-modal="generate-invoice"
           />
         </div>
@@ -453,7 +554,7 @@ export default function InvoicesPage() {
 
       {/* Edit Invoice Modal */}
       {editingInvoice && (
-        <div className="mt-6">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
           <InvoiceModal
             invoice={editingInvoice}
             onClose={() => setEditingInvoice(null)}
@@ -461,6 +562,9 @@ export default function InvoicesPage() {
               setEditingInvoice(null);
               fetchInvoices();
             }}
+            loadingPDF={loadingPDF}
+            onGeneratePDF={generatePDF}
+            onPreviewPDF={previewPDF}
             data-modal="edit-invoice"
           />
         </div>
@@ -473,12 +577,14 @@ export default function InvoicesPage() {
 function GenerateInvoiceModal({ 
   bookings,
   onClose, 
-  onGenerate, 
+  onGenerate,
+  isGenerating,
   ...props 
 }: { 
   bookings: Booking[];
   onClose: () => void; 
   onGenerate: (bookingId: string) => void;
+  isGenerating: string | null;
   [key: string]: any;
 }) {
   const [selectedBooking, setSelectedBooking] = useState('');
@@ -486,7 +592,9 @@ function GenerateInvoiceModal({
   const handleGenerate = () => {
     if (selectedBooking) {
       onGenerate(selectedBooking);
-      onClose();
+      if (!isGenerating) {
+        onClose();
+      }
     }
   };
 
@@ -565,10 +673,17 @@ function GenerateInvoiceModal({
           </button>
           <button
             onClick={handleGenerate}
-            disabled={!selectedBooking}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!selectedBooking || isGenerating === selectedBooking}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
-            Generate Invoice
+            {isGenerating === selectedBooking ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Generating...
+              </>
+            ) : (
+              'Generate Invoice'
+            )}
           </button>
         </div>
       </div>
@@ -580,19 +695,57 @@ function GenerateInvoiceModal({
 function InvoiceModal({ 
   invoice,
   onClose, 
-  onUpdate, 
+  onUpdate,
+  loadingPDF,
+  onGeneratePDF,
+  onPreviewPDF,
   ...props 
 }: { 
   invoice: Invoice;
   onClose: () => void; 
   onUpdate: () => void;
+  loadingPDF: string | null;
+  onGeneratePDF: (invoice: Invoice) => void;
+  onPreviewPDF: (invoice: Invoice) => void;
   [key: string]: any;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    status: invoice.status,
+    notes: invoice.notes || '',
+    termsAndConditions: invoice.termsAndConditions || ''
+  });
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
+      style: 'currency', 
       currency: 'USD',
     }).format(amount);
+  };
+
+  const handleSave = async () => {
+    try {
+      const response = await fetch(`/api/invoices/${invoice._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsEditing(false);
+        onUpdate();
+        alert('Invoice updated successfully!');
+      } else {
+        alert(data.error || 'Failed to update invoice');
+      }
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      alert('Failed to update invoice');
+    }
   };
 
   return (
@@ -607,14 +760,24 @@ function InvoiceModal({
             {invoice.client.name} - {invoice.safari?.title || 'N/A'}
           </p>
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+              isEditing 
+                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {isEditing ? 'Cancel' : 'Edit'}
+          </button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Invoice Content */}
@@ -638,7 +801,24 @@ function InvoiceModal({
               <p><span className="font-medium">Invoice #:</span> {invoice.invoiceNumber}</p>
               <p><span className="font-medium">Date:</span> {new Date(invoice.createdAt).toLocaleDateString()}</p>
               <p><span className="font-medium">Due Date:</span> {new Date(invoice.dueDate).toLocaleDateString()}</p>
-              <p><span className="font-medium">Status:</span> <span className="capitalize">{invoice.status}</span></p>
+              <div className="flex items-center">
+                <span className="font-medium mr-2">Status:</span>
+                {isEditing ? (
+                  <select
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({...editFormData, status: e.target.value as any})}
+                    className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="sent">Sent</option>
+                    <option value="paid">Paid</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                ) : (
+                  <span className="capitalize">{invoice.status}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -719,38 +899,92 @@ function InvoiceModal({
         </div>
 
         {/* Notes and Terms */}
-        {(invoice.notes || invoice.termsAndConditions) && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            {invoice.notes && (
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Notes</h3>
-                <p className="text-sm text-gray-600">{invoice.notes}</p>
-              </div>
-            )}
-            {invoice.termsAndConditions && (
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Terms & Conditions</h3>
-                <p className="text-sm text-gray-600">{invoice.termsAndConditions}</p>
-              </div>
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Notes</h3>
+            {isEditing ? (
+              <textarea
+                value={editFormData.notes}
+                onChange={(e) => setEditFormData({...editFormData, notes: e.target.value})}
+                placeholder="Add notes..."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            ) : (
+              <p className="text-sm text-gray-600">{invoice.notes || 'No notes'}</p>
             )}
           </div>
-        )}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Terms & Conditions</h3>
+            {isEditing ? (
+              <textarea
+                value={editFormData.termsAndConditions}
+                onChange={(e) => setEditFormData({...editFormData, termsAndConditions: e.target.value})}
+                placeholder="Add terms and conditions..."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            ) : (
+              <p className="text-sm text-gray-600">{invoice.termsAndConditions || 'No terms and conditions'}</p>
+            )}
+          </div>
+        </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
-          >
-            Close
-          </button>
-          <button
-            onClick={() => {/* TODO: Implement PDF download */}}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium flex items-center"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </button>
+        <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+          <div className="flex space-x-3">
+            <button
+              onClick={() => onPreviewPDF(invoice)}
+              disabled={loadingPDF === invoice._id + '_preview'}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingPDF === invoice._id + '_preview' ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Previewing...
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview PDF
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => onGeneratePDF(invoice)}
+              disabled={loadingPDF === invoice._id}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingPDF === invoice._id ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Download PDF
+                </>
+              )}
+            </button>
+          </div>
+          <div className="flex space-x-3">
+            {isEditing && (
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
