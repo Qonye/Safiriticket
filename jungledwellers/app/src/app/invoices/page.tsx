@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, FileText, Download, Eye, DollarSign, Calendar, User, MapPin, Printer } from 'lucide-react';
+import { previewPDF as previewPDFUtil, downloadPDF as downloadPDFUtil } from '@/lib/pdf-download';
 
 interface Client {
   _id: string;
@@ -173,14 +174,9 @@ export default function InvoicesPage() {
 
       const html = await response.text();
       
-      // Open PDF in new window for printing
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-      }
+      // Download PDF using html2pdf.js
+      const filename = `${invoice.invoiceNumber || 'invoice'}.pdf`;
+      await downloadPDFUtil(html, filename);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -205,12 +201,8 @@ export default function InvoicesPage() {
 
       const html = await response.text();
       
-      // Open PDF in new window for preview
-      const previewWindow = window.open('', '_blank');
-      if (previewWindow) {
-        previewWindow.document.write(html);
-        previewWindow.document.close();
-      }
+      // Preview PDF using html2pdf.js
+      await previewPDFUtil(html);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');

@@ -59,10 +59,10 @@ export async function POST(request: NextRequest) {
         items: invoice.items || [],
         subtotal: invoice.subtotal || 0,
         tax: invoice.taxAmount || 0,
-        total: invoice.totalAmount || 0,
+        total: invoice.total || 0, // Use 'total' not 'totalAmount'
         currency: invoice.currency || 'USD',
         createdBy: 'System', // This should come from the user session
-        creationDate: new Date(invoice.invoiceDate).toLocaleDateString(),
+        creationDate: new Date(invoice.createdAt).toLocaleDateString(), // Use 'createdAt' not 'invoiceDate'
         paymentDetails: {
           accountName: 'JUNGLE DWELLERS LTD',
           accountNumber: '0254001002',

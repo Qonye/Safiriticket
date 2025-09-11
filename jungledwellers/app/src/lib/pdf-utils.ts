@@ -106,15 +106,16 @@ export function generateServiceTablesHTML(items: InvoiceItem[], currency: string
     categoryItems.forEach((item, index) => {
       const isInformational = item.total === 0 && item.unitPrice === 0;
       const isSubItem = item.description.startsWith('  ');
+      const isHeader = item.description.startsWith('---') && item.description.endsWith('---');
       
       html += `
-        <tr style="${isSubItem ? 'background: #f8f9fa;' : ''}">
-          <td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: left; color: ${isSubItem ? '#6b7280' : '#2e2e2e'}; font-size: 0.95em; ${isSubItem ? 'padding-left: 24px;' : ''}">
+        <tr style="${isSubItem ? 'background: #f8f9fa;' : isHeader ? 'background: #2d5016;' : ''}">
+          <td style="border: 1px solid #e6e9ef; padding: ${isHeader ? '12px' : '10px 12px'}; text-align: ${isHeader ? 'center' : 'left'}; color: ${isHeader ? '#ffffff' : isSubItem ? '#4b5563' : '#1f2937'}; font-size: ${isHeader ? '1.2em' : '1.0em'}; font-weight: ${isHeader ? '600' : 'normal'}; ${isSubItem ? 'padding-left: 24px;' : ''}">
             ${item.description}
           </td>
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: #2e2e2e; font-size: 0.95em;">${isInformational ? '-' : item.quantity}</td>` : ''}
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: #2e2e2e; font-size: 0.95em;">${isInformational ? '-' : formatCurrency(item.unitPrice, currency)}</td>` : ''}
-          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: #2e2e2e; font-size: 0.95em; font-weight: ${isInformational ? 'normal' : '600'};">${isInformational ? '-' : formatCurrency(item.total, currency)}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : item.quantity}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff' : '#2e2e2e'}; font-size: 0.95em; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : formatCurrency(item.unitPrice, currency)}</td>` : ''}
+          ${hasPricedItems ? `<td style="border: 1px solid #e6e9ef; padding: 10px 12px; text-align: center; color: ${isHeader ? '#ffffff' : '#2e2e2e'}; font-size: 0.95em; font-weight: ${isInformational ? 'normal' : '600'}; background: ${isHeader ? '#2d5016' : 'transparent'};">${isInformational ? '-' : formatCurrency(item.total, currency)}</td>` : ''}
         </tr>
       `;
     });
@@ -184,55 +185,92 @@ export function generateInvoiceDataFromBooking(booking: any, safari: any, client
   // Create invoice items from safari data
   const items: InvoiceItem[] = [];
 
-  // Base safari package
+  // Create main safari description (simple and clean)
+  let safariDescription = `${safari.title || safari.name || 'Safari Package'} - ${safari.duration} days safari package`;
+  
+  // Add destination if available
+  if (safari.destination) {
+    safariDescription += `\nDestination: ${safari.destination}`;
+  }
+
+  // Base safari package with enhanced description
   items.push({
-    description: `${safari.name} - ${safari.destination}`,
+    description: safariDescription,
     quantity: booking.pax,
     unitPrice: safari.basePrice,
     total: safari.basePrice * booking.pax,
-    category: 'Safari Package'
+    category: 'activities'
   });
 
-  // Add inclusions as detailed items (even if no price)
+  // Add inclusions as separate items under "other" category with special formatting
   if (safari.inclusions && safari.inclusions.length > 0) {
+    // Add a header item for inclusions
+    items.push({
+      description: '--- INCLUSIONS ---',
+      quantity: 1,
+      unitPrice: 0,
+      total: 0,
+      category: 'other'
+    });
+    
     safari.inclusions.forEach((inclusion: any) => {
-      if (inclusion.trim()) {
+      const desc = inclusion.description || inclusion;
+      if (desc && desc.trim()) {
         items.push({
-          description: `Included: ${inclusion}`,
-          quantity: booking.pax,
-          unitPrice: 0, // Inclusions are included in base price
-          total: 0,
-          category: 'Inclusions'
-        });
-      }
-    });
-  }
-
-  // Add exclusions as detailed items (for transparency)
-  if (safari.exclusions && safari.exclusions.length > 0) {
-    safari.exclusions.forEach((exclusion: any) => {
-      if (exclusion.trim()) {
-        items.push({
-          description: `Not Included: ${exclusion}`,
+          description: `✓ ${desc}`,
           quantity: 1,
-          unitPrice: 0, // Exclusions are informational
+          unitPrice: 0,
           total: 0,
-          category: 'Exclusions'
+          category: 'other'
         });
       }
     });
   }
 
-  // Add itinerary as detailed items
+  // Add exclusions as separate items under "other" category with special formatting
+  if (safari.exclusions && safari.exclusions.length > 0) {
+    // Add a header item for exclusions
+    items.push({
+      description: '--- EXCLUSIONS ---',
+      quantity: 1,
+      unitPrice: 0,
+      total: 0,
+      category: 'other'
+    });
+    
+    safari.exclusions.forEach((exclusion: any) => {
+      const desc = exclusion.description || exclusion;
+      if (desc && desc.trim()) {
+        items.push({
+          description: `✗ ${desc}`,
+          quantity: 1,
+          unitPrice: 0,
+          total: 0,
+          category: 'other'
+        });
+      }
+    });
+  }
+
+  // Add detailed itinerary as separate items under "other" category with special formatting
   if (safari.itinerary && safari.itinerary.length > 0) {
+    // Add a header item for itinerary
+    items.push({
+      description: '--- ITINERARY ---',
+      quantity: 1,
+      unitPrice: 0,
+      total: 0,
+      category: 'other'
+    });
+    
     safari.itinerary.forEach((day: any) => {
       if (day.title && day.description) {
         items.push({
           description: `Day ${day.day}: ${day.title}`,
           quantity: 1,
-          unitPrice: 0, // Itinerary is included in base price
+          unitPrice: 0,
           total: 0,
-          category: 'Itinerary'
+          category: 'other'
         });
         // Add day description as a sub-item
         if (day.description.trim()) {
@@ -241,7 +279,7 @@ export function generateInvoiceDataFromBooking(booking: any, safari: any, client
             quantity: 1,
             unitPrice: 0,
             total: 0,
-            category: 'Itinerary Details'
+            category: 'other'
           });
         }
       }

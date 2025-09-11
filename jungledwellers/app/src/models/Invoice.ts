@@ -37,7 +37,7 @@ const InvoiceItemSchema = new Schema<IInvoiceItem>({
     type: String,
     required: [true, 'Item description is required'],
     trim: true,
-    maxlength: [300, 'Description cannot be more than 300 characters']
+    maxlength: [2000, 'Description cannot be more than 2000 characters']
   },
   quantity: {
     type: Number,

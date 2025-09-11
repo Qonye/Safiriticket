@@ -48,23 +48,40 @@ export async function POST(request: NextRequest) {
     // Create invoice items from safari data
     const items = [];
 
-    // Base safari package
+    // Create main safari description (simple and clean)
+    let safariDescription = `${booking.safari.title || 'Safari Package'} - ${booking.safari.duration} days safari package`;
+    
+    // Add destination if available
+    if (booking.safari.destination) {
+      safariDescription += `\nDestination: ${booking.safari.destination}`;
+    }
+
+    // Base safari package with enhanced description
     items.push({
-      description: `${booking.safari.title} - ${booking.safari.duration} days safari`,
+      description: safariDescription,
       quantity: booking.pax,
       unitPrice: booking.safari.basePrice,
       total: booking.safari.basePrice * booking.pax,
       category: 'activities'
     });
 
-    // Add inclusions as detailed items (even if no price)
+    // Add inclusions as separate items under "other" category with special formatting
     if (booking.safari.inclusions && booking.safari.inclusions.length > 0) {
+      // Add a header item for inclusions
+      items.push({
+        description: '--- INCLUSIONS ---',
+        quantity: 1,
+        unitPrice: 0,
+        total: 0,
+        category: 'other'
+      });
+      
       booking.safari.inclusions.forEach((inclusion: any) => {
         if (inclusion.description && inclusion.description.trim()) {
           items.push({
-            description: `Included: ${inclusion.description}`,
-            quantity: booking.pax,
-            unitPrice: 0, // Inclusions are included in base price
+            description: `✓ ${inclusion.description}`,
+            quantity: 1,
+            unitPrice: 0,
             total: 0,
             category: 'other'
           });
@@ -72,14 +89,23 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Add exclusions as detailed items (for transparency)
+    // Add exclusions as separate items under "other" category with special formatting
     if (booking.safari.exclusions && booking.safari.exclusions.length > 0) {
+      // Add a header item for exclusions
+      items.push({
+        description: '--- EXCLUSIONS ---',
+        quantity: 1,
+        unitPrice: 0,
+        total: 0,
+        category: 'other'
+      });
+      
       booking.safari.exclusions.forEach((exclusion: any) => {
         if (exclusion.description && exclusion.description.trim()) {
           items.push({
-            description: `Not Included: ${exclusion.description}`,
+            description: `✗ ${exclusion.description}`,
             quantity: 1,
-            unitPrice: 0, // Exclusions are informational
+            unitPrice: 0,
             total: 0,
             category: 'other'
           });
@@ -87,27 +113,66 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Add itinerary as detailed items
+    // Add detailed itinerary as separate items under "other" category with improved formatting
     if (booking.safari.itinerary && booking.safari.itinerary.length > 0) {
-      booking.safari.itinerary.forEach((day: any) => {
-        if (day.title && day.description) {
+      // Add a header item for itinerary
+      items.push({
+        description: '--- ITINERARY ---',
+        quantity: 1,
+        unitPrice: 0,
+        total: 0,
+        category: 'other'
+      });
+      
+      booking.safari.itinerary.forEach((day: any, index: number) => {
+        // Create a comprehensive day entry
+        let dayDescription = `Day ${day.day || (index + 1)}`;
+        
+        if (day.title) {
+          dayDescription += `: ${day.title}`;
+        }
+        
+        if (day.location) {
+          dayDescription += ` - ${day.location}`;
+        }
+        
+        if (day.date) {
+          const dateStr = new Date(day.date).toLocaleDateString();
+          dayDescription += ` (${dateStr})`;
+        }
+        
+        items.push({
+          description: dayDescription,
+          quantity: 1,
+          unitPrice: 0,
+          total: 0,
+          category: 'other'
+        });
+        
+        // Add day description/activities as a sub-item if available
+        if (day.description && day.description.trim()) {
           items.push({
-            description: `Day ${day.day}: ${day.title}`,
+            description: `  ${day.description}`,
             quantity: 1,
-            unitPrice: 0, // Itinerary is included in base price
+            unitPrice: 0,
             total: 0,
-            category: 'Itinerary'
+            category: 'other'
           });
-          // Add day description as a sub-item
-          if (day.description.trim()) {
-            items.push({
-              description: `  ${day.description}`,
-              quantity: 1,
-              unitPrice: 0,
-              total: 0,
-              category: 'Itinerary Details'
-            });
-          }
+        }
+        
+        // Add activities if available
+        if (day.activities && day.activities.length > 0) {
+          day.activities.forEach((activity: string) => {
+            if (activity && activity.trim()) {
+              items.push({
+                description: `    • ${activity}`,
+                quantity: 1,
+                unitPrice: 0,
+                total: 0,
+                category: 'other'
+              });
+            }
+          });
         }
       });
     }
@@ -121,7 +186,7 @@ export async function POST(request: NextRequest) {
             quantity: acc.nights || 1,
             unitPrice: acc.price,
             total: acc.price * (acc.nights || 1),
-            category: 'Accommodation'
+             category: 'accommodation'
           });
         }
       });
@@ -136,7 +201,7 @@ export async function POST(request: NextRequest) {
             quantity: booking.pax,
             unitPrice: activity.price,
             total: activity.price * booking.pax,
-            category: 'Activities'
+             category: 'activities'
           });
         }
       });
@@ -151,7 +216,7 @@ export async function POST(request: NextRequest) {
             quantity: 1,
             unitPrice: transport.price,
             total: transport.price,
-            category: 'Transportation'
+             category: 'transportation'
           });
         }
       });
@@ -166,7 +231,7 @@ export async function POST(request: NextRequest) {
             quantity: booking.pax,
             unitPrice: meal.price,
             total: meal.price * booking.pax,
-            category: 'Meals'
+             category: 'meals'
           });
         }
       });
@@ -181,7 +246,7 @@ export async function POST(request: NextRequest) {
             quantity: booking.pax,
             unitPrice: park.price,
             total: park.price * booking.pax,
-            category: 'Park Fees'
+             category: 'park_fees'
           });
         }
       });
@@ -196,7 +261,7 @@ export async function POST(request: NextRequest) {
             quantity: 1,
             unitPrice: guide.price,
             total: guide.price,
-            category: 'Guides'
+             category: 'guides'
           });
         }
       });
