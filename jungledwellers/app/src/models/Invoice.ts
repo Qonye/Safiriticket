@@ -27,6 +27,14 @@ export interface IInvoice extends Document {
   paymentMethod?: string;
   notes?: string;
   termsAndConditions?: string;
+  paymentDetails?: {
+    accountName: string;
+    accountNumber: string;
+    bankName: string;
+    swiftCode: string;
+    currency: string;
+    additionalInfo: string;
+  };
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -147,6 +155,44 @@ const InvoiceSchema = new Schema<IInvoice>({
     type: String,
     trim: true,
     maxlength: [5000, 'Terms and conditions cannot be more than 5000 characters']
+  },
+  paymentDetails: {
+    accountName: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Account name cannot be more than 100 characters'],
+      default: 'JUNGLE DWELLERS LTD'
+    },
+    accountNumber: {
+      type: String,
+      trim: true,
+      maxlength: [50, 'Account number cannot be more than 50 characters'],
+      default: '0254001002'
+    },
+    bankName: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Bank name cannot be more than 100 characters'],
+      default: 'DIAMOND TRUST BANK'
+    },
+    swiftCode: {
+      type: String,
+      trim: true,
+      maxlength: [20, 'SWIFT code cannot be more than 20 characters'],
+      default: 'DTKEKENA'
+    },
+    currency: {
+      type: String,
+      trim: true,
+      maxlength: [10, 'Currency cannot be more than 10 characters'],
+      default: 'USD'
+    },
+    additionalInfo: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Additional info cannot be more than 500 characters'],
+      default: '(Please use your name or invoice number as payment reference)'
+    }
   },
   createdBy: {
     type: Schema.Types.ObjectId,

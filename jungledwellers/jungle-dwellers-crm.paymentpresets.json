@@ -1,0 +1,168 @@
+[{
+  "_id": {
+    "$oid": "68c2d8cf1b3378bccd0ce063"
+  },
+  "name": "DTB - USD Account",
+  "accountName": "JUNGLE DWELLERS LTD",
+  "accountNumber": "0254001002",
+  "bankName": "DIAMOND TRUST BANK",
+  "swiftCode": "DTKEKENA",
+  "currency": "USD",
+  "additionalInfo": "(Please use your name or invoice number as payment reference)",
+  "isDefault": true,
+  "isActive": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-09-11T14:12:31.242Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-11T14:12:31.242Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c2d8cf1b3378bccd0ce064"
+  },
+  "name": "DTB - KES Account",
+  "accountName": "JUNGLE DWELLERS LTD",
+  "accountNumber": "0254001001",
+  "bankName": "DIAMOND TRUST BANK",
+  "swiftCode": "DTKEKENA",
+  "currency": "KES",
+  "additionalInfo": "(Please use your name or invoice number as payment reference)",
+  "isDefault": true,
+  "isActive": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-09-11T14:12:31.277Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-11T14:12:31.277Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c2d8cf1b3378bccd0ce065"
+  },
+  "name": "DTB - GBP Account",
+  "accountName": "JUNGLE DWELLERS LTD",
+  "accountNumber": "0254001003",
+  "bankName": "DIAMOND TRUST BANK",
+  "swiftCode": "DTKEKENA",
+  "currency": "GBP",
+  "additionalInfo": "(Please use your name or invoice number as payment reference)",
+  "isDefault": true,
+  "isActive": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-09-11T14:12:31.287Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-11T14:12:31.287Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c2d8cf1b3378bccd0ce066"
+  },
+  "name": "NCBA - KES Account",
+  "accountName": "JUNGLE DWELLERS LTD",
+  "accountNumber": "8816130017",
+  "bankName": "NCBA BANK KENYA",
+  "swiftCode": "CBAFKENX",
+  "currency": "KES",
+  "additionalInfo": "( Bank Code: 07 - 000, P.O. Box 44599-00100 Nairobi, Kenya,NCBA Center, Mara and Ragati Roads Upperhill, Please use your name or invoice number as payment reference)",
+  "isDefault": false,
+  "isActive": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c2d8cf1b3378bccd0ce067"
+  },
+  "name": "NCBA - USD Account",
+  "accountName": "JUNGLE DWELLERS LTD",
+  "accountNumber": "8816130022",
+  "bankName": "NCBA BANK KENYA",
+  "swiftCode": "CBAFKENX",
+  "currency": "USD",
+  "additionalInfo": "( Bank Code: 07 - 000, P.O. Box 44599-00100 Nairobi, Kenya,NCBA Center, Mara and Ragati Roads Upperhill, Please use your name or invoice number as payment reference)",
+  "isDefault": false,
+  "isActive": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c2d8cf1b3378bccd0ce068"
+  },
+  "name": "DTB - EUR Account",
+  "accountName": "JUNGLE DWELLERS LTD",
+  "accountNumber": "0254001002",
+  "bankName": "DIAMOND TRUST BANK",
+  "swiftCode": "DTKEKENA",
+  "currency": "EUR",
+  "additionalInfo": "(Please use your name or invoice number as payment reference)",
+  "isDefault": true,
+  "isActive": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c2d8cf1b3378bccd0ce069"
+  },
+  "name": "DTB - CAD Account",
+  "accountName": "JUNGLE DWELLERS LTD",
+  "accountNumber": "0254001002",
+  "bankName": "DIAMOND TRUST BANK",
+  "swiftCode": "DTKEKENA",
+  "currency": "CAD",
+  "additionalInfo": "(Please use your name or invoice number as payment reference)",
+  "isDefault": true,
+  "isActive": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c2d8cf1b3378bccd0ce06a"
+  },
+  "name": "DTB - AUD Account",
+  "accountName": "JUNGLE DWELLERS LTD",
+  "accountNumber": "0254001002",
+  "bankName": "DIAMOND TRUST BANK",
+  "swiftCode": "DTKEKENA",
+  "currency": "AUD",
+  "additionalInfo": "(Please use your name or invoice number as payment reference)",
+  "isDefault": true,
+  "isActive": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-11T14:12:31.288Z"
+  }
+}]

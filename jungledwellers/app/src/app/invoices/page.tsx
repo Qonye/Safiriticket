@@ -148,7 +148,7 @@ export default function InvoicesPage() {
     }
   };
 
-  const handleGenerateFromBooking = async (bookingId: string) => {
+  const handleGenerateFromBooking = async (bookingId: string, currency?: string, paymentPresetId?: string) => {
     try {
       setGeneratingInvoice(bookingId);
       const response = await fetch('/api/invoices/generate-from-booking', {
@@ -156,7 +156,11 @@ export default function InvoicesPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ bookingId }),
+        body: JSON.stringify({ 
+          bookingId, 
+          currency, 
+          paymentPresetId 
+        }),
       });
 
       const data = await response.json();
@@ -575,7 +579,7 @@ export default function InvoicesPage() {
 
 // Generate Invoice Modal Component
 function GenerateInvoiceModal({ 
-  bookings,
+  bookings, 
   onClose, 
   onGenerate,
   isGenerating,
@@ -583,15 +587,58 @@ function GenerateInvoiceModal({
 }: { 
   bookings: Booking[];
   onClose: () => void; 
-  onGenerate: (bookingId: string) => void;
+  onGenerate: (bookingId: string, currency?: string, paymentPresetId?: string) => void;
   isGenerating: string | null;
   [key: string]: any;
 }) {
   const [selectedBooking, setSelectedBooking] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState('USD');
+  const [selectedPaymentPreset, setSelectedPaymentPreset] = useState('');
+  const [paymentPresets, setPaymentPresets] = useState<any[]>([]);
+  const [loadingPresets, setLoadingPresets] = useState(false);
+
+  // Available currencies
+  const currencies = [
+    { value: 'USD', label: 'USD - US Dollar' },
+    { value: 'EUR', label: 'EUR - Euro' },
+    { value: 'GBP', label: 'GBP - British Pound' },
+    { value: 'KES', label: 'KES - Kenyan Shilling' },
+    { value: 'CAD', label: 'CAD - Canadian Dollar' },
+    { value: 'AUD', label: 'AUD - Australian Dollar' }
+  ];
+
+  // Fetch payment presets when currency changes
+  const fetchPaymentPresets = async (currency: string) => {
+    try {
+      setLoadingPresets(true);
+      const response = await fetch(`/api/payment-presets?currency=${currency}&active=true`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setPaymentPresets(data.data);
+        // Auto-select default preset if available
+        const defaultPreset = data.data.find((preset: any) => preset.isDefault);
+        if (defaultPreset) {
+          setSelectedPaymentPreset(defaultPreset._id);
+        } else if (data.data.length > 0) {
+          setSelectedPaymentPreset(data.data[0]._id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching payment presets:', error);
+    } finally {
+      setLoadingPresets(false);
+    }
+  };
+
+  // Load presets when component mounts or currency changes
+  useEffect(() => {
+    fetchPaymentPresets(selectedCurrency);
+  }, [selectedCurrency]);
 
   const handleGenerate = () => {
     if (selectedBooking) {
-      onGenerate(selectedBooking);
+      onGenerate(selectedBooking, selectedCurrency, selectedPaymentPreset);
       if (!isGenerating) {
         onClose();
       }
@@ -638,6 +685,70 @@ function GenerateInvoiceModal({
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Currency Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Currency
+          </label>
+          <select
+            value={selectedCurrency}
+            onChange={(e) => setSelectedCurrency(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+          >
+            {currencies.map((currency) => (
+              <option key={currency.value} value={currency.value}>
+                {currency.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Payment Preset Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Payment Details
+          </label>
+          <select
+            value={selectedPaymentPreset}
+            onChange={(e) => setSelectedPaymentPreset(e.target.value)}
+            disabled={loadingPresets || paymentPresets.length === 0}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          >
+            {loadingPresets ? (
+              <option value="">Loading payment options...</option>
+            ) : paymentPresets.length === 0 ? (
+              <option value="">No payment options available for {selectedCurrency}</option>
+            ) : (
+              <>
+                <option value="">Choose payment details...</option>
+                {paymentPresets.map((preset) => (
+                  <option key={preset._id} value={preset._id}>
+                    {preset.name} - {preset.accountNumber}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
+          
+          {/* Payment Details Preview */}
+          {selectedPaymentPreset && !loadingPresets && (
+            <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Payment Details:</h4>
+              {(() => {
+                const preset = paymentPresets.find(p => p._id === selectedPaymentPreset);
+                return preset ? (
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <div><span className="font-medium">Account:</span> {preset.accountName}</div>
+                    <div><span className="font-medium">Number:</span> {preset.accountNumber}</div>
+                    <div><span className="font-medium">Bank:</span> {preset.bankName}</div>
+                    <div><span className="font-medium">SWIFT:</span> {preset.swiftCode}</div>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          )}
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">

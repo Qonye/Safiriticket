@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db-utils';
 import Invoice from '@/models/Invoice';
 import Booking from '@/models/Booking';
+import Client from '@/models/Client';
+import Safari from '@/models/Safari';
+import PaymentPreset from '@/models/PaymentPreset';
 import mongoose from 'mongoose';
 
 // POST /api/invoices/generate-from-booking - Generate invoice from booking
@@ -10,7 +13,7 @@ export async function POST(request: NextRequest) {
     await getDB();
     
     const body = await request.json();
-    const { bookingId, invoiceDate, dueDate, notes = '', terms = '' } = body;
+    const { bookingId, invoiceDate, dueDate, notes = '', terms = '', currency, paymentPresetId } = body;
 
     // Validate required fields
     if (!bookingId) {
@@ -277,6 +280,30 @@ export async function POST(request: NextRequest) {
     const invoiceDateObj = invoiceDate ? new Date(invoiceDate) : new Date();
     const dueDateObj = dueDate ? new Date(dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
 
+    // Get payment preset if provided
+    let paymentDetails = {
+      accountName: 'JUNGLE DWELLERS LTD',
+      accountNumber: '0254001002',
+      bankName: 'DIAMOND TRUST BANK',
+      swiftCode: 'DTKEKENA',
+      currency: currency || booking.safari.currency || 'USD',
+      additionalInfo: '(Please use your name or invoice number as payment reference)'
+    };
+
+    if (paymentPresetId) {
+      const paymentPreset = await PaymentPreset.findById(paymentPresetId);
+      if (paymentPreset) {
+        paymentDetails = {
+          accountName: paymentPreset.accountName,
+          accountNumber: paymentPreset.accountNumber,
+          bankName: paymentPreset.bankName,
+          swiftCode: paymentPreset.swiftCode,
+          currency: paymentPreset.currency,
+          additionalInfo: paymentPreset.additionalInfo
+        };
+      }
+    }
+
     // Create new invoice
     const invoice = new Invoice({
       invoiceNumber,
@@ -291,10 +318,11 @@ export async function POST(request: NextRequest) {
       discountRate: 0,
       discountAmount: 0,
       total: totalAmount,
-      currency: booking.safari.currency || 'USD',
+      currency: currency || booking.safari.currency || 'USD',
       notes: notes || `Generated from booking ${booking.bookingNumber}`,
       termsAndConditions: terms || 'Payment due within 30 days of invoice date.',
       status: 'draft',
+      paymentDetails,
       createdBy: new mongoose.Types.ObjectId() // TODO: Get from auth context
     });
 
