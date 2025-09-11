@@ -54,19 +54,19 @@ export async function POST(request: NextRequest) {
       quantity: booking.pax,
       unitPrice: booking.safari.basePrice,
       total: booking.safari.basePrice * booking.pax,
-      category: 'Safari Package'
+      category: 'activities'
     });
 
     // Add inclusions as detailed items (even if no price)
     if (booking.safari.inclusions && booking.safari.inclusions.length > 0) {
       booking.safari.inclusions.forEach((inclusion: any) => {
-        if (inclusion.trim()) {
+        if (inclusion.description && inclusion.description.trim()) {
           items.push({
-            description: `Included: ${inclusion}`,
+            description: `Included: ${inclusion.description}`,
             quantity: booking.pax,
             unitPrice: 0, // Inclusions are included in base price
             total: 0,
-            category: 'Inclusions'
+            category: 'other'
           });
         }
       });
@@ -75,13 +75,13 @@ export async function POST(request: NextRequest) {
     // Add exclusions as detailed items (for transparency)
     if (booking.safari.exclusions && booking.safari.exclusions.length > 0) {
       booking.safari.exclusions.forEach((exclusion: any) => {
-        if (exclusion.trim()) {
+        if (exclusion.description && exclusion.description.trim()) {
           items.push({
-            description: `Not Included: ${exclusion}`,
+            description: `Not Included: ${exclusion.description}`,
             quantity: 1,
             unitPrice: 0, // Exclusions are informational
             total: 0,
-            category: 'Exclusions'
+            category: 'other'
           });
         }
       });
@@ -218,15 +218,17 @@ export async function POST(request: NextRequest) {
       client: booking.client._id,
       booking: booking._id,
       safari: booking.safari._id,
-      invoiceDate: invoiceDateObj,
       dueDate: dueDateObj,
       items,
       subtotal,
       taxRate,
       taxAmount,
-      totalAmount,
+      discountRate: 0,
+      discountAmount: 0,
+      total: totalAmount,
+      currency: booking.safari.currency || 'USD',
       notes: notes || `Generated from booking ${booking.bookingNumber}`,
-      terms: terms || 'Payment due within 30 days of invoice date.',
+      termsAndConditions: terms || 'Payment due within 30 days of invoice date.',
       status: 'draft',
       createdBy: new mongoose.Types.ObjectId() // TODO: Get from auth context
     });
