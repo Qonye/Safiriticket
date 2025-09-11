@@ -116,8 +116,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const client = new Client(clientData);
-    await client.save();
+    // Use raw MongoDB collection for creation to ensure emergencyContact is saved
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+    const collection = db.collection('clients');
+    
+    // Add timestamps and other required fields
+    const clientDocData = {
+      ...clientData,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      __v: 0
+    };
+    
+    const result = await collection.insertOne(clientDocData);
+    
+    // Fetch the created client
+    const client = await Client.findById(result.insertedId);
 
     return NextResponse.json({
       success: true,

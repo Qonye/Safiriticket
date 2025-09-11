@@ -92,9 +92,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get client to retrieve emergency contact
-    const Client = (await import('@/models/Client')).default;
-    const client = await Client.findById(clientId);
+    // Get client to retrieve emergency contact using raw MongoDB
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+    const clientsCollection = db.collection('clients');
+    
+    const client = await clientsCollection.findOne({ _id: new mongoose.Types.ObjectId(clientId) });
     
     if (!client) {
       return NextResponse.json(

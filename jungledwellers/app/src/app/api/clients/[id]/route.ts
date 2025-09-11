@@ -106,11 +106,21 @@ export async function PUT(
       }
     }
 
-    const client = await Client.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
+    
+    // Use raw MongoDB collection for update
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+    const collection = db.collection('clients');
+    
+    await collection.updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
     );
+    
+    // Fetch the updated client
+    const client = await Client.findById(id);
 
     if (!client) {
       return NextResponse.json(
