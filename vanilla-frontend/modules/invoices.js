@@ -46,6 +46,23 @@ window.renderInvoices = function(main) {
             </select>
           </label>
         </div>
+        <div>
+          <label style="display:block;margin-bottom:6px;">Payment Display</label>
+          <div style="display:flex;gap:12px;">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="radio" name="paymentDisplayOption" value="both" checked style="cursor:pointer;">
+              <span style="font-size:0.9em;">Both</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="radio" name="paymentDisplayOption" value="link" style="cursor:pointer;">
+              <span style="font-size:0.9em;">Link Only</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="radio" name="paymentDisplayOption" value="bank" style="cursor:pointer;">
+              <span style="font-size:0.9em;">Bank Only</span>
+            </label>
+          </div>
+        </div>
       </form>
       <div style="width:100%;margin-top:14px;">
         <table id="invoice-items-table" class="data-table" style="margin-bottom:8px;">
@@ -427,6 +444,15 @@ window.renderInvoices = function(main) {
     currencySelect.value = invoice.currency || 'USD';
     const paymentMethodSelect = document.getElementById('invoice-payment-method-select');
     paymentMethodSelect.value = inferPaymentMethodFromDetails(invoice.paymentDetails || {});
+    
+    // Set payment display option radio buttons
+    const paymentDisplayOption = invoice.paymentDisplayOption || 'both';
+    const radioButtons = document.querySelectorAll('input[name="paymentDisplayOption"]');
+    radioButtons.forEach(radio => {
+      if (radio.value === paymentDisplayOption) {
+        radio.checked = true;
+      }
+    });
 
     // Items
     const tbody = document.getElementById('invoice-items-tbody');
@@ -903,6 +929,7 @@ window.renderInvoices = function(main) {
       const currency = form.currency.value || 'USD';
       const paymentMethod = form.paymentMethod.value || 'usd-dtb';
       const paymentDetails = getPaymentDetails(paymentMethod);
+      const paymentDisplayOption = form.paymentDisplayOption.value || 'both';
       
       const data = {
         client: clientId,
@@ -912,6 +939,7 @@ window.renderInvoices = function(main) {
         total,
         currency,
         paymentDetails,
+        paymentDisplayOption,
         quotation: editingInvoiceId ? (originalQuotationId || undefined) : (quotationId || undefined)
       };
       

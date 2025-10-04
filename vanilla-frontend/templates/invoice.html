@@ -535,14 +535,16 @@
         <p style="font-size: 0.9em; color: #666; margin-top: 8px;">Click the button above to pay with card, mobile money, or other online payment methods.</p>
       </div>
       
-      <!-- Bank Transfer Details -->
-      <strong style="color:#be292c;font-size:1.08em; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">BANK TRANSFER DETAILS:</strong><br>
-      <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
-      <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
-      <span style="font-family: Arial, Helvetica, sans-serif;">BANK NAME: {{paymentBankName}}</span><br>
-      <span style="font-family: Arial, Helvetica, sans-serif;">SWIFT CODE: {{paymentSwiftCode}}</span><br>
-      <span style="font-family: Arial, Helvetica, sans-serif;">CURRENCY: {{paymentCurrency}}</span><br>
-      <span style="color:#aaa5a5;font-size:0.97em; font-family: Arial, Helvetica, sans-serif;">{{paymentAdditionalInfo}}</span>
+      <!-- Bank Transfer Details (shown based on payment display option) -->
+      <div id="bank-details-section" style="margin: 10px 0 10px 0; display: {{bankDetailsDisplay}};">
+        <strong style="color:#be292c;font-size:1.08em; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">BANK TRANSFER DETAILS:</strong><br>
+        <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
+        <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
+        <span style="font-family: Arial, Helvetica, sans-serif;">BANK NAME: {{paymentBankName}}</span><br>
+        <span style="font-family: Arial, Helvetica, sans-serif;">SWIFT CODE: {{paymentSwiftCode}}</span><br>
+        <span style="font-family: Arial, Helvetica, sans-serif;">CURRENCY: {{paymentCurrency}}</span><br>
+        <span style="color:#aaa5a5;font-size:0.97em; font-family: Arial, Helvetica, sans-serif;">{{paymentAdditionalInfo}}</span>
+      </div>
     </div>
     <div class="footer" style="text-align:center;max-width:700px;margin:32px auto 0 auto;font-size:0.7em;color:#404040;background:transparent;line-height:1.6;letter-spacing:0.01em;border-top:1px solid #be292c;padding-top:16px; font-family: Arial, Helvetica, sans-serif; page-break-inside: avoid; break-inside: avoid;">
       <span class="footer-brand" style="font-weight:bold;color:#be292c;font-size:1.1em;letter-spacing:0.04em;margin-bottom:4px;display:block; font-family: Arial, Helvetica, sans-serif;">Safiri Ticket Ltd</span>

@@ -547,14 +547,20 @@ function _fillInvoiceTemplate(template, invoice, currentUser = null) {
   // Replace grand total placeholder
   html = html.replace(/{{grandTotal}}/g, `${currencySymbol}${grandTotal.toLocaleString()}`);
 
-  // Payment link handling
-  if (invoice.paymentLink) {
+  // Payment link handling based on paymentDisplayOption
+  const displayOption = invoice.paymentDisplayOption || 'both';
+  
+  if (invoice.paymentLink && (displayOption === 'both' || displayOption === 'link')) {
     html = html.replace(/{{paymentLink}}/g, invoice.paymentLink);
     html = html.replace(/{{paymentLinkDisplay}}/g, 'block');
   } else {
     html = html.replace(/{{paymentLink}}/g, '#');
     html = html.replace(/{{paymentLinkDisplay}}/g, 'none');
   }
+  
+  // Bank details display handling
+  const bankDetailsDisplay = (displayOption === 'both' || displayOption === 'bank') ? 'block' : 'none';
+  html = html.replace(/{{bankDetailsDisplay}}/g, bankDetailsDisplay);
   
   return html;
 }

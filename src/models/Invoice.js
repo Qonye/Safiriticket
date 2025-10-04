@@ -23,6 +23,7 @@ const invoiceSchema = new mongoose.Schema({
   paidAmount: { type: Number, default: 0 },
   paymentLink: String,
   paymentLinkId: String,
+  paymentDisplayOption: { type: String, enum: ['both', 'link', 'bank'], default: 'both' },
   status: { type: String, enum: ['Unpaid', 'Partially Paid', 'Paid', 'Overdue'], default: 'Unpaid' },
   dueDate: Date,
   paidAt: Date,
