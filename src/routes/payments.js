@@ -123,4 +123,57 @@ router.post('/webhook', async (req, res) => {
   }
 });
 
+/**
+ * Delete a payment and reset invoice status
+ * Useful for removing test payments
+ */
+router.delete('/:paymentId', authenticate, async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.paymentId);
+    
+    if (!payment) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+    
+    const invoice = await Invoice.findById(payment.invoice);
+    
+    if (!invoice) {
+      return res.status(404).json({ error: 'Associated invoice not found' });
+    }
+    
+    // Subtract payment amount from invoice's paidAmount
+    invoice.paidAmount = Math.max((invoice.paidAmount || 0) - payment.amount, 0);
+    
+    // Update invoice status based on new paidAmount
+    if (invoice.paidAmount >= invoice.total) {
+      invoice.status = 'Paid';
+    } else if (invoice.paidAmount > 0) {
+      invoice.status = 'Partially Paid';
+    } else {
+      invoice.status = 'Unpaid';
+      invoice.paidAt = undefined; // Remove paid date if fully unpaid
+    }
+    
+    await invoice.save();
+    
+    // Delete the payment
+    await Payment.findByIdAndDelete(req.params.paymentId);
+    
+    res.json({
+      success: true,
+      message: 'Payment removed successfully',
+      invoice: {
+        id: invoice._id,
+        number: invoice.number,
+        status: invoice.status,
+        paidAmount: invoice.paidAmount,
+        total: invoice.total
+      }
+    });
+  } catch (error) {
+    console.error('Error deleting payment:', error);
+    res.status(500).json({ error: 'Failed to delete payment' });
+  }
+});
+
 export default router;

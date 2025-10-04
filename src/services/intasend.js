@@ -40,7 +40,8 @@ export async function generatePaymentLink(invoice, client) {
       amount: dueAmount,
       currency: invoice.currency || 'USD',
       api_ref: `invoice_${invoice._id.toString()}`,
-      email: client.email
+      email: client.email,
+      redirect_url: 'https://admin.safiritickets.com/payment-success.html'
     };
 
     // Use IntaSend SDK to create checkout
@@ -95,25 +96,39 @@ export async function processWebhook(webhookData) {
   try {
     console.log('Processing IntaSend webhook:', JSON.stringify(webhookData));
 
-    // Extract payment data from webhook
-    const { checkout_id, status, transaction_id, payment_method, metadata } = webhookData;
+    // Extract payment data from webhook - IntaSend might use different field names
+    const { 
+      checkout_id, 
+      checkout, 
+      id, 
+      status, 
+      transaction_id, 
+      payment_method, 
+      metadata 
+    } = webhookData;
     
-    if (!checkout_id) {
-      throw new Error('Missing checkout_id in webhook data');
+    // Try different possible checkout ID fields
+    const paymentId = checkout_id || checkout || id || webhookData.checkout_id;
+    
+    if (!paymentId) {
+      console.error('Webhook data received:', webhookData);
+      throw new Error('Missing payment identifier in webhook data');
     }
+    
+    console.log('Found payment ID:', paymentId);
 
     // Find the payment by checkout_id from IntaSend response
     const payment = await Payment.findOne({ 
       $or: [
-        { 'metadata.id': checkout_id },
-        { 'metadata.checkout_id': checkout_id },
-        { 'metadata.response_data.id': checkout_id },
-        { 'metadata.response_data.checkout_id': checkout_id }
+        { 'metadata.id': paymentId },
+        { 'metadata.checkout_id': paymentId },
+        { 'metadata.response_data.id': paymentId },
+        { 'metadata.response_data.checkout_id': paymentId }
       ]
     });
     
     if (!payment) {
-      throw new Error(`Payment not found for checkout_id: ${checkout_id}`);
+      throw new Error(`Payment not found for checkout_id: ${paymentId}`);
     }
 
     // Update payment status
@@ -199,7 +214,8 @@ export async function regeneratePaymentLink(invoice, client) {
       amount: dueAmount,
       currency: invoice.currency || 'USD',
       api_ref: `invoice_${invoice._id.toString()}_regen`,
-      email: client.email
+      email: client.email,
+      redirect_url: 'https://admin.safiritickets.com/payment-success.html'
     };
 
     // Use IntaSend SDK to create checkout

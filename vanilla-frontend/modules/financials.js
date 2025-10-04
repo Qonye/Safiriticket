@@ -170,7 +170,7 @@ window.renderFinancials = function(main) {
         
         // For each invoice, fetch its payments
         Promise.all(invoices.map(invoice => 
-          fetch(`${window.API_BASE_URL}/api/payments/invoice/${invoice._id}`)
+          fetch(`${window.API_BASE_URL}/api/payments/invoice/${invoice._id}`, { credentials: 'include' })
             .then(r => r.json())
             .then(payments => ({
               invoice,
@@ -209,6 +209,7 @@ window.renderFinancials = function(main) {
                   <th style="background:#8c241c;">Method</th>
                   <th style="background:#8c241c;">Status</th>
                   <th style="background:#8c241c;">Transaction ID</th>
+                  <th style="background:#8c241c;">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -231,12 +232,45 @@ window.renderFinancials = function(main) {
                       <td>${payment.paymentMethod || payment.method || 'N/A'}</td>
                       <td style="color:${statusColor};font-weight:bold;">${payment.status || 'N/A'}</td>
                       <td>${payment.transactionId || 'N/A'}</td>
+                      <td>
+                        <button class="delete-payment-btn" data-payment-id="${payment._id}" data-invoice-number="${payment.invoice?.number || 'Unknown'}" style="background:#e74c3c;color:#fff;border:none;padding:3px 6px;border-radius:3px;cursor:pointer;font-size:11px;">Delete</button>
+                      </td>
                     </tr>
                   `;
                 }).join('')}
               </tbody>
             </table>
           `;
+          
+          // Add click handlers for delete payment buttons
+          document.querySelectorAll('.delete-payment-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+              const paymentId = this.getAttribute('data-payment-id');
+              const invoiceNumber = this.getAttribute('data-invoice-number');
+              
+              if (confirm(`Are you sure you want to delete this payment for invoice ${invoiceNumber}? This will reset the invoice payment status.`)) {
+                try {
+                  const response = await fetch(`${window.API_BASE_URL}/api/payments/${paymentId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                  });
+                  
+                  const result = await response.json();
+                  
+                  if (result.success) {
+                    alert('Payment deleted successfully! Invoice status updated.');
+                    fetchPayments(); // Refresh the payments list
+                    fetchFinancials(); // Refresh the financials overview
+                  } else {
+                    alert('Error deleting payment: ' + (result.error || 'Unknown error'));
+                  }
+                } catch (error) {
+                  console.error('Error deleting payment:', error);
+                  alert('Error deleting payment. Please try again.');
+                }
+              }
+            });
+          });
         });
       });
   }
