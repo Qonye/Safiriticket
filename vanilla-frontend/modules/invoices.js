@@ -576,7 +576,7 @@ window.renderInvoices = function(main) {
                       <button class="edit-paid-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit Paid</button>
                       <button class="save-paid-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Save</button>
                       <button class="cancel-paid-btn" style="background:#b47572;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Cancel</button>
-                      ${!inv.paymentLink && inv.status !== 'Paid' ? '<button class="generate-payment-link-btn" style="background:#9b59b6;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Generate Payment Link</button>' : ''}
+                      ${!inv.paymentLink && inv.status !== 'Paid' ? '<button class="generate-payment-link-btn" style="background:#9b59b6;color:#fff;border:none;padding:3px 6px;border-radius:3px;cursor:pointer;font-size:11px;white-space:nowrap;">Generate Link</button>' : ''}
                       <button class="edit-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit</button>
                       <button class="delete-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Delete</button>
                       <button class="preview-invoice-btn" style="background:#8c241c;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Preview</button>
