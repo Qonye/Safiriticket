@@ -671,39 +671,29 @@ window.renderInvoices = function(main) {
           btn.onclick = async function() {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            const invoice = window.invoices.find(inv => inv._id === id);
-            if (!invoice) {
-              console.error('Invoice data not found for preview:', id);
-              alert('Could not find invoice details to generate PDF.');
+            
+            // Fetch fresh invoice data instead of using cache
+            try {
+              const response = await fetch(`${window.API_BASE_URL}/api/invoices/${id}`);
+              const invoice = await response.json();
+              
+              if (!invoice) {
+                console.error('Invoice data not found for preview:', id);
+                alert('Could not find invoice details to preview PDF.');
+                return;
+              }
+              
+              if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
+                const currentUser = window.auth.getUserInfo();
+                await window.newPdfEngine.generateInvoice(invoice, 'preview', {}, currentUser);
+              } else {
+                console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
+                alert('Error: PDF preview functionality is currently unavailable. Please check console for details.');
+              }
+            } catch (error) {
+              console.error('Error fetching fresh invoice data for preview:', error);
+              alert('Could not fetch invoice details to preview PDF.');
               return;
-            }
-            if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
-              // Get current user info
-              const response = await fetch(`${window.API_BASE_URL}/api/auth/me`, { credentials: 'include' });
-              const currentUser = await response.json();
-              await window.newPdfEngine.generateInvoice(invoice, 'preview', {}, currentUser);
-            } else {
-              console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
-              alert('Error: PDF preview functionality is currently unavailable. Please check console for details.');
-            }
-          };
-        });
-        document.querySelectorAll('.preview-invoice-btn').forEach(btn => {
-          btn.onclick = async function() {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            const invoice = window.invoices.find(inv => inv._id === id);
-            if (!invoice) {
-              console.error('Invoice data not found for preview:', id);
-              alert('Could not find invoice details to generate PDF.');
-              return;
-            }
-            if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
-              const currentUser = window.auth.getUserInfo();
-              await window.newPdfEngine.generateInvoice(invoice, 'preview', {}, currentUser);
-            } else {
-              console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
-              alert('Error: PDF preview functionality is currently unavailable. Please check console for details.');
             }
           };
         });
@@ -713,18 +703,28 @@ window.renderInvoices = function(main) {
           btn.onclick = async function() {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            const invoice = window.invoices.find(inv => inv._id === id);
-            if (!invoice) {
-              console.error('Invoice data not found for download:', id);
-              alert('Could not find invoice details to generate PDF.');
-              return;
-            }
+            
+            // Fetch fresh invoice data instead of using cache
+            try {
+              const response = await fetch(`${window.API_BASE_URL}/api/invoices/${id}`);
+              const invoice = await response.json();
+              
+              if (!invoice) {
+                console.error('Invoice data not found for download:', id);
+                alert('Could not find invoice details to generate PDF.');
+                return;
+              }
             if (window.newPdfEngine && typeof window.newPdfEngine.generateInvoice === 'function') {
               const currentUser = window.auth.getUserInfo();
               await window.newPdfEngine.generateInvoice(invoice, 'download', { filename: `${invoice.number || 'INV-details'}.pdf` }, currentUser);
             } else {
               console.error('newPdfEngine or its generateInvoice method is not available. Ensure new-pdf-engine.js is loaded correctly.');
               alert('Error: PDF download functionality is currently unavailable. Please check console for details.');
+            }
+            } catch (error) {
+              console.error('Error fetching fresh invoice data:', error);
+              alert('Could not fetch invoice details to generate PDF.');
+              return;
             }
           };
         });

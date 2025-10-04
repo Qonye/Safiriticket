@@ -47,10 +47,10 @@ export async function generatePaymentLink(invoice, client) {
     const collection = intaSendClient.collection();
     const responseData = await collection.charge(requestData);
 
-    // Check if the response indicates success
-    if (!responseData.success && responseData.status !== 'COMPLETE') {
+    // Check if the response indicates success (IntaSend returns URL on success)
+    if (!responseData || !responseData.url) {
       console.error('IntaSend API Error:', responseData);
-      throw new Error(responseData.message || 'Failed to generate payment link');
+      throw new Error('Failed to generate payment link');
     }
 
     // Create payment record in database
@@ -206,10 +206,10 @@ export async function regeneratePaymentLink(invoice, client) {
     const collection = intaSendClient.collection();
     const responseData = await collection.charge(requestData);
 
-    // Check if the response indicates success
-    if (!responseData.success && responseData.status !== 'COMPLETE') {
+    // Check if the response indicates success (IntaSend returns URL on success)
+    if (!responseData || !responseData.url) {
       console.error('IntaSend API Error:', responseData);
-      throw new Error(responseData.message || 'Failed to regenerate payment link');
+      throw new Error('Failed to regenerate payment link');
     }
 
     // Create new payment record in database
