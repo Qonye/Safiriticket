@@ -154,7 +154,7 @@ export async function processWebhook(webhookData) {
     if (provider) {
       const methodMap = {
         'CARD-PAYMENT': 'CARD',
-        'MPESA': 'MPESA', 
+        'M-PESA': 'MPESA',        // IntaSend sends "M-PESA" but model expects "MPESA"
         'BANK-TRANSFER': 'BANK_TRANSFER'
       };
       payment.paymentMethod = methodMap[provider] || provider;
