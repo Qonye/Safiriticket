@@ -64,7 +64,8 @@ export async function generatePaymentLink(invoice, client) {
       metadata: {
         checkout_id: responseData.id || responseData.checkout_id,
         payment_link: responseData.url,
-        response_data: responseData
+        response_data: responseData,
+        api_ref: `invoice_${invoice._id.toString()}`
       }
     });
 
@@ -96,64 +97,72 @@ export async function processWebhook(webhookData) {
   try {
     console.log('Processing IntaSend webhook:', JSON.stringify(webhookData));
 
-    // Extract payment data from webhook - IntaSend might use different field names
+    // Extract payment data from IntaSend webhook
     const { 
-      checkout_id, 
-      checkout, 
-      id, 
-      status, 
-      transaction_id, 
-      payment_method, 
-      metadata 
+      invoice_id,           // IntaSend's payment identifier 
+      state,               // PENDING, COMPLETE, FAILED
+      value,               // Payment amount
+      currency,            // Payment currency
+      api_ref,             // Our invoice reference
+      account,             // Customer email
+      provider,            // CARD-PAYMENT, MPESA, etc.
+      mpesa_reference      // Reference for M-Pesa payments
     } = webhookData;
     
-    // Try different possible checkout ID fields
-    const paymentId = checkout_id || checkout || id || webhookData.checkout_id;
-    
-    if (!paymentId) {
+    if (!invoice_id) {
       console.error('Webhook data received:', webhookData);
-      throw new Error('Missing payment identifier in webhook data');
+      throw new Error('Missing invoice_id in IntaSend webhook data');
     }
     
-    console.log('Found payment ID:', paymentId);
+    console.log('Processing payment for invoice_id:', invoice_id, 'with api_ref:', api_ref);
 
-    // Find the payment by checkout_id from IntaSend response
+    // Find the payment by api_ref (which contains our invoice ID)
     const payment = await Payment.findOne({ 
       $or: [
-        { 'metadata.id': paymentId },
-        { 'metadata.checkout_id': paymentId },
-        { 'metadata.response_data.id': paymentId },
-        { 'metadata.response_data.checkout_id': paymentId }
+        { 'metadata.api_ref': api_ref },           // Direct api_ref match
+        { 'invoice': api_ref.replace('invoice_', '') }, // Invoice ID from api_ref
+        { 'metadata.checkout_id': invoice_id },    // Fallback to invoice_id
+        { 'metadata.response_data.id': invoice_id } // Another fallback
       ]
     });
     
     if (!payment) {
-      throw new Error(`Payment not found for checkout_id: ${paymentId}`);
+      console.log('Searching for payment with conditions:');
+      console.log('- api_ref:', api_ref);
+      console.log('- invoice_id from api_ref:', api_ref.replace('invoice_', ''));
+      console.log('- invoice_id:', invoice_id);
+      throw new Error(`Payment not found for api_ref: ${api_ref}`);
     }
+    
+    console.log('Found payment record:', payment._id, 'for invoice:', payment.invoice);
 
-    // Update payment status
-    payment.status = status === 'COMPLETE' ? 'COMPLETED' : status;
-    payment.transactionId = transaction_id;
+    // Update payment status based on IntaSend state
+    const statusMap = {
+      'PENDING': 'PENDING',
+      'COMPLETE': 'COMPLETED',
+      'FAILED': 'FAILED'
+    };
+    payment.status = statusMap[state] || state;
+    
+    // Set transaction reference
+    payment.transactionId = mpesa_reference || invoice_id;
     payment.paymentDate = new Date();
     payment.metadata = { ...payment.metadata, webhook: webhookData };
     
-    // Update payment method if provided
-    if (payment_method) {
-      // Map IntaSend payment methods to our schema
+    // Update payment method based on provider
+    if (provider) {
       const methodMap = {
-        'mpesa': 'MPESA',
-        'card': 'CARD',
-        'bank': 'BANK_TRANSFER',
-        'mobile_money': 'MPESA'
+        'CARD-PAYMENT': 'CARD',
+        'MPESA': 'MPESA', 
+        'BANK-TRANSFER': 'BANK_TRANSFER'
       };
-      
-      payment.paymentMethod = methodMap[payment_method.toLowerCase()] || 'INTASEND';
+      payment.paymentMethod = methodMap[provider] || provider;
     }
     
     await payment.save();
 
     // If payment is completed, update the invoice
-    if (status === 'COMPLETE') {
+    if (state === 'COMPLETE') {
       const invoice = await Invoice.findById(payment.invoice);
       
       if (!invoice) {
@@ -239,6 +248,7 @@ export async function regeneratePaymentLink(invoice, client) {
         checkout_id: responseData.id || responseData.checkout_id,
         payment_link: responseData.url,
         response_data: responseData,
+        api_ref: `invoice_${invoice._id.toString()}`,
         regenerated: true,
         regenerated_at: new Date().toISOString()
       }
