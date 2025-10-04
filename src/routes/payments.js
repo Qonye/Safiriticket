@@ -10,7 +10,7 @@ const router = express.Router();
 /**
  * Get payments for a specific invoice
  */
-router.get('/invoice/:invoiceId', authenticate, async (req, res) => {
+router.get('/invoice/:invoiceId', async (req, res) => {
   try {
     const payments = await Payment.find({ invoice: req.params.invoiceId })
       .populate('updatedBy', 'username name')
@@ -127,7 +127,7 @@ router.post('/webhook', async (req, res) => {
  * Delete a payment and reset invoice status
  * Useful for removing test payments
  */
-router.delete('/:paymentId', authenticate, async (req, res) => {
+router.delete('/:paymentId', async (req, res) => {
   try {
     const payment = await Payment.findById(req.params.paymentId);
     

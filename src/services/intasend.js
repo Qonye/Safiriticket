@@ -139,10 +139,11 @@ export async function processWebhook(webhookData) {
     // Update payment status based on IntaSend state
     const statusMap = {
       'PENDING': 'PENDING',
+      'PROCESSING': 'PENDING',     // Map PROCESSING to PENDING
       'COMPLETE': 'COMPLETED',
       'FAILED': 'FAILED'
     };
-    payment.status = statusMap[state] || state;
+    payment.status = statusMap[state] || 'PENDING';
     
     // Set transaction reference
     payment.transactionId = mpesa_reference || invoice_id;

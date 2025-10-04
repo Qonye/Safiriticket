@@ -3,12 +3,15 @@ window.renderFinancials = function(main) {
     <h2 style="color:#8c241c;">Financial Overview</h2>
     <div id="financials-summary" style="margin-bottom:32px;">Loading...</div>
     <div class="widget-row" id="financials-widgets"></div>
-    <div id="financials-charts" style="margin:32px 0 24px 0;"></div>
-    <div id="financials-details"></div>
-    <div id="payments-section" style="margin-top:32px;">
-      <h3 style="color:#8c241c;">Payment Transactions</h3>
+    
+    <!-- Online Payment Transactions (moved up for better visibility) -->
+    <div id="payments-section" style="margin:32px 0;">
+      <h3 style="color:#8c241c;">Online Payment Transactions</h3>
       <div id="payments-list">Loading payments...</div>
     </div>
+    
+    <div id="financials-charts" style="margin:32px 0 24px 0;"></div>
+    <div id="financials-details"></div>
     <button id="refresh-financials-btn" style="margin:16px 0;padding:6px 16px;">Refresh</button>
     <style>
       .finance-form-input {
@@ -108,6 +111,12 @@ window.renderFinancials = function(main) {
       .join(' + ');
   }
   function renderCharts(data) {
+    // Destroy any existing Chart.js instances before creating new ones
+    Chart.helpers.each(Chart.instances, (instance) => {
+      instance.destroy();
+    });
+    Chart.instances = [];
+    
     // Simple bar chart using inline SVG (no dependencies)
     const paid = data.paidRevenue || 0;
     const unpaid = data.unpaidRevenue || 0;
@@ -159,10 +168,12 @@ window.renderFinancials = function(main) {
   }
   
   function fetchPayments() {
+    console.log('Starting to fetched payments...');
     // Fetch all invoices to get their IDs
     fetch(`${window.API_BASE_URL}/api/invoices`)
       .then(r => r.json())
       .then(invoices => {
+        console.log(`Found ${invoices.length} invoices`);
         if (!invoices.length) {
           document.getElementById('payments-list').innerHTML = '<p>No invoices found.</p>';
           return;
@@ -171,15 +182,27 @@ window.renderFinancials = function(main) {
         // For each invoice, fetch its payments
         Promise.all(invoices.map(invoice => 
           fetch(`${window.API_BASE_URL}/api/payments/invoice/${invoice._id}`, { credentials: 'include' })
-            .then(r => r.json())
-            .then(payments => ({
-              invoice,
-              payments
-            }))
-            .catch(() => ({
-              invoice,
-              payments: []
-            }))
+            .then(r => {
+              if (!r.ok) {
+                console.error(`Payment fetch failed for invoice ${invoice._id}:`, r.status, r.statusText);
+                throw new Error(`HTTP ${r.status}`);
+              }
+              return r.json();
+            })
+            .then(payments => {
+              console.log(`Fetched ${payments.length} payments for invoice ${invoice.number}`);
+              return {
+                invoice,
+                payments
+              };
+            })
+            .catch(error => {
+              console.log(`No payments found for invoice ${invoice._id}:`, error.message);
+              return {
+                invoice,
+                payments: []
+              };
+            })
         ))
         .then(results => {
           // Flatten all payments into a single array
@@ -189,6 +212,8 @@ window.renderFinancials = function(main) {
               invoice: result.invoice
             })))
             .filter(payment => payment._id); // Filter out any empty results
+            
+          console.log(`Total payments found: ${allPayments.length}`);
           
           if (!allPayments.length) {
             document.getElementById('payments-list').innerHTML = '<p>No payment transactions found.</p>';
