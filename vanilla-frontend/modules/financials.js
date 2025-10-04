@@ -7,6 +7,7 @@ window.renderFinancials = function(main) {
     <!-- Online Payment Transactions (moved up for better visibility) -->
     <div id="payments-section" style="margin:32px 0;">
       <h3 style="color:#8c241c;">Online Payment Transactions</h3>
+      <button id="refresh-payments-btn" style="margin:8px 0 16px 0;padding:6px 16px;">Refresh Payments</button>
       <div id="payments-list">Loading payments...</div>
     </div>
     
@@ -486,6 +487,10 @@ window.renderFinancials = function(main) {
   
   document.getElementById('refresh-financials-btn').onclick = function() {
     fetchFinancials();
+    fetchPayments();
+  };
+  
+  document.getElementById('refresh-payments-btn').onclick = function() {
     fetchPayments();
   };
   

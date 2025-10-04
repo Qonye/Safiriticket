@@ -155,6 +155,13 @@ export async function processWebhook(webhookData) {
       const methodMap = {
         'CARD-PAYMENT': 'CARD',
         'M-PESA': 'MPESA',        // IntaSend sends "M-PESA" but model expects "MPESA"
+        'GOOGLE-PAY': 'CARD',     // Google Pay typically processes as card payment
+        'APPLE-PAY': 'CARD',      // Apple Pay typically processes as card payment
+        'CASH-APP': 'CARD',       // Cash App typically processes as card payment
+        'VISA': 'CARD',           // Visa card payments
+        'MASTERCARD': 'CARD',     // Mastercard payments
+        'ACH': 'BANK_TRANSFER',   // ACH bank transfers
+        'BITCOIN': 'OTHER',       // Bitcoin payments
         'BANK-TRANSFER': 'BANK_TRANSFER'
       };
       payment.paymentMethod = methodMap[provider] || provider;
