@@ -41,7 +41,7 @@ export async function generatePaymentLink(invoice, client) {
       currency: invoice.currency || 'USD',
       api_ref: `invoice_${invoice._id.toString()}`,
       email: client.email,
-      redirect_url: 'https://admin.safiritickets.com/payment-success.html'
+      redirect_url: 'https://admin.safiritickets.com/payment-success'
     };
 
     // Use IntaSend SDK to create checkout
@@ -225,7 +225,7 @@ export async function regeneratePaymentLink(invoice, client) {
       currency: invoice.currency || 'USD',
       api_ref: `invoice_${invoice._id.toString()}_regen`,
       email: client.email,
-      redirect_url: 'https://admin.safiritickets.com/payment-success.html'
+      redirect_url: 'https://admin.safiritickets.com/payment-success'
     };
 
     // Use IntaSend SDK to create checkout

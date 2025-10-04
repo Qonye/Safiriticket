@@ -1,5 +1,6 @@
-# Redirect payment success page
-/payment-success /payment-success.html 200
+# Redirect payment success page - handle with and without .html
+/payment-success        /payment-success.html    200
+/payment-success.html   /payment-success.html    200
 
 # Handle SPA routing
 /* /index.html 200
