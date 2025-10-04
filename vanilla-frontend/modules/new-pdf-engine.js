@@ -546,6 +546,15 @@ function _fillInvoiceTemplate(template, invoice, currentUser = null) {
   
   // Replace grand total placeholder
   html = html.replace(/{{grandTotal}}/g, `${currencySymbol}${grandTotal.toLocaleString()}`);
+
+  // Payment link handling
+  if (invoice.paymentLink) {
+    html = html.replace(/{{paymentLink}}/g, invoice.paymentLink);
+    html = html.replace(/{{paymentLinkDisplay}}/g, 'block');
+  } else {
+    html = html.replace(/{{paymentLink}}/g, '#');
+    html = html.replace(/{{paymentLinkDisplay}}/g, 'none');
+  }
   
   return html;
 }
