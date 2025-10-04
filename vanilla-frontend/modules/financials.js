@@ -5,6 +5,10 @@ window.renderFinancials = function(main) {
     <div class="widget-row" id="financials-widgets"></div>
     <div id="financials-charts" style="margin:32px 0 24px 0;"></div>
     <div id="financials-details"></div>
+    <div id="payments-section" style="margin-top:32px;">
+      <h3 style="color:#8c241c;">Payment Transactions</h3>
+      <div id="payments-list">Loading payments...</div>
+    </div>
     <button id="refresh-financials-btn" style="margin:16px 0;padding:6px 16px;">Refresh</button>
     <style>
       .finance-form-input {
@@ -153,6 +157,90 @@ window.renderFinancials = function(main) {
       ${exchangeRateInfo}
     `;
   }
+  
+  function fetchPayments() {
+    // Fetch all invoices to get their IDs
+    fetch(`${window.API_BASE_URL}/api/invoices`)
+      .then(r => r.json())
+      .then(invoices => {
+        if (!invoices.length) {
+          document.getElementById('payments-list').innerHTML = '<p>No invoices found.</p>';
+          return;
+        }
+        
+        // For each invoice, fetch its payments
+        Promise.all(invoices.map(invoice => 
+          fetch(`${window.API_BASE_URL}/api/payments/invoice/${invoice._id}`)
+            .then(r => r.json())
+            .then(payments => ({
+              invoice,
+              payments
+            }))
+            .catch(() => ({
+              invoice,
+              payments: []
+            }))
+        ))
+        .then(results => {
+          // Flatten all payments into a single array
+          const allPayments = results
+            .flatMap(result => result.payments.map(payment => ({
+              ...payment,
+              invoice: result.invoice
+            })))
+            .filter(payment => payment._id); // Filter out any empty results
+          
+          if (!allPayments.length) {
+            document.getElementById('payments-list').innerHTML = '<p>No payment transactions found.</p>';
+            return;
+          }
+          
+          // Sort payments by date, newest first
+          allPayments.sort((a, b) => new Date(b.paymentDate || b.createdAt) - new Date(a.paymentDate || a.createdAt));
+          
+          // Render payments table
+          document.getElementById('payments-list').innerHTML = `
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="background:#8c241c;">Date</th>
+                  <th style="background:#8c241c;">Invoice</th>
+                  <th style="background:#8c241c;">Amount</th>
+                  <th style="background:#8c241c;">Method</th>
+                  <th style="background:#8c241c;">Status</th>
+                  <th style="background:#8c241c;">Transaction ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${allPayments.map(payment => {
+                  const date = payment.paymentDate || payment.createdAt;
+                  const formattedDate = date ? new Date(date).toLocaleDateString() : 'N/A';
+                  const currencySymbol = getCurrencySymbol(payment.currency);
+                  
+                  // Determine status color
+                  let statusColor = '#666';
+                  if (payment.status === 'COMPLETED') statusColor = '#2ecc40';
+                  if (payment.status === 'FAILED') statusColor = '#e74c3c';
+                  if (payment.status === 'PENDING') statusColor = '#f39c12';
+                  
+                  return `
+                    <tr>
+                      <td>${formattedDate}</td>
+                      <td>${payment.invoice?.number || 'Unknown'}</td>
+                      <td>${currencySymbol}${payment.amount.toFixed(2)}</td>
+                      <td>${payment.paymentMethod || payment.method || 'N/A'}</td>
+                      <td style="color:${statusColor};font-weight:bold;">${payment.status || 'N/A'}</td>
+                      <td>${payment.transactionId || 'N/A'}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          `;
+        });
+      });
+  }
+  
   function fetchFinancials() {
     fetch(`${window.API_BASE_URL}/api/financials`)
       .then(r => r.json())
@@ -236,6 +324,11 @@ window.renderFinancials = function(main) {
           const originalPaid = `${currencySymbol}${(inv.paidAmount || 0)}`;
           const originalDue = `${currencySymbol}${((inv.total || 0) - (inv.paidAmount || 0)).toFixed(2)}`;
           
+          // Add payment link button if available
+          const paymentLinkBtn = inv.paymentLink ? 
+            `<button class="copy-payment-link" data-link="${inv.paymentLink}" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Copy Payment Link</button>` : 
+            '';
+          
           return `
             <tr>
               <td>${inv.client?.name || ''} <span style="color:#b47572;font-size:0.95em;">${inv.client?.email || ''}</span></td>
@@ -246,6 +339,7 @@ window.renderFinancials = function(main) {
               <td>${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ''}</td>
               <td>$${expenseTotal.toFixed(2)}</td>
               <td style="font-weight:bold;color:${profit >= 0 ? '#2ecc40' : '#d63031'};">$${profit.toFixed(2)}</td>
+              <td>${paymentLinkBtn}</td>
             </tr>
           `;
         }));// Calculate currency breakdown
@@ -293,6 +387,7 @@ window.renderFinancials = function(main) {
                 <th style="background:#8c241c;">Due Date</th>
                 <th style="background:#8c241c;">Expenses (USD)</th>
                 <th style="background:#8c241c;">Profit (USD)</th>
+                <th style="background:#8c241c;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -306,10 +401,34 @@ window.renderFinancials = function(main) {
             • Exchange rates are approximate and for internal analysis only
           </div>
         `;
+        
+        // Add event listeners for copy payment link buttons
+        document.querySelectorAll('.copy-payment-link').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const link = this.getAttribute('data-link');
+            navigator.clipboard.writeText(link)
+              .then(() => {
+                this.textContent = 'Copied!';
+                setTimeout(() => {
+                  this.textContent = 'Copy Payment Link';
+                }, 2000);
+              })
+              .catch(() => {
+                alert('Failed to copy payment link. Please try again.');
+              });
+          });
+        });
       });
   }
+  
+  // Fetch both financial data and payment transactions
   fetchFinancials();
-  document.getElementById('refresh-financials-btn').onclick = fetchFinancials;
+  fetchPayments();
+  
+  document.getElementById('refresh-financials-btn').onclick = function() {
+    fetchFinancials();
+    fetchPayments();
+  };
   
   // Add event listener for viewing exchange rates
   document.addEventListener('click', function(e) {
@@ -328,4 +447,133 @@ window.renderFinancials = function(main) {
         .catch(() => alert('Unable to fetch current exchange rates'));
     }
   });
+  
+  // Add manual payment form
+  document.getElementById('financials-details').insertAdjacentHTML('afterend', `
+    <div style="margin-top:32px;">
+      <h3 style="color:#8c241c;">Add Manual Payment</h3>
+      <form id="add-payment-form" style="max-width:600px;background:#f8f9fa;padding:16px;border-radius:8px;border:1px solid #eee;">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;font-weight:bold;">Invoice</label>
+          <select id="payment-invoice-select" class="finance-form-select" required>
+            <option value="">Select Invoice</option>
+            <!-- Will be populated with invoices -->
+          </select>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;font-weight:bold;">Amount</label>
+          <input type="number" id="payment-amount" class="finance-form-input" step="0.01" min="0" required placeholder="Enter payment amount">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;font-weight:bold;">Payment Method</label>
+          <select id="payment-method-select" class="finance-form-select" required>
+            <option value="BANK_TRANSFER">Bank Transfer</option>
+            <option value="CASH">Cash</option>
+            <option value="MPESA">M-Pesa</option>
+            <option value="CARD">Card</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;font-weight:bold;">Transaction ID/Reference</label>
+          <input type="text" id="payment-transaction-id" class="finance-form-input" placeholder="Optional reference number">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;font-weight:bold;">Payment Date</label>
+          <input type="date" id="payment-date" class="finance-form-input" required>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;font-weight:bold;">Notes</label>
+          <textarea id="payment-notes" class="finance-form-input" rows="3" placeholder="Optional notes about this payment"></textarea>
+        </div>
+        <button type="submit" class="finance-form-btn">Record Payment</button>
+      </form>
+    </div>
+  `);
+  
+  // Populate invoice dropdown for manual payments
+  fetch(`${window.API_BASE_URL}/api/invoices`)
+    .then(r => r.json())
+    .then(invoices => {
+      const select = document.getElementById('payment-invoice-select');
+      if (select) {
+        select.innerHTML = '<option value="">Select Invoice</option>' + 
+          invoices
+            .filter(inv => inv.status !== 'Paid')
+            .map(inv => {
+              const currencySymbol = getCurrencySymbol(inv.currency || 'USD');
+              const dueAmount = Math.max((inv.total || 0) - (inv.paidAmount || 0), 0);
+              return `<option value="${inv._id}" data-currency="${inv.currency || 'USD'}" data-due="${dueAmount}">
+                ${inv.number || inv._id} - ${inv.client?.name || 'Unknown'} (${currencySymbol}${dueAmount.toFixed(2)} due)
+              </option>`;
+            })
+            .join('');
+      }
+    });
+  
+  // Set today's date as default for payment date
+  const paymentDateInput = document.getElementById('payment-date');
+  if (paymentDateInput) {
+    paymentDateInput.value = new Date().toISOString().split('T')[0];
+  }
+  
+  // Handle manual payment form submission
+  const paymentForm = document.getElementById('add-payment-form');
+  if (paymentForm) {
+    paymentForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const invoiceId = document.getElementById('payment-invoice-select').value;
+      const amount = parseFloat(document.getElementById('payment-amount').value);
+      const method = document.getElementById('payment-method-select').value;
+      const transactionId = document.getElementById('payment-transaction-id').value;
+      const paymentDate = document.getElementById('payment-date').value;
+      const notes = document.getElementById('payment-notes').value;
+      
+      if (!invoiceId || isNaN(amount) || amount <= 0) {
+        alert('Please select an invoice and enter a valid amount.');
+        return;
+      }
+      
+      // Get currency from selected invoice option
+      const selectedOption = document.getElementById('payment-invoice-select').options[
+        document.getElementById('payment-invoice-select').selectedIndex
+      ];
+      const currency = selectedOption.getAttribute('data-currency') || 'USD';
+      
+      // Submit manual payment
+      fetch(`${window.API_BASE_URL}/api/payments/manual`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          invoiceId,
+          amount,
+          currency,
+          paymentMethod: method,
+          transactionId,
+          paymentDate,
+          notes
+        })
+      })
+      .then(r => r.json())
+      .then(result => {
+        if (result.success) {
+          alert('Payment recorded successfully!');
+          paymentForm.reset();
+          // Set today's date again
+          document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
+          // Refresh data
+          fetchFinancials();
+          fetchPayments();
+        } else {
+          alert('Error: ' + (result.error || 'Failed to record payment'));
+        }
+      })
+      .catch(err => {
+        alert('Error: ' + err.message);
+      });
+    });
+  }
 };

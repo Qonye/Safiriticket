@@ -526,7 +526,17 @@
     </div>
     
     <div class="section" style="text-align: left; margin-top: 18px; margin-bottom: 18px; background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); border-radius: 3px; padding: 20px; font-family: Arial, Helvetica, sans-serif; page-break-inside: avoid; break-inside: avoid;">
-      <strong style="color:#be292c;font-size:1.08em; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">PAYMENT DETAILS:</strong><br>
+      <strong style="color:#be292c;font-size:1.08em; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">PAYMENT OPTIONS:</strong><br>
+      
+      <!-- Online Payment Section (shown only if payment link is available) -->
+      <div id="online-payment-section" style="margin: 10px 0 20px 0; display: {{paymentLinkDisplay}};">
+        <span style="font-family: Arial, Helvetica, sans-serif; font-weight: bold;">Pay Online:</span><br>
+        <a href="{{paymentLink}}" target="_blank" style="display: inline-block; background-color: #be292c; color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold; margin-top: 8px; font-size: 1.1em;">Pay Now</a>
+        <p style="font-size: 0.9em; color: #666; margin-top: 8px;">Click the button above to pay with card, mobile money, or other online payment methods.</p>
+      </div>
+      
+      <!-- Bank Transfer Details -->
+      <strong style="color:#be292c;font-size:1.08em; font-weight: 500; font-family: Arial, Helvetica, sans-serif;">BANK TRANSFER DETAILS:</strong><br>
       <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NAME: {{paymentAccountName}}</span><br>
       <span style="font-family: Arial, Helvetica, sans-serif;">ACCOUNT NO: {{paymentAccountNumber}}</span><br>
       <span style="font-family: Arial, Helvetica, sans-serif;">BANK NAME: {{paymentBankName}}</span><br>

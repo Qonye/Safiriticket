@@ -576,6 +576,7 @@ window.renderInvoices = function(main) {
                       <button class="edit-paid-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit Paid</button>
                       <button class="save-paid-btn" style="background:#2ecc40;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Save</button>
                       <button class="cancel-paid-btn" style="background:#b47572;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none;">Cancel</button>
+                      ${!inv.paymentLink && inv.status !== 'Paid' ? '<button class="generate-payment-link-btn" style="background:#9b59b6;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Generate Payment Link</button>' : ''}
                       <button class="edit-btn" style="background:#ee9f64;color:#8c241c;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Edit</button>
                       <button class="delete-btn" style="background:#943c34;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Delete</button>
                       <button class="preview-invoice-btn" style="background:#8c241c;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Preview</button>
@@ -745,6 +746,67 @@ window.renderInvoices = function(main) {
                 btn.textContent = 'Error';
                 setTimeout(() => { btn.textContent = 'Email'; btn.disabled = false; }, 1500);
               });
+          };
+        });
+
+        // Generate payment link for existing invoice
+        document.querySelectorAll('.generate-payment-link-btn').forEach(btn => {
+          btn.onclick = async function() {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            const invoice = window.invoices.find(inv => inv._id === id);
+            
+            if (!invoice) {
+              alert('Invoice not found');
+              return;
+            }
+            
+            if (!invoice.client) {
+              alert('Invoice must have a client to generate payment link');
+              return;
+            }
+            
+            if (invoice.status === 'Paid') {
+              alert('Cannot generate payment link for already paid invoice');
+              return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            
+            try {
+              const response = await fetch(`${window.API_BASE_URL}/api/invoices/${id}/generate-payment-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+              });
+              
+              const result = await response.json();
+              
+              if (result.success) {
+                btn.textContent = 'Generated!';
+                btn.style.background = '#2ecc40';
+                // Refresh the invoices list to show the new payment link
+                fetchInvoices();
+                alert('Payment link generated successfully!');
+              } else {
+                btn.textContent = 'Error';
+                btn.style.background = '#e74c3c';
+                alert(`Error: ${result.error || 'Failed to generate payment link'}`);
+              }
+            } catch (error) {
+              btn.textContent = 'Error';
+              btn.style.background = '#e74c3c';
+              alert('Error generating payment link');
+              console.error('Error:', error);
+            }
+            
+            // Reset button after 3 seconds
+            setTimeout(() => {
+              btn.disabled = false;
+              btn.textContent = 'Generate Payment Link';
+              btn.style.background = '#9b59b6';
+            }, 3000);
           };
         });
 
@@ -955,6 +1017,16 @@ function fillInvoiceTemplate(template, invoice, currentUser) {
   html = html.replace(/{{total}}/g, `${currencySymbol}${(invoice.total || 0).toFixed(2)}`);
   html = html.replace(/{{createdBy}}/g, currentUser?.name || 'Unknown User');
   html = html.replace(/{{creationDate}}/g, new Date().toLocaleDateString());
+  html = html.replace(/{{grandTotal}}/g, `${currencySymbol}${(invoice.total || 0).toFixed(2)}`);
+
+  // Payment link
+  if (invoice.paymentLink) {
+    html = html.replace(/{{paymentLink}}/g, invoice.paymentLink);
+    html = html.replace(/{{paymentLinkDisplay}}/g, 'block');
+  } else {
+    html = html.replace(/{{paymentLink}}/g, '#');
+    html = html.replace(/{{paymentLinkDisplay}}/g, 'none');
+  }
 
   // Payment details
   const paymentDetails = invoice.paymentDetails || {};

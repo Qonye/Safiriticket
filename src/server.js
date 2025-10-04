@@ -95,9 +95,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
 // --- Models ---
 import authRoutes from './routes/auth.js';
+import paymentRoutes from './routes/payments.js';
 
 // --- Routes ---
 app.use('/api/auth', authRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -462,6 +464,36 @@ app.post('/api/invoices', async (req, res) => {
   
   await invoice.save();
   
+  // Generate IntaSend payment link if invoice is not fully paid and has a client
+  if (invoice.status !== 'Paid' && invoice.client) {
+    try {
+      // Import the IntaSend service
+      const { generatePaymentLink } = await import('./services/intasend.js');
+      
+      // Fetch client details
+      const client = await Client.findById(invoice.client);
+      
+      if (client) {
+        console.log('Generating payment link for invoice:', invoice.number);
+        const paymentResult = await generatePaymentLink(invoice, client);
+        
+        if (paymentResult.success) {
+          // Update invoice with payment link
+          invoice.paymentLink = paymentResult.paymentLink;
+          invoice.paymentLinkId = paymentResult.paymentLinkId;
+          await invoice.save();
+          
+          console.log('Payment link generated:', paymentResult.paymentLink);
+        } else {
+          console.error('Failed to generate payment link:', paymentResult.message);
+        }
+      }
+    } catch (error) {
+      console.error('Error generating payment link:', error);
+      // Continue without payment link - don't fail the invoice creation
+    }
+  }
+  
   // Debug: Log the saved invoice
   console.log('Saved invoice:', JSON.stringify(invoice.toObject(), null, 2));
   
@@ -491,11 +523,68 @@ app.put('/api/invoices/:id', async (req, res) => {
       }
     }
   }
+  
+  // Check if total amount changed and regenerate payment link if needed
+  const originalInvoice = await Invoice.findById(req.params.id);
+  const totalChanged = originalInvoice && update.total && update.total !== originalInvoice.total;
+  
   // Always return the updated invoice with the correct paidAmount
   const invoice = await Invoice.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+  
   // Force save to ensure Mongoose hooks run (if any)
   await invoice.save();
+  
+  // Generate or regenerate payment link if:
+  // 1. Total changed and invoice is not fully paid, OR
+  // 2. Invoice doesn't have a payment link yet and is not fully paid
+  const needsPaymentLink = (totalChanged || !invoice.paymentLink) && invoice.status !== 'Paid' && invoice.client;
+  
+  if (needsPaymentLink) {
+    try {
+      // Import the IntaSend service
+      const { generatePaymentLink, regeneratePaymentLink } = await import('./services/intasend.js');
+      
+      // Fetch client details
+      const client = await Client.findById(invoice.client);
+      
+      if (client) {
+        if (totalChanged) {
+          console.log('Regenerating payment link for invoice:', invoice.number, 'due to total change');
+          const paymentResult = await regeneratePaymentLink(invoice, client);
+          
+          if (paymentResult.success) {
+            // Update invoice with new payment link
+            invoice.paymentLink = paymentResult.paymentLink;
+            invoice.paymentLinkId = paymentResult.paymentLinkId;
+            await invoice.save();
+            
+            console.log('Payment link regenerated:', paymentResult.paymentLink);
+          } else {
+            console.error('Failed to regenerate payment link:', paymentResult.message);
+          }
+        } else if (!invoice.paymentLink) {
+          console.log('Generating payment link for existing invoice:', invoice.number);
+          const paymentResult = await generatePaymentLink(invoice, client);
+          
+          if (paymentResult.success) {
+            // Update invoice with payment link
+            invoice.paymentLink = paymentResult.paymentLink;
+            invoice.paymentLinkId = paymentResult.paymentLinkId;
+            await invoice.save();
+            
+            console.log('Payment link generated for existing invoice:', paymentResult.paymentLink);
+          } else {
+            console.error('Failed to generate payment link for existing invoice:', paymentResult.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error generating/regenerating payment link:', error);
+      // Continue without failing the invoice update
+    }
+  }
+  
   res.json(invoice);
 });
 
@@ -508,6 +597,53 @@ app.delete('/api/invoices/:id', async (req, res) => {
 app.get('/api/invoices/:id/expenses', async (req, res) => {
   const expenses = await Expense.find({ invoice: req.params.id });
   res.json(expenses);
+});
+
+// --- Generate payment link for existing invoice ---
+app.post('/api/invoices/:id/generate-payment-link', async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id).populate('client');
+    
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+    
+    if (!invoice.client) {
+      return res.status(400).json({ error: 'Invoice must have a client to generate payment link' });
+    }
+    
+    if (invoice.status === 'Paid') {
+      return res.status(400).json({ error: 'Cannot generate payment link for already paid invoice' });
+    }
+    
+    // Import the IntaSend service
+    const { generatePaymentLink } = await import('./services/intasend.js');
+    
+    console.log('Manually generating payment link for invoice:', invoice.number);
+    const paymentResult = await generatePaymentLink(invoice, invoice.client);
+    
+    if (paymentResult.success) {
+      // Update invoice with payment link
+      invoice.paymentLink = paymentResult.paymentLink;
+      invoice.paymentLinkId = paymentResult.paymentLinkId;
+      await invoice.save();
+      
+      res.json({
+        success: true,
+        paymentLink: paymentResult.paymentLink,
+        paymentLinkId: paymentResult.paymentLinkId,
+        message: 'Payment link generated successfully'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: paymentResult.message
+      });
+    }
+  } catch (error) {
+    console.error('Error generating payment link:', error);
+    res.status(500).json({ error: 'Failed to generate payment link' });
+  }
 });
 
 // --- Financials Summary Endpoint ---

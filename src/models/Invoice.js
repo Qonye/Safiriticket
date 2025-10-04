@@ -11,7 +11,7 @@ const invoiceSchema = new mongoose.Schema({
     // Allow any additional dynamic fields (hotelName, checkin, checkout, airline, etc.)
   }],
   total: { type: Number, required: true },
-  currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'GBP', 'KES', 'CAD', 'AUD'] },
+  currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'GBP', 'KES'] },
   paymentDetails: {
     accountName: { type: String, default: 'JUNGLE DWELLERS LTD' },
     accountNumber: { type: String, default: '0254001002' },
@@ -21,7 +21,9 @@ const invoiceSchema = new mongoose.Schema({
     additionalInfo: { type: String, default: '(Please use your name or invoice number as payment reference)' }
   },
   paidAmount: { type: Number, default: 0 },
-  status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' },
+  paymentLink: String,
+  paymentLinkId: String,
+  status: { type: String, enum: ['Unpaid', 'Partially Paid', 'Paid', 'Overdue'], default: 'Unpaid' },
   dueDate: Date,
   paidAt: Date,
   createdAt: { type: Date, default: Date.now },
