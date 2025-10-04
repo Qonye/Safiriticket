@@ -80,5 +80,40 @@
             </p>
         </div>
     </div>
+
+    <script>
+        // Handle payment success
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const trackingId = urlParams.get('tracking_id');
+            const signature = urlParams.get('signature');
+            const checkoutId = urlParams.get('checkout_id');
+            
+            console.log('Payment Success Parameters:', {
+                trackingId,
+                signature,
+                checkoutId,
+                url: window.location.href
+            });
+            
+            // Show success message with transaction details
+            if (trackingId) {
+                const container = document.querySelector('.container');
+                const detailsDiv = document.createElement('div');
+                detailsDiv.style.marginTop = '20px';
+                detailsDiv.style.padding = '15px';
+                detailsDiv.style.backgroundColor = '#f8f9fa';
+                detailsDiv.style.borderRadius = '5px';
+                detailsDiv.style.fontSize = '0.9em';
+                detailsDiv.innerHTML = `
+                    <p><strong>Transaction ID:</strong> ${trackingId}</p>
+                    <p style="color: #666; font-size: 0.85em;">Your payment is being processed. You will receive confirmation once it's complete.</p>
+                `;
+                container.appendChild(detailsDiv);
+            }
+            
+            // Payment completed - customer can close window
+        });
+    </script>
 </body>
 </html>

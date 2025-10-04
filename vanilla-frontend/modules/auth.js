@@ -102,8 +102,20 @@ window.auth = {
         const app = document.getElementById('app');
         if (!app) return;
         
-        // Clear existing content
-        app.style.display = 'block';
+        // Hide sidebar and toggle button during login
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle-btn');
+        const mainContent = document.getElementById('main-content');
+        
+        if (sidebar) sidebar.style.display = 'none';
+        if (sidebarToggle) sidebarToggle.style.display = 'none';
+        if (mainContent) mainContent.style.width = '100%';
+        
+        // Clear existing content and center the login form
+        app.style.display = 'flex';
+        app.style.justifyContent = 'center';
+        app.style.alignItems = 'center';
+        app.style.minHeight = '100vh';
         app.innerHTML = '';
         
         // Check if template exists
@@ -170,20 +182,44 @@ window.auth = {
         const app = document.getElementById('app');
         if (app) {
             app.style.display = 'flex';
+            app.style.justifyContent = 'normal';
+            app.style.alignItems = 'normal';
+            app.style.minHeight = 'auto';
             
             // Show sidebar and main content
             const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.getElementById('sidebar-toggle-btn');
             const mainContent = document.getElementById('main-content');
             
             if (sidebar && mainContent) {
                 // Make sure they're visible
-                sidebar.style.display = 'block';
+                sidebar.style.display = 'flex';
+                sidebarToggle.style.display = 'block';
                 mainContent.style.display = 'block';
+                mainContent.style.width = 'auto';
                 
                 // Update user info in sidebar if available
                 const statusDiv = document.getElementById('sidebar-status');
                 if (statusDiv && this.user) {
-                    statusDiv.innerHTML = `<div>Logged in as: <strong>${this.user.name || this.user.username}</strong></div>`;
+                    statusDiv.innerHTML = `
+                        <div style="text-align: center; padding: 12px; border-top: 1px solid rgba(255,255,255,0.2); margin-top: auto;">
+                            <div style="margin-bottom: 8px; font-size: 0.9em;">Logged in as:</div>
+                            <div style="font-weight: bold; margin-bottom: 12px;">${this.user.name || this.user.username}</div>
+                            <button onclick="window.auth.logout()" style="
+                                background: #be292c;
+                                color: white;
+                                border: none;
+                                padding: 8px 16px;
+                                border-radius: 4px;
+                                cursor: pointer;
+                                font-size: 0.85em;
+                                width: 100%;
+                                margin-top: 8px;
+                            " onmouseover="this.style.background='#a01e21'" onmouseout="this.style.background='#be292c'">
+                                Logout
+                            </button>
+                        </div>
+                    `;
                 }
                 
                 // Trigger overview section display

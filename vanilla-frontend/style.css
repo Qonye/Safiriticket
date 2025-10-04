@@ -30,7 +30,7 @@ html {
   z-index: 1000;
   padding: 24px 0 0 0;
   box-shadow: 2px 0 12px #e45424;
-  display: flex;
+  display: none; /* Hidden by default - only shown after authentication */
   flex-direction: column;
   align-items: center;
   overflow-y: auto;
@@ -40,7 +40,7 @@ html {
   transform: translateX(-100%);
 }
 .sidebar-toggle-btn {
-  display: none;
+  display: none !important; /* Hidden by default - only shown after authentication */
   position: fixed;
   top: 16px;
   left: 16px;
