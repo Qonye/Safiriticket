@@ -11,13 +11,13 @@ const paymentSchema = new mongoose.Schema({
   },
   paymentMethod: { 
     type: String, 
-    enum: ['INTASEND', 'MPESA', 'CARD', 'BANK_TRANSFER', 'CASH', 'OTHER'],
-    default: 'INTASEND'
+    enum: ['PESAPAL', 'INTASEND', 'MPESA', 'CARD', 'BANK_TRANSFER', 'CASH', 'OTHER'],
+    default: 'PESAPAL'
   },
   transactionId: String,
   paymentDate: Date,
   notes: String,
-  metadata: Object, // For storing IntaSend response data
+  metadata: Object, // For storing Pesapal response data and payment metadata
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 

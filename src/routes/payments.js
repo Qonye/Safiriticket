@@ -3,7 +3,7 @@ import { authenticate } from '../middleware/auth.js';
 import Payment from '../models/Payment.js';
 import Invoice from '../models/Invoice.js';
 import Client from '../models/Client.js';
-import { processWebhook, verifyWebhookSignature } from '../services/intasend.js';
+import { processWebhook, verifyWebhookSignature } from '../services/pesapal.js';
 
 const router = express.Router();
 
@@ -85,24 +85,26 @@ router.post('/manual', authenticate, async (req, res) => {
 });
 
 /**
- * IntaSend webhook endpoint
- * This endpoint receives payment notifications from IntaSend
+ * Pesapal webhook endpoint (IPN)
+ * This endpoint receives payment notifications from Pesapal
+ * Supports both GET and POST methods
  */
-router.post('/webhook', async (req, res) => {
+router.get('/pesapal-webhook', async (req, res) => {
   try {
-    const payload = req.body;
+    // Pesapal sends IPN via GET with query parameters
+    const queryParams = req.query;
     
-    // Verify webhook signature (if IntaSend provides this)
-    if (!verifyWebhookSignature(req.headers, payload)) {
-      return res.status(401).json({ error: 'Invalid webhook signature' });
+    // Basic validation
+    if (!verifyWebhookSignature(queryParams, {})) {
+      return res.status(400).json({ error: 'Invalid webhook parameters' });
     }
     
     // Process the webhook data
-    const result = await processWebhook(payload);
+    const result = await processWebhook(queryParams, {});
     
     if (!result.success) {
       console.error('Webhook processing error:', result.message);
-      // Return 200 even on error to prevent IntaSend from retrying
+      // Return 200 even on error to prevent Pesapal from retrying
       return res.status(200).json({ 
         status: 'error',
         message: result.message
@@ -115,7 +117,73 @@ router.post('/webhook', async (req, res) => {
     });
   } catch (error) {
     console.error('Webhook error:', error);
-    // Return 200 even on error to prevent IntaSend from retrying
+    // Return 200 even on error to prevent Pesapal from retrying
+    res.status(200).json({ 
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+});
+
+router.post('/pesapal-webhook', async (req, res) => {
+  try {
+    // Pesapal can also send IPN via POST
+    const queryParams = req.query;
+    const body = req.body;
+    
+    // Basic validation
+    if (!verifyWebhookSignature(queryParams, body)) {
+      return res.status(400).json({ error: 'Invalid webhook parameters' });
+    }
+    
+    // Process the webhook data
+    const result = await processWebhook(queryParams, body);
+    
+    if (!result.success) {
+      console.error('Webhook processing error:', result.message);
+      // Return 200 even on error to prevent Pesapal from retrying
+      return res.status(200).json({ 
+        status: 'error',
+        message: result.message
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      message: 'Webhook processed successfully'
+    });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    // Return 200 even on error to prevent Pesapal from retrying
+    res.status(200).json({ 
+      status: 'error',
+      message: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * Legacy webhook endpoint (redirects to Pesapal webhook)
+ * @deprecated Use /pesapal-webhook instead
+ * Kept for backward compatibility with old webhook URLs
+ */
+router.post('/webhook', async (req, res) => {
+  try {
+    const queryParams = req.query;
+    const body = req.body;
+    
+    // Redirect Pesapal webhooks to the correct endpoint
+    if (queryParams.OrderTrackingId || body.OrderTrackingId) {
+      return res.redirect(307, '/api/payments/pesapal-webhook');
+    }
+    
+    // Unknown webhook format
+    res.status(200).json({ 
+      status: 'error',
+      message: 'Please use /pesapal-webhook endpoint'
+    });
+  } catch (error) {
+    console.error('Webhook error:', error);
     res.status(200).json({ 
       status: 'error',
       message: 'Internal server error'

@@ -464,11 +464,11 @@ app.post('/api/invoices', async (req, res) => {
   
   await invoice.save();
   
-  // Generate IntaSend payment link if invoice is not fully paid and has a client
+  // Generate Pesapal payment link if invoice is not fully paid and has a client
   if (invoice.status !== 'Paid' && invoice.client) {
     try {
-      // Import the IntaSend service
-      const { generatePaymentLink } = await import('./services/intasend.js');
+      // Import the Pesapal service
+      const { generatePaymentLink } = await import('./services/pesapal.js');
       
       // Fetch client details
       const client = await Client.findById(invoice.client);
@@ -542,8 +542,8 @@ app.put('/api/invoices/:id', async (req, res) => {
   
   if (needsPaymentLink) {
     try {
-      // Import the IntaSend service
-      const { generatePaymentLink, regeneratePaymentLink } = await import('./services/intasend.js');
+      // Import the Pesapal service
+      const { generatePaymentLink, regeneratePaymentLink } = await import('./services/pesapal.js');
       
       // Fetch client details
       const client = await Client.findById(invoice.client);
@@ -616,8 +616,8 @@ app.post('/api/invoices/:id/generate-payment-link', async (req, res) => {
       return res.status(400).json({ error: 'Cannot generate payment link for already paid invoice' });
     }
     
-    // Import the IntaSend service
-    const { generatePaymentLink } = await import('./services/intasend.js');
+    // Import the Pesapal service
+    const { generatePaymentLink } = await import('./services/pesapal.js');
     
     console.log('Manually generating payment link for invoice:', invoice.number);
     const paymentResult = await generatePaymentLink(invoice, invoice.client);
