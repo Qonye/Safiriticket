@@ -1,6 +1,6 @@
 [build]
-  # Publish directory - adjust if your build output is different
-  publish = "public"
+  # Publish directory - root of vanilla-frontend
+  # publish = "."  # Default is root, so this is optional
   
   # Build command (if needed)
   # command = "npm run build"
