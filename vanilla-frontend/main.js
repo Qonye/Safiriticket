@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (section === 'financials' && typeof window.renderFinancials === 'function') window.renderFinancials(main);
     else if (section === 'orgsettings' && typeof window.renderOrgSettings === 'function') window.renderOrgSettings(main);
     else if (section === 'clients' && typeof window.renderClients === 'function') window.renderClients(main);
+    else if (section === 'leads' && typeof window.renderLeads === 'function') window.renderLeads(main);
     else if (section === 'products' && typeof window.renderProducts === 'function') window.renderProducts(main);
     else if (section === 'services' && typeof window.renderServices === 'function') window.renderServices(main);
     else main.innerHTML = `<h2>${section.charAt(0).toUpperCase() + section.slice(1)}</h2><p>Section coming soon...</p>`;

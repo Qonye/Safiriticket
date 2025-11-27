@@ -77,10 +77,12 @@ app.use(cors({
     'http://127.0.0.1:5501', // Live server default port via IP
     'http://localhost:63342', // IntelliJ IDEA built-in server
     'http://127.0.0.1:63342', // IntelliJ IDEA built-in server via IP
+    'https://jungledwellers.net', // WordPress site
+    'https://safiritickets.com', // WordPress site
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
 }));
 
 // Log all incoming requests for debugging
@@ -96,10 +98,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 // --- Models ---
 import authRoutes from './routes/auth.js';
 import paymentRoutes from './routes/payments.js';
+import leadsRoutes from './routes/leads.js';
 
 // --- Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/leads', leadsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
