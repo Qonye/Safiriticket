@@ -9,10 +9,22 @@ const router = express.Router();
 // POST /api/leads - Create lead (webhook endpoint - requires API key)
 router.post('/', apiKeyAuth, async (req, res) => {
   try {
+    // Log incoming request for debugging
+    console.log('='.repeat(80));
+    console.log('📥 LEAD SUBMISSION RECEIVED');
+    console.log('Time:', new Date().toISOString());
+    console.log('IP Address:', req.ip || req.connection.remoteAddress);
+    console.log('User-Agent:', req.headers['user-agent'] || 'Not provided');
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Request Body:', JSON.stringify(req.body, null, 2));
+    console.log('='.repeat(80));
+
     const { name, email, phone, company, sourceWebsite, message, metadata } = req.body;
 
     // Validate required fields
     if (!name || !email || !sourceWebsite) {
+      console.log('❌ VALIDATION FAILED: Missing required fields');
+      console.log('Received:', { name: !!name, email: !!email, sourceWebsite: !!sourceWebsite });
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: name, email, and sourceWebsite are required'
@@ -31,6 +43,7 @@ router.post('/', apiKeyAuth, async (req, res) => {
     const existingLead = await Lead.findOne({ email: email.toLowerCase(), sourceWebsite });
 
     if (existingLead) {
+      console.log('🔄 UPDATING EXISTING LEAD:', existingLead._id);
       // Update existing lead with new information
       existingLead.name = name;
       if (phone) existingLead.phone = phone;
@@ -45,6 +58,9 @@ router.post('/', apiKeyAuth, async (req, res) => {
       });
 
       await existingLead.save();
+      console.log('✅ LEAD UPDATED SUCCESSFULLY');
+      console.log('Lead ID:', existingLead._id);
+      console.log('='.repeat(80));
       return res.status(200).json({
         success: true,
         message: 'Lead updated successfully',
@@ -53,6 +69,7 @@ router.post('/', apiKeyAuth, async (req, res) => {
     }
 
     // Create new lead
+    console.log('✨ CREATING NEW LEAD');
     const lead = new Lead({
       name: name.trim(),
       email: email.toLowerCase().trim(),
@@ -65,6 +82,12 @@ router.post('/', apiKeyAuth, async (req, res) => {
     });
 
     await lead.save();
+    console.log('✅ LEAD CREATED SUCCESSFULLY');
+    console.log('Lead ID:', lead._id);
+    console.log('Lead Name:', lead.name);
+    console.log('Lead Email:', lead.email);
+    console.log('Source Website:', lead.sourceWebsite);
+    console.log('='.repeat(80));
 
     res.status(201).json({
       success: true,
@@ -72,7 +95,13 @@ router.post('/', apiKeyAuth, async (req, res) => {
       lead
     });
   } catch (error) {
-    console.error('Error creating lead:', error);
+    console.error('='.repeat(80));
+    console.error('❌ ERROR CREATING LEAD');
+    console.error('Time:', new Date().toISOString());
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    console.error('Request Body:', JSON.stringify(req.body, null, 2));
+    console.error('='.repeat(80));
     res.status(500).json({
       success: false,
       error: 'Failed to create lead',

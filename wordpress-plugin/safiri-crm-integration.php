@@ -32,8 +32,15 @@ class SafiriCRMIntegration {
         add_action('elementor_pro/forms/new_record', array($this, 'handle_elementor_submission'), 10, 2);
         
         // Hook into BitForms (most important for safiritickets.com)
+        // Try multiple possible BitForms hooks
         add_action('bitforms_form_submission_complete', array($this, 'handle_bitforms_submission'), 10, 3);
         add_action('bitforms_after_form_submit', array($this, 'handle_bitforms_submission_alt'), 10, 2);
+        add_action('bitforms_form_entry_created', array($this, 'handle_bitforms_submission'), 10, 3);
+        add_action('bitforms_after_entry_save', array($this, 'handle_bitforms_submission'), 10, 3);
+        add_filter('bitforms_form_submit_data', array($this, 'handle_bitforms_filter'), 10, 2);
+        // Also hook into WordPress form submission hooks that BitForms might use
+        add_action('wp_ajax_bitforms_form_submit', array($this, 'handle_bitforms_ajax'), 10);
+        add_action('wp_ajax_nopriv_bitforms_form_submit', array($this, 'handle_bitforms_ajax'), 10);
         
         // Generic hook for any form submission
         add_action('wp_ajax_nopriv_safiri_submit_lead', array($this, 'handle_ajax_submission'));
@@ -42,6 +49,144 @@ class SafiriCRMIntegration {
         // Add admin settings page
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
+        
+        // Add JavaScript to intercept BitForms submissions
+        add_action('wp_footer', array($this, 'add_bitforms_intercept_script'));
+    }
+    
+    /**
+     * Add JavaScript to intercept BitForms form submissions
+     */
+    public function add_bitforms_intercept_script() {
+        $api_url = get_option('safiri_crm_api_url', $this->api_url);
+        $api_key = get_option('safiri_crm_api_key', $this->api_key);
+        $source = get_option('safiri_crm_source_website', $this->source_website);
+        ?>
+        <script type="text/javascript">
+        (function() {
+            // Wait for DOM to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initBitFormsInterceptor);
+            } else {
+                initBitFormsInterceptor();
+            }
+            
+            function initBitFormsInterceptor() {
+                // Intercept BitForms AJAX submissions
+                const originalFetch = window.fetch;
+                window.fetch = function(...args) {
+                    const url = args[0];
+                    const options = args[1] || {};
+                    
+                    // Check if this is a BitForms submission
+                    if (typeof url === 'string' && url.includes('bitforms') && options.method === 'POST') {
+                        const originalThen = Promise.prototype.then;
+                        
+                        return originalFetch.apply(this, args).then(function(response) {
+                            // Clone response to read it
+                            const clonedResponse = response.clone();
+                            
+                            // If form submission was successful, send to CRM
+                            if (response.ok) {
+                                clonedResponse.json().then(function(data) {
+                                    if (data && data.success !== false) {
+                                        sendToCRM(options.body, '<?php echo esc_js($api_url); ?>', '<?php echo esc_js($api_key); ?>', '<?php echo esc_js($source); ?>');
+                                    }
+                                }).catch(function() {
+                                    // If not JSON, still try to send
+                                    if (options.body) {
+                                        sendToCRM(options.body, '<?php echo esc_js($api_url); ?>', '<?php echo esc_js($api_key); ?>', '<?php echo esc_js($source); ?>');
+                                    }
+                                });
+                            }
+                            
+                            return response;
+                        });
+                    }
+                    
+                    return originalFetch.apply(this, args);
+                };
+                
+                // Also listen for form submit events on BitForms
+                document.addEventListener('submit', function(e) {
+                    const form = e.target;
+                    if (form && (form.classList.contains('bitforms-form') || form.closest('.bitforms-form-container') || form.querySelector('[data-bitforms]'))) {
+                        setTimeout(function() {
+                            const formData = new FormData(form);
+                            const formObject = {};
+                            formData.forEach(function(value, key) {
+                                formObject[key] = value;
+                            });
+                            sendToCRM(JSON.stringify(formObject), '<?php echo esc_js($api_url); ?>', '<?php echo esc_js($api_key); ?>', '<?php echo esc_js($source); ?>');
+                        }, 1000);
+                    }
+                }, true);
+            }
+            
+            function sendToCRM(formData, apiUrl, apiKey, source) {
+                try {
+                    let data = {};
+                    
+                    // Parse form data if it's a string
+                    if (typeof formData === 'string') {
+                        try {
+                            data = JSON.parse(formData);
+                        } catch(e) {
+                            // Try URL-encoded format
+                            const params = new URLSearchParams(formData);
+                            params.forEach(function(value, key) {
+                                data[key] = value;
+                            });
+                        }
+                    } else if (formData instanceof FormData) {
+                        formData.forEach(function(value, key) {
+                            data[key] = value;
+                        });
+                    } else {
+                        data = formData;
+                    }
+                    
+                    // Map BitForms fields to CRM format
+                    const leadData = {
+                        name: (data['First name'] || data['first_name'] || data['firstname'] || data['fname'] || '') + ' ' + (data['Last name'] || data['last_name'] || data['lastname'] || data['lname'] || ''),
+                        email: data['Email address'] || data['email'] || data['email_address'] || '',
+                        phone: data['Phone Number'] || data['phone'] || data['phone_number'] || data['tel'] || '',
+                        company: data['company'] || data['Company'] || '',
+                        sourceWebsite: source,
+                        message: (data['Tell Us About Your Project:'] || data['message'] || data['Message'] || '') + (data['Additional Information:'] ? '\n\nAdditional Information: ' + data['Additional Information:'] : ''),
+                        metadata: {}
+                    };
+                    
+                    // Add other fields to metadata
+                    Object.keys(data).forEach(function(key) {
+                        if (!['First name', 'first_name', 'firstname', 'fname', 'Last name', 'last_name', 'lastname', 'lname', 'Email address', 'email', 'email_address', 'Phone Number', 'phone', 'phone_number', 'tel', 'company', 'Company', 'Tell Us About Your Project:', 'message', 'Message', 'Additional Information:'].includes(key)) {
+                            leadData.metadata[key] = data[key];
+                        }
+                    });
+                    
+                    // Clean up name (remove extra spaces)
+                    leadData.name = leadData.name.trim();
+                    
+                    // Only send if we have name and email
+                    if (leadData.name && leadData.email) {
+                        fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-API-Key': apiKey
+                            },
+                            body: JSON.stringify(leadData)
+                        }).catch(function(error) {
+                            console.error('Safiri CRM: Error sending lead', error);
+                        });
+                    }
+                } catch(error) {
+                    console.error('Safiri CRM: Error processing form data', error);
+                }
+            }
+        })();
+        </script>
+        <?php
     }
     
     /**
