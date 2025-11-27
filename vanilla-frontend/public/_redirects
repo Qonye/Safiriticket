@@ -1,6 +1,7 @@
+# Specific routes - must come BEFORE the catch-all SPA rule
 # Redirect payment success page - handle with and without .html
 /payment-success        /payment-success.html    200
 /payment-success.html   /payment-success.html    200
 
-# Handle SPA routing
+# Handle SPA routing (catch-all - must be LAST)
 /* /index.html 200

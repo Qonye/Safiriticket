@@ -82,35 +82,62 @@
     </div>
 
     <script>
-        // Handle payment success
+        // Handle payment success - Pesapal callback
         window.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const trackingId = urlParams.get('tracking_id');
-            const signature = urlParams.get('signature');
-            const checkoutId = urlParams.get('checkout_id');
+            
+            // Pesapal callback parameters
+            const orderTrackingId = urlParams.get('OrderTrackingId');
+            const orderMerchantReference = urlParams.get('OrderMerchantReference');
+            const orderNotificationType = urlParams.get('OrderNotificationType');
+            
+            // Legacy Intasend parameters (for backward compatibility)
+            const trackingId = urlParams.get('tracking_id') || orderTrackingId;
+            const checkoutId = urlParams.get('checkout_id') || orderMerchantReference;
             
             console.log('Payment Success Parameters:', {
+                orderTrackingId,
+                orderMerchantReference,
+                orderNotificationType,
                 trackingId,
-                signature,
                 checkoutId,
                 url: window.location.href
             });
             
             // Show success message with transaction details
-            if (trackingId) {
-                const container = document.querySelector('.container');
-                const detailsDiv = document.createElement('div');
-                detailsDiv.style.marginTop = '20px';
-                detailsDiv.style.padding = '15px';
-                detailsDiv.style.backgroundColor = '#f8f9fa';
-                detailsDiv.style.borderRadius = '5px';
-                detailsDiv.style.fontSize = '0.9em';
+            const container = document.querySelector('.container');
+            const detailsDiv = document.createElement('div');
+            detailsDiv.style.marginTop = '20px';
+            detailsDiv.style.padding = '15px';
+            detailsDiv.style.backgroundColor = '#f8f9fa';
+            detailsDiv.style.borderRadius = '5px';
+            detailsDiv.style.fontSize = '0.9em';
+            
+            if (orderTrackingId) {
+                detailsDiv.innerHTML = `
+                    <p><strong>Transaction ID:</strong> ${orderTrackingId}</p>
+                    ${orderMerchantReference ? `<p><strong>Invoice Reference:</strong> ${orderMerchantReference}</p>` : ''}
+                    <p style="color: #666; font-size: 0.85em; margin-top: 10px;">
+                        Your payment is being processed. You will receive confirmation once it's complete.
+                    </p>
+                `;
+            } else if (trackingId) {
+                // Fallback for legacy Intasend format
                 detailsDiv.innerHTML = `
                     <p><strong>Transaction ID:</strong> ${trackingId}</p>
-                    <p style="color: #666; font-size: 0.85em;">Your payment is being processed. You will receive confirmation once it's complete.</p>
+                    <p style="color: #666; font-size: 0.85em; margin-top: 10px;">
+                        Your payment is being processed. You will receive confirmation once it's complete.
+                    </p>
                 `;
-                container.appendChild(detailsDiv);
+            } else {
+                detailsDiv.innerHTML = `
+                    <p style="color: #666; font-size: 0.85em;">
+                        Your payment has been received. You will receive confirmation once it's processed.
+                    </p>
+                `;
             }
+            
+            container.appendChild(detailsDiv);
             
             // Payment completed - customer can close window
         });

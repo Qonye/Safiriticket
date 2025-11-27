@@ -1,0 +1,23 @@
+[build]
+  # Publish directory - adjust if your build output is different
+  publish = "public"
+  
+  # Build command (if needed)
+  # command = "npm run build"
+
+[[redirects]]
+  from = "/payment-success"
+  to = "/payment-success.html"
+  status = 200
+
+[[redirects]]
+  from = "/payment-success.html"
+  to = "/payment-success.html"
+  status = 200
+
+# SPA fallback - must be last
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
