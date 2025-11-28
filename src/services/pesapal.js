@@ -32,8 +32,20 @@ async function getAccessToken() {
       return cachedToken;
     }
 
+    const isProduction = PESAPAL_BASE_URL.includes('pay.pesapal.com');
+    const tokenUrl = `${PESAPAL_BASE_URL}/api/Auth/RequestToken`;
+
+    // Enhanced logging for production debugging
+    console.log('================================================================================');
+    console.log(`🔄 Requesting Pesapal Access Token (${isProduction ? 'PRODUCTION' : 'SANDBOX'})`);
+    console.log(`📍 URL: ${tokenUrl}`);
+    console.log(`🔑 Consumer Key: ${PESAPAL_CONSUMER_KEY.substring(0, 10)}...`);
+    console.log(`🌐 Base URL: ${PESAPAL_BASE_URL}`);
+    console.log('================================================================================');
+
+    const startTime = Date.now();
     const response = await axios.post(
-      `${PESAPAL_BASE_URL}/api/Auth/RequestToken`,
+      tokenUrl,
       {
         consumer_key: PESAPAL_CONSUMER_KEY,
         consumer_secret: PESAPAL_CONSUMER_SECRET
@@ -41,12 +53,26 @@ async function getAccessToken() {
       {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+          'User-Agent': 'SafiriTickets-CRM/1.0'
+        },
+        timeout: 30000, // 30 second timeout
+        validateStatus: (status) => status < 500 // Don't throw on 4xx, only 5xx
       }
     );
 
+    const duration = Date.now() - startTime;
+    console.log(`⏱️  Request completed in ${duration}ms`);
+
+    if (response.status >= 400) {
+      console.error(`❌ Pesapal API returned status ${response.status}`);
+      console.error('Response:', JSON.stringify(response.data, null, 2));
+      throw new Error(`Pesapal API error: ${response.status} - ${JSON.stringify(response.data)}`);
+    }
+
     if (!response.data || !response.data.token) {
+      console.error('❌ Invalid token response from Pesapal');
+      console.error('Response:', JSON.stringify(response.data, null, 2));
       throw new Error('Invalid token response from Pesapal');
     }
 
@@ -56,11 +82,73 @@ async function getAccessToken() {
     const expiryDate = new Date(response.data.expiryDate);
     tokenExpiry = new Date(expiryDate.getTime() - 5 * 60 * 1000);
 
-    console.log('Pesapal token obtained, expires at:', expiryDate);
+    console.log('✅ Pesapal token obtained successfully');
+    console.log(`📅 Token expires at: ${expiryDate.toISOString()}`);
+    console.log('================================================================================');
     return cachedToken;
   } catch (error) {
-    console.error('Error getting Pesapal access token:', error.response?.data || error.message);
-    throw new Error(`Failed to get Pesapal access token: ${error.message}`);
+    const isProduction = PESAPAL_BASE_URL.includes('pay.pesapal.com');
+    
+    // Detailed error logging
+    console.error('================================================================================');
+    console.error('❌ ERROR GETTING PESAPAL ACCESS TOKEN');
+    console.error('================================================================================');
+    console.error(`Environment: ${isProduction ? 'PRODUCTION' : 'SANDBOX'}`);
+    console.error(`URL: ${PESAPAL_BASE_URL}/api/Auth/RequestToken`);
+    console.error(`Error Code: ${error.code || 'N/A'}`);
+    console.error(`HTTP Status: ${error.response?.status || 'N/A'}`);
+    console.error(`Error Message: ${error.message}`);
+    
+    if (error.response) {
+      console.error('Response Status:', error.response.status);
+      console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
+      console.error('Response Headers:', JSON.stringify(error.response.headers, null, 2));
+    } else if (error.request) {
+      console.error('⚠️  Request made but NO RESPONSE received');
+      console.error('This usually indicates:');
+      console.error('  1. Network connectivity issue');
+      console.error('  2. Firewall blocking the connection');
+      console.error('  3. IP address not whitelisted (common in production)');
+      console.error('  4. Pesapal server is down or unreachable');
+      console.error('Request Config:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        timeout: error.config?.timeout
+      });
+    }
+    
+    if (isProduction && (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED' || error.response?.status === 522)) {
+      console.error('');
+      console.error('🚨 PRODUCTION-SPECIFIC ISSUES TO CHECK:');
+      console.error('  1. Is your Railway server IP whitelisted in Pesapal?');
+      console.error('  2. Is your Pesapal production account activated?');
+      console.error('  3. Are you using the correct production credentials?');
+      console.error('  4. Contact Pesapal support: pesapalv2.zohodesk.com');
+      console.error('');
+    }
+    
+    console.error('Stack Trace:', error.stack);
+    console.error('================================================================================');
+
+    // Provide helpful error messages
+    let errorMessage = 'Failed to get Pesapal access token';
+    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED' || error.response?.status === 522) {
+      if (isProduction) {
+        errorMessage = 'Connection timeout to Pesapal production API. This may indicate: (1) IP whitelisting required, (2) Account not activated, or (3) Network/firewall issues. Contact Pesapal support.';
+      } else {
+        errorMessage = 'Connection timeout to Pesapal API. Please try again later.';
+      }
+    } else if (error.response?.status === 502) {
+      errorMessage = 'Pesapal API returned Bad Gateway (502). The server may be temporarily unavailable.';
+    } else if (error.response?.status === 401) {
+      errorMessage = 'Authentication failed. Please verify your Pesapal consumer key and secret are correct.';
+    } else if (error.response?.status) {
+      errorMessage = `Pesapal API error (${error.response.status}): ${JSON.stringify(error.response.data)}`;
+    } else {
+      errorMessage = error.message || 'Unknown error';
+    }
+
+    throw new Error(errorMessage);
   }
 }
 

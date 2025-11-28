@@ -192,6 +192,66 @@ router.post('/webhook', async (req, res) => {
 });
 
 /**
+ * Diagnostic endpoint to test Pesapal connection
+ * Helps debug production connection issues
+ */
+router.get('/pesapal-diagnostic', authenticate, async (req, res) => {
+  try {
+    const { getAccessToken } = await import('../services/pesapal.js');
+    
+    // Get server IP (if available)
+    const serverIP = req.headers['x-forwarded-for'] || req.ip || 'Unknown';
+    
+    // Get environment info
+    const baseUrl = process.env.PESAPAL_BASE_URL || 'Not set';
+    const consumerKey = process.env.PESAPAL_CONSUMER_KEY ? 
+      `${process.env.PESAPAL_CONSUMER_KEY.substring(0, 10)}...` : 'Not set';
+    const isProduction = baseUrl.includes('pay.pesapal.com');
+    
+    // Try to get access token
+    let tokenResult = { success: false, error: null };
+    try {
+      const token = await getAccessToken();
+      tokenResult = { success: true, token: token.substring(0, 20) + '...' };
+    } catch (error) {
+      tokenResult = { 
+        success: false, 
+        error: error.message,
+        code: error.code,
+        status: error.response?.status
+      };
+    }
+    
+    res.json({
+      diagnostic: {
+        timestamp: new Date().toISOString(),
+        environment: isProduction ? 'PRODUCTION' : 'SANDBOX',
+        serverIP: serverIP,
+        configuration: {
+          baseUrl: baseUrl,
+          consumerKey: consumerKey,
+          hasConsumerSecret: !!process.env.PESAPAL_CONSUMER_SECRET
+        },
+        connectionTest: tokenResult,
+        recommendations: isProduction && !tokenResult.success ? [
+          '1. Verify your Railway server IP is whitelisted in Pesapal',
+          '2. Confirm your production account is activated',
+          '3. Check that production credentials are correct',
+          '4. Try using HTTPS URL: https://pay.pesapal.com/v3',
+          '5. Contact Pesapal support: pesapalv2.zohodesk.com'
+        ] : []
+      }
+    });
+  } catch (error) {
+    console.error('Diagnostic error:', error);
+    res.status(500).json({ 
+      error: 'Diagnostic failed', 
+      message: error.message 
+    });
+  }
+});
+
+/**
  * Delete a payment and reset invoice status
  * Useful for removing test payments
  */
