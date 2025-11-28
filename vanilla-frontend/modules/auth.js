@@ -222,6 +222,17 @@ window.auth = {
                     `;
                 }
                 
+                // Show/hide Users menu item based on role (admin, systemsadmin, and superadmin)
+                const usersMenuItem = document.getElementById('users-menu-item');
+                if (usersMenuItem) {
+                    const canManage = this.user && (
+                        this.user.role === 'superadmin' || 
+                        this.user.role === 'systemsadmin' || 
+                        this.user.role === 'admin'
+                    );
+                    usersMenuItem.style.display = canManage ? 'block' : 'none';
+                }
+                
                 // Trigger overview section display
                 const overviewBtn = document.querySelector('button[data-section="overview"]');
                 if (overviewBtn) {

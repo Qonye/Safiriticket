@@ -17,11 +17,47 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebarNav.appendChild(li);
   }
 
+  // Add Users link to sidebar for superadmin (will be shown/hidden based on role)
+  if (!sidebarNav.querySelector('[data-section="users"]')) {
+    const li = document.createElement('li');
+    li.id = 'users-menu-item';
+    li.style.display = 'none'; // Hidden by default
+    li.innerHTML = `<button data-section="users">Users</button>`;
+    sidebarNav.appendChild(li);
+  }
+
+  // Show Users menu item if user is admin, systemsadmin, or superadmin
+  function updateUsersMenuVisibility() {
+    const usersMenuItem = document.getElementById('users-menu-item');
+    if (usersMenuItem && window.auth && window.auth.user) {
+      const canManage = window.auth.user.role === 'superadmin' || 
+                        window.auth.user.role === 'systemsadmin' || 
+                        window.auth.user.role === 'admin';
+      usersMenuItem.style.display = canManage ? 'block' : 'none';
+    } else if (usersMenuItem) {
+      usersMenuItem.style.display = 'none';
+    }
+  }
+
+  // Check auth periodically to update menu visibility
+  if (window.auth) {
+    const originalShowPanel = window.auth.showPanel;
+    window.auth.showPanel = function() {
+      originalShowPanel.call(this);
+      updateUsersMenuVisibility();
+    };
+  }
+  
+  // Also check on initial load
+  setTimeout(updateUsersMenuVisibility, 500);
+
   function setActive(section) {
     buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.section === section));
-    // Also handle dynamically added Services button
+    // Also handle dynamically added buttons
     const servicesBtn = document.querySelector('.sidebar nav ul button[data-section="services"]');
     if (servicesBtn) servicesBtn.classList.toggle('active', section === 'services');
+    const usersBtn = document.querySelector('.sidebar nav ul button[data-section="users"]');
+    if (usersBtn) usersBtn.classList.toggle('active', section === 'users');
   }
 
   function showOverview() {
@@ -76,13 +112,28 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (section === 'leads' && typeof window.renderLeads === 'function') window.renderLeads(main);
     else if (section === 'products' && typeof window.renderProducts === 'function') window.renderProducts(main);
     else if (section === 'services' && typeof window.renderServices === 'function') window.renderServices(main);
+    else if (section === 'users' && typeof window.renderUsers === 'function') window.renderUsers(main);
     else main.innerHTML = `<h2>${section.charAt(0).toUpperCase() + section.slice(1)}</h2><p>Section coming soon...</p>`;
   }
 
-  // Sidebar navigation
-  document.querySelectorAll('.sidebar nav ul li button').forEach(btn => {
-    btn.addEventListener('click', () => showSection(btn.dataset.section));
+  // Sidebar navigation (including dynamically added buttons)
+  function setupSidebarNavigation() {
+    document.querySelectorAll('.sidebar nav ul li button').forEach(btn => {
+      // Remove existing listeners to avoid duplicates
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.addEventListener('click', () => showSection(newBtn.dataset.section));
+    });
+  }
+  setupSidebarNavigation();
+  
+  // Re-setup navigation when menu items are added dynamically
+  const observer = new MutationObserver(() => {
+    setupSidebarNavigation();
   });
+  if (sidebarNav) {
+    observer.observe(sidebarNav, { childList: true, subtree: true });
+  }
 
   // Health check
   fetch(window.API_BASE_URL + '/api/health', { mode: 'cors' })
