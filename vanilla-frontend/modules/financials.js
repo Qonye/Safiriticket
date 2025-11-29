@@ -279,7 +279,12 @@ window.renderFinancials = function(main) {
             return;
           }
           
-          allPayments.sort((a, b) => new Date(b.paymentDate || b.createdAt) - new Date(a.paymentDate || a.createdAt));
+          // Sort by most recent first (newest payment date first)
+          allPayments.sort((a, b) => {
+            const dateA = new Date(a.paymentDate || a.createdAt || 0);
+            const dateB = new Date(b.paymentDate || b.createdAt || 0);
+            return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+          });
           
           document.getElementById('payments-list').innerHTML = `
             <table class="data-table">
@@ -633,6 +638,12 @@ window.renderFinancials = function(main) {
     fetch(`${window.API_BASE_URL}/api/invoices`)
       .then(r => r.json())
       .then(async invoices => {
+        // Sort invoices by most recent first (newest createdAt first)
+        invoices.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0);
+          const dateB = new Date(b.createdAt || 0);
+          return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+        });
         allInvoicesData = invoices;
         
         if (!invoices.length) {
