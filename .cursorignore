@@ -1,0 +1,14 @@
+# Cursor ignore file
+# This file tells Cursor which files to ignore when indexing
+
+# Allow .env files to be edited
+!.env
+!.env.example
+!.env.local
+!.env.*.local
+
+# But still ignore sensitive patterns
+node_modules/
+*.log
+.DS_Store
+

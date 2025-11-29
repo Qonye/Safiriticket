@@ -21,7 +21,7 @@ window.renderClients = function(main) {
   `;
 
   function fetchClients() {
-    fetch('http://localhost:5000/api/clients')
+    fetch(`${window.API_BASE_URL}/api/clients`)
       .then(r => r.json())
       .then(clients => {
         if (!clients.length) {
@@ -101,7 +101,7 @@ window.renderClients = function(main) {
             const name = tr.querySelector('.edit-name').value.trim();
             const email = tr.querySelector('.edit-email').value.trim();
             const phone = tr.querySelector('.edit-phone').value.trim();
-            fetch(`http://localhost:5000/api/clients/${id}`, {
+            fetch(`${window.API_BASE_URL}/api/clients/${id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ name, email, phone })
@@ -115,7 +115,7 @@ window.renderClients = function(main) {
             if (!confirm('Delete this client?')) return;
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
-            fetch(`http://localhost:5000/api/clients/${id}`, {
+            fetch(`${window.API_BASE_URL}/api/clients/${id}`, {
               method: 'DELETE'
             })
               .then(r => r.json())
@@ -135,7 +135,7 @@ window.renderClients = function(main) {
       email: form.email.value.trim(),
       phone: form.phone.value.trim()
     };
-    fetch('http://localhost:5000/api/clients', {
+    fetch(`${window.API_BASE_URL}/api/clients`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)

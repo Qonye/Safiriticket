@@ -1,0 +1,622 @@
+// c:\projects\Safiriticket\vanilla-frontend\modules\new-pdf-engine.js
+
+/**
+ * New PDF Generation Engine
+ * This module orchestrates the generation of PDFs, ensuring correct template
+ * filling and leveraging existing utilities from pdf-utils.js.
+ *
+ * Make sure to include this file in index.html:
+ * <script src="modules/new-pdf-engine.js"></script>
+ * And ensure it's loaded after pdf-utils.js and before invoices.js or any module that uses it.
+ */
+
+// Ensure html2pdf is globally available (as it's used by pdf-utils.js)
+if (typeof html2pdf === 'undefined') {
+  console.error('html2pdf.js is not loaded. Make sure it is included in your HTML before pdf-utils.js and new-pdf-engine.js.');
+  // Alerting the user as this is a critical dependency for PDF generation.
+  alert('Critical Error: html2pdf.js library is missing. PDF functionality will be broken.');
+}
+
+// Helper function to get the correct currency symbol
+function _getCurrencySymbol(currency) {
+  const symbols = {
+    'USD': '$',
+    'EUR': '€',
+    'GBP': '£',
+    'KES': 'KSh',
+    'CAD': 'C$',
+    'AUD': 'A$'
+  };
+  return symbols[currency] || '$';
+}
+
+// Helper function to infer item type (moved from pdf-utils.js)
+function _inferType(item) {
+  if (item.type) return item.type; // Primary source of type
+  if (item.serviceType) return item.serviceType;
+
+  // Heuristics based on fields or description if item.type is missing
+  if (item.airline || /flight/i.test(item.description)) return 'flight';
+  if (item.hotelName || /hotel/i.test(item.description)) return 'hotel';
+  if ((item.from && item.to) || /transfer/i.test(item.description)) return 'transfer';
+  if (item.activityName || /activity/i.test(item.description)) return 'activity';
+  if (item.visaType || item.passportNo || /visa/i.test(item.description)) return 'visa';
+  if (item.provider || item.policyNo || /insurance/i.test(item.description)) return 'insurance';
+  return 'Other';
+}
+
+// Helper function to render service tables (moved and adapted from pdf-utils.js)
+function _renderInvoiceServiceTables(items = [], clientName = '', currency = 'USD') {
+  if (!items || !items.length) {
+    return '';
+  }
+
+  const currencySymbol = _getCurrencySymbol(currency);
+  
+  const grouped = {};
+  items.forEach(item => {
+    const type = _inferType(item); // Use local _inferType
+    if (!grouped[type]) grouped[type] = [];
+    grouped[type].push(item);
+  });
+
+  let htmlContent = '';
+  let grandTotal = 0;
+
+  // Flight Table
+  if (grouped.flight && grouped.flight.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Flight</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 18%;">Passenger Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 14%;">Travel Dates</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 10%;">Airline</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 14%;">Route</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 8%;">Class</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 10%;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 8%;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 18%;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.flight.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+
+      const flightDate = item.flightDate || '';
+      const returnDate = item.returnDate || '';
+      const isRoundTrip = item.isRoundTrip || false;
+      const airline = item.airline || '';
+      const from = item.from || '';
+      const to = item.to || '';
+      const flightClass = item.class || '';
+      const route = `${from}${from && to ? ' - ' : ''}${to}`; // Added space for better readability
+      
+      // Debug: Log flight item data
+      console.log('Flight item data:', {
+        description: item.description,
+        airline: airline,
+        from: from,
+        to: to,
+        flightDate: flightDate,
+        returnDate: returnDate,
+        class: flightClass,
+        route: route
+      });
+
+      // Format travel dates to show both departure and return if available
+      let travelDates = '';
+      if (flightDate) {
+        travelDates = new Date(flightDate).toLocaleDateString();
+        if (returnDate && isRoundTrip) {
+          travelDates += ` - ${new Date(returnDate).toLocaleDateString()} (Round Trip)`;
+        } else if (returnDate) {
+          travelDates += ` - ${new Date(returnDate).toLocaleDateString()}`;
+        } else if (isRoundTrip) {
+          travelDates += ' (Round Trip)';
+        }
+      } else if (returnDate) {
+        travelDates = `Return: ${new Date(returnDate).toLocaleDateString()}`;
+      } else {
+        travelDates = 'N/A';
+      }
+
+      htmlContent += `
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${travelDates}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${airline}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${route}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${flightClass}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="7" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">Flight Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
+  } else {
+    console.log('[_renderInvoiceServiceTables] No flight items to render or grouped.flight is empty.');
+  }
+
+  // Hotel Table
+  if (grouped.hotel && grouped.hotel.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Hotel</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Guest Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 18%;">Stay Dates</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Hotel</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 18%;">Amount per Night</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 12%;">No. of Days</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 12%;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 10%;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.hotel.forEach(item => {
+      const amount = Number(item.price) || 0; // Assuming price is per night
+      const fee = Number(item.serviceFee) || 0;
+      let nights = item.quantity || 0; // Start with quantity if available
+      let stayDates = '';
+      const checkin = item.checkin;
+      const checkout = item.checkout;
+      const hotelName = item.hotelName || '';
+
+      // If quantity is not provided or invalid, calculate nights from dates
+      if (!nights || nights <= 0) {
+        if (checkin && checkout) {
+          const d1 = new Date(checkin);
+          const d2 = new Date(checkout);
+          nights = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+        } else {
+          nights = 1; // Default to 1 night if no dates provided
+        }
+      }
+
+      if (checkin && checkout) {
+        const d1 = new Date(checkin);
+        const d2 = new Date(checkout);
+        const calculatedNights = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+        if (!item.quantity) nights = calculatedNights; // If quantity not provided, calculate it
+        stayDates = `${d1.toLocaleDateString()} – ${d2.toLocaleDateString()}`;
+      } else if (item.stayDates) { // Fallback if checkin/checkout not present
+        stayDates = item.stayDates;
+      }
+      // Calculate total: (price * nights) + service fee
+      const totalRow = (amount * nights) + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      htmlContent += `
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${stayDates}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${hotelName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${nights}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="6" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">Hotel Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
+  }
+
+  // Transfer Table
+  if (grouped.transfer && grouped.transfer.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Transfers</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 18%;">Passenger Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Transfer Date</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 18%;">From</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 18%;">To</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 12%;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 10%;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 9%;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.transfer.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      const from = item.from || '';
+      const to = item.to || '';
+      const transferDate = item.transferDate || item.date || item.transferDateTime || '';
+
+      // Format transfer date with better error handling
+      let formattedTransferDate = 'TBD';
+      if (transferDate && transferDate.trim() !== '') {
+        try {
+          const date = new Date(transferDate);
+          if (!isNaN(date.getTime())) {
+            formattedTransferDate = date.toLocaleDateString();
+          }
+        } catch (error) {
+          console.warn('Invalid transfer date:', transferDate);
+        }
+      }
+
+      htmlContent += `
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${formattedTransferDate}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${from}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${to}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="6" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">Transfer Subtotal:</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
+  }
+
+  // VISA Table
+  if (grouped.visa && grouped.visa.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Visas</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 25%;">NAME</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 30%;">DESTINATION</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">AMOUNT</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">SERVICE FEE</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 5%;">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.visa.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      htmlContent += `
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.destination || ''}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="4" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">TOTAL</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
+  }
+
+  // TRAVEL INSURANCE Table
+  if (grouped.insurance && grouped.insurance.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Travel Insurance</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 25%;">Destination</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">Dates</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 5%;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.insurance.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      
+      // Format dates for insurance
+      let datesDisplay = '';
+      if (item.coverageFrom && item.coverageTo) {
+        const fromDate = new Date(item.coverageFrom).toLocaleDateString();
+        const toDate = new Date(item.coverageTo).toLocaleDateString();
+        datesDisplay = `${fromDate} - ${toDate}`;
+      }
+      
+      htmlContent += `
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.description || clientName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${item.destination || ''}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${datesDisplay}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="5" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">TOTAL</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
+  }
+
+  // ACTIVITIES Table
+  if (grouped.activity && grouped.activity.length > 0) {
+    let total = 0;
+    htmlContent += `
+      <div style="margin-top: 12px; margin-bottom: 8px;">
+        <h3 style="margin: 0 0 6px 0; color: #be292c; font-size: 1em; font-weight: 500; letter-spacing: 0.5px;">Activities</h3>
+        <table class="items-table" style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 3px; overflow: hidden; table-layout: fixed;">
+          <thead>
+            <tr>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">Name</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 30%;">Description</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Amount</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 15%;">Service Fee</th>
+              <th style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%); color: #be292c; font-size: 0.85em; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; width: 20%;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    grouped.activity.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const fee = Number(item.serviceFee) || 0;
+      const totalRow = amount + fee;
+      total += totalRow;
+      grandTotal += totalRow;
+      // For activities, use activityName for NAME column and activityDescription for DESCRIPTION column
+      // If activityDescription is empty, use a fallback to avoid empty cells
+      const activityName = item.activityName || item.description || clientName;
+      const activityDescription = item.activityDescription || (item.description && item.description !== activityName ? item.description : '');
+      
+      htmlContent += `
+        <tr>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${activityName}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${activityDescription}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${amount.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${fee.toLocaleString()}</td>
+          <td style="font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; padding: 6px 4px; border: 1px solid rgba(0, 0, 0, 0.06); text-align: center; vertical-align: middle;">${currencySymbol}${totalRow.toLocaleString()}</td>
+        </tr>
+      `;
+    });
+    htmlContent += `
+        </tbody>
+        <tfoot>
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);">
+            <td colspan="4" style="text-align:right;font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">Total</td>
+            <td style="font-weight:600;color:#be292c;font-size:0.9em;padding:8px 4px;border: 1px solid rgba(0, 0, 0, 0.06);">${currencySymbol}${total.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    `;
+  }
+  
+  return htmlContent;
+}
+
+// Helper function to fill template placeholders (moved and adapted from pdf-utils.js)
+function _fillInvoiceTemplate(template, invoice, currentUser = null) {
+  let html = template;
+
+  html = html.replace(/{{number}}/g, invoice.number || '');
+  html = html.replace(/{{clientName}}/g, invoice.client?.name || '');
+  // Ensure clientEmail is also handled if present in the template or data
+  html = html.replace(/{{clientEmail}}/g, invoice.client?.email || ''); 
+  html = html.replace(/{{dueDate}}/g, invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '');
+  
+  // Set current date for creation date
+  const currentDate = new Date().toLocaleDateString();
+  html = html.replace(/{{creationDate}}/g, currentDate);
+  
+  // Add user information if available
+  if (currentUser) {
+    // Use name first, then username, then fallback to 'System'
+    const creatorName = currentUser.name || currentUser.username || 'System';
+    html = html.replace(/{{createdBy}}/g, creatorName);
+  } else {
+    html = html.replace(/{{createdBy}}/g, 'System');
+  }
+
+  // Get the currency from invoice or default to USD
+  const currency = invoice.currency || 'USD';
+  const currencySymbol = _getCurrencySymbol(currency);
+  
+  // Replace all payment details placeholders
+  if (invoice.paymentDetails) {
+    html = html.replace(/{{paymentAccountName}}/g, invoice.paymentDetails.accountName || '');
+    html = html.replace(/{{paymentAccountNumber}}/g, invoice.paymentDetails.accountNumber || '');
+    html = html.replace(/{{paymentBankName}}/g, invoice.paymentDetails.bankName || '');
+    html = html.replace(/{{paymentSwiftCode}}/g, invoice.paymentDetails.swiftCode || '');
+    html = html.replace(/{{paymentCurrency}}/g, invoice.paymentDetails.currency || currency);
+    html = html.replace(/{{paymentAdditionalInfo}}/g, invoice.paymentDetails.additionalInfo || '');
+  }
+  
+  // Replace currency symbol placeholder if present
+  html = html.replace(/{{currencySymbol}}/g, currencySymbol);
+
+  const serviceTablesHtml = _renderInvoiceServiceTables(invoice.items || [], invoice.client?.name || '', currency); // Call local _renderInvoiceServiceTables with currency
+  
+  html = html.replace(/{{serviceTables}}/g, serviceTablesHtml);
+  
+  // Apply compact styling based on content volume
+  const itemTypes = new Set();
+  let totalItems = 0;
+  if (invoice.items && invoice.items.length > 0) {
+    invoice.items.forEach(item => {
+      const type = _inferType(item);
+      itemTypes.add(type);
+      totalItems += Number(item.quantity) || 1;
+    });
+  }
+  
+  // Apply compact styling based on complexity
+  if (itemTypes.size > 2 || totalItems > 8) {
+    // Apply compact styling for many service types or many items
+    html = html.replace(/class="container"/g, 'class="container compact"');
+    html = html.replace(/class="section"/g, 'class="section compact"');
+    html = html.replace(/class="items-table"/g, 'class="items-table compact"');
+  }
+  
+  // Apply extra compact styling for very complex invoices
+  if (itemTypes.size > 4 || totalItems > 15) {
+    html = html.replace(/class="container compact"/g, 'class="container compact extra-compact"');
+    html = html.replace(/class="section compact"/g, 'class="section compact extra-compact"');
+    html = html.replace(/class="items-table compact"/g, 'class="items-table compact extra-compact"');
+  }
+  
+  // Calculate grand total from service tables
+  let grandTotal = 0;
+  if (invoice.items && invoice.items.length > 0) {
+    invoice.items.forEach(item => {
+      const amount = Number(item.price) || 0;
+      const serviceFee = Number(item.serviceFee) || 0;
+      const quantity = Number(item.quantity) || 1;
+      grandTotal += (amount * quantity) + serviceFee;
+    });
+  }
+  
+  // Replace grand total placeholder
+  html = html.replace(/{{grandTotal}}/g, `${currencySymbol}${grandTotal.toLocaleString()}`);
+
+  // Payment link handling based on paymentDisplayOption
+  const displayOption = invoice.paymentDisplayOption || 'both';
+  
+  if (invoice.paymentLink && (displayOption === 'both' || displayOption === 'link')) {
+    html = html.replace(/{{paymentLink}}/g, invoice.paymentLink);
+    html = html.replace(/{{paymentLinkDisplay}}/g, 'block');
+  } else {
+    html = html.replace(/{{paymentLink}}/g, '#');
+    html = html.replace(/{{paymentLinkDisplay}}/g, 'none');
+  }
+  
+  // Bank details display handling
+  const bankDetailsDisplay = (displayOption === 'both' || displayOption === 'bank') ? 'block' : 'none';
+  html = html.replace(/{{bankDetailsDisplay}}/g, bankDetailsDisplay);
+  
+  return html;
+}
+
+window.newPdfEngine = {
+  generateInvoice: async function(invoiceData, action = 'preview', options = {}, currentUser = null) {
+    try {
+      let html = await window.loadTemplate('invoice');
+      
+      html = _fillInvoiceTemplate(html, invoiceData, currentUser);
+      
+      const filename = `${invoiceData.number || 'INV-details'}.pdf`;
+
+      if (action === 'preview') {
+        await window.previewPDF(html, options); // Corrected: populatedHtml to html
+      } else if (action === 'download') {
+        await window.downloadPDF(html, filename, options); // Corrected: populatedHtml to html
+      }
+
+    } catch (error) {
+      console.error('[newPdfEngine] Error in generateInvoice:', error.message, error.stack);
+    }
+  },
+
+  generateQuotation: async function(quotationData, action = 'preview', options = {}) {
+    console.log('[newPdfEngine] Generating quotation. Action:', action);
+    try {
+      let html = await window.loadTemplate('quotation'); // Assuming you have a quotation.html
+      console.log('[newPdfEngine] Loaded template HTML (first 50 chars):', typeof html === 'string' ? html.substring(0, 50) + '...' : 'HTML is not a string or is null/undefined');
+      
+      console.log('[newPdfEngine] quotationData.items count before fillQuotationTemplate:', (quotationData && quotationData.items ? quotationData.items.length : 'N/A'));
+      console.log('[newPdfEngine] quotationData.currency:', quotationData.currency || 'USD (default)');
+
+      console.log('[newPdfEngine] typeof window.fillQuotationTemplate before call:', typeof window.fillQuotationTemplate);
+      if (typeof window.fillQuotationTemplate === 'function') {
+        console.log('[newPdfEngine] Source of window.fillQuotationTemplate (first 300 chars):\n', window.fillQuotationTemplate.toString().substring(0, 300));
+      } else {
+        console.error('[newPdfEngine] ERROR: window.fillQuotationTemplate is NOT a function!');
+        return;
+      }
+      
+      console.log('[newPdfEngine] CALLING window.fillQuotationTemplate now...');
+      html = window.fillQuotationTemplate(html, quotationData);
+      console.log('[newPdfEngine] RETURNED from window.fillQuotationTemplate. HTML (first 50 chars):', typeof html === 'string' ? html.substring(0, 50) + '...' : 'HTML is not a string or is null/undefined after call');
+      
+      const filename = `quotation-${quotationData.number || 'details'}.pdf`;
+      console.log(`[newPdfEngine] Action: ${action.charAt(0).toUpperCase() + action.slice(1)}, filename: ${filename}`);
+
+      if (action === 'preview') {
+        await window.previewPDF(html, options); // Corrected: populatedHtml to html
+      } else if (action === 'download') {
+        await window.downloadPDF(html, filename, options); // Corrected: populatedHtml to html
+      }
+
+    } catch (error) {
+      console.error('[newPdfEngine] Error in generateQuotation:', error.message, error.stack);
+    }
+  }
+};

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jungle Dwellers - Invoice Terms & Conditions</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background: #fefefe;
+            color: #2c3e50;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            position: relative;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+        .watermark {
+            position: absolute;
+            top: 10%;
+            right: 0%;
+            opacity: 0.5;
+            z-index: 1;
+            pointer-events: none;
+            overflow: visible;
+            width: 350px;
+            height: 300px;
+        }
+        .watermark img {
+            width: 300px;
+            height: auto;
+            transform: rotate(-15deg);
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+        .content {
+            position: relative;
+            z-index: 2;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+        }
+        .logo img {
+            height: 80px;
+            width: auto;
+            margin-right: 20px;
+        }
+        .main-title {
+            color: #2d5016;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 30px 0 20px 0;
+            text-align: left;
+            text-decoration: underline;
+        }
+        .section-title {
+            color: #2d5016;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin: 30px 0 15px 0;
+        }
+        .section-content {
+            margin-bottom: 20px;
+        }
+        .section-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .section-content li {
+            margin: 8px 0;
+            line-height: 1.5;
+            color: #333;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            position: relative;
+        }
+        .contact-info {
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.8;
+        }
+        .safari-footer {
+            width: 100%;
+            position: relative;
+            margin-top: 20px;
+        }
+        .safari-footer img {
+            width: 100%;
+            height: auto;
+            object-position: bottom;
+            display: block;
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2d5016;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);
+            transition: all 0.3s ease;
+        }
+        .print-btn:hover {
+            background: #1a3a0f;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45, 80, 22, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+            .container {
+                padding: 20px;
+                max-width: 100%;
+            }
+            .watermark img {
+                width: 200px;
+                right: -80px;
+                top: -15px;
+            }
+            .logo img {
+                height: 60px;
+            }
+            .main-title {
+                font-size: 2em;
+            }
+            .section-title {
+                font-size: 1.2em;
+            }
+            .safari-footer {
+                margin-left: -20px;
+                margin-right: -20px;
+            }
+        }
+        
+        @media print {
+            .print-btn {
+                display: none;
+            }
+            body {
+                padding: 0;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Print</button>
+    
+    <div class="container">
+        <div class="watermark">
+            <img src="LIon head.png" alt="Jungle Dwellers Watermark" />
+        </div>
+        
+        <div class="content">
+            <div class="logo">
+                <img src="JD - Logo 1.png" alt="Jungle Dwellers Holiday Gurus Logo" />
+            </div>
+
+            <h1 class="main-title">Booking Conditions</h1>
+            
+            <div class="section-content">
+                <p><strong>We assume consent to the below terms and conditions unless you advise us otherwise.</strong></p>
+                <p><strong>We strongly recommend you take out travel insurance to cover unforeseen events even prior to departure.</strong></p>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Prices</h3>
+                <ul>
+                    <li>Published prices are based on costs at the time of publication. We reserve the right to change published prices at any time before your booking is made.</li>
+                    <li>We reserve the right to increase the cost of your holiday should the government impose new taxes or increase existing taxes, currency fluctuations, or increase of fuel charges.</li>
+                    <li>You will be informed by us of any increases, regulated by EU directives.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Payments</h3>
+                <ul>
+                    <li>A non-refundable deposit of 30% must be made and a confirmation issued by the Company before any binding contract exists.</li>
+                    <li>Upon receipt of a deposit we will invoice you for the remainder of the tour cost, which is payable not less than 6 weeks prior to the commencement of the tour.</li>
+                    <li>Should you book less than 6 weeks before departure, full payment must be made on booking.</li>
+                    <li>If you do not pay your balance by the time specified without prior arrangements with the Company it reserves the right to cancel your booking or pursue any unpaid monies.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Cancellation by You</h3>
+                <ul>
+                    <li>If you cancel your booking more than 6 weeks prior to departure your deposit will not be refunded, unless possibly should you make another booking for an alternative date, whereupon the Company may charge you an administration fee.</li>
+                    <li>If you cancel less than 45 days (6 weeks), but more than 30 days (4 weeks), prior to departure a refund of 50% will be made by the Company.</li>
+                    <li>If you cancel your booking less than 30 days (4 weeks) prior to departure no refund will be made.</li>
+                    <li>It is strongly recommended that you take out insurance against irrecoverable cancellation costs.</li>
+                    <li>Any cancellation must be made in writing. Whether or not the deposit was received, the deposit will remain due in case of cancellation.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Cancellation by Us</h3>
+                <ul>
+                    <li>We reserve the right to cancel the contract between us for any reason prior to your payment of the full price of the holiday, whereupon we will refund in full (other than due to your default in paying) any monies that you have paid us.</li>
+                    <li>After full payment has been made, we will only cancel the contract if circumstances beyond our control make it unavoidable. Such circumstances include, but are not limited to civil or political unrest, terrorism, natural disaster or other force majeure.</li>
+                    <li>In the unlikely event that such circumstances should arise, we will contact you immediately and offer you the choice of an alternative of equivalent quality or a full refund of all monies paid. No additional compensation will be paid over and above the total sum received from you.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Travel Insurance</h3>
+                <ul>
+                    <li><strong>Travel Insurance is mandatory for all Clients.</strong> At the time of booking he or she must arrange his or her own insurance with a reputable insurer, with protection for the full duration of the tour, to cover personal injury, medical expenses, repatriation expenses, loss of luggage and the expenses associated with cancellation or curtailment of a tour.</li>
+                    <li>If a Client becomes ill, all hospital expenses, doctor fees and repatriation costs are the Client's responsibility and the Company shall not be liable for any refund of the tour cost.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Alteration to Itineraries</h3>
+                <ul>
+                    <li>It is unlikely that the Company will have to make changes to the Client's suggested tour; however, occasionally changes/alterations may be made either before or after booking was made.</li>
+                    <li>Most of these will be minor and the Company will endeavor to advise the Client of them at the earliest possible date.</li>
+                    <li>The Company reserves the right to alter the itinerary after departure, without payment of compensation if it is in the interest of the Client to do so.</li>
+                    <li>Furthermore, compensation is not available if the Company is forced to cancel or in any way change the tour due to force majeure, namely war, riot, civil strife, industrial dispute, terrorist activity, natural or nuclear disaster, fire, adverse weather conditions or other material external circumstances beyond the Company's control.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Liability</h3>
+                <ul>
+                    <li>Where the Client suffers damage or loss of any kind but does not suffer personal injury, the Company shall forward any such claim to its insurers to ascertain liability; which liability shall be ascertained based on whether any part of the tour arrangements booked with the Company were not supplied as described and were not of a reasonable standard.</li>
+                    <li>In such a case, the Company and/or its Insurers may be obliged to pay reasonable compensation if the Client's enjoyment of the tour has been adversely affected but will pay no compensation if there has been no fault on the part of the Company and its suppliers and the reason for the failure in the tour arrangements was either the Client's fault, the actions of someone unconnected with the tour arrangements or could not have been foreseen or avoided by the Company or its suppliers even if all due care had been exercised.</li>
+                    <li>Where the Client suffers death or personal injury as a result of an activity forming part of the tour arrangements booked with the Company, the Company shall forward all claims presented to it to its insurers to investigate and ascertain liability.</li>
+                    <li>The Client understands that the Company's insurers shall not accept liability if there has been no fault on the Company's part or its suppliers and the cause was either the Client's fault, the actions of someone unconnected with the tour or one which neither the Company nor its suppliers could have anticipated or avoided even with the exercise of all due care.</li>
+                    <li>If additional expenses are incurred through delay, accident or disruption of the tour beyond the control of the Company by force majeure, such expenses must be borne solely by the Client.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Carriers</h3>
+                <ul>
+                    <li>In respect of transport by air, sea and rail carriers and land vehicles; our liability is in all cases limited to liability as Carriers as per the terms contained in our Insurance Policies.</li>
+                    <li>All transport is provided subject to the relevant carrier's conditions of carriage, some of which may limit or exclude their liability to you, often in accordance with international conventions.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Good Health</h3>
+                <ul>
+                    <li>Client's bookings are accepted on the understanding that they appreciate the possible risks inherent in safari travel with the proximity to wild animals and that they undertake the tour at their own volition.</li>
+                    <li>In respect of Hot Air Ballooning, scuba diving, horse riding and other hazardous pursuits, the Client will appreciate that by their nature these activities carry inherent risks.</li>
+                    <li>The Client hereby agrees to be personally responsible for assuming such risks and it is the traveller's duty to check carefully with their travel insurance on any clauses that may apply when intending to engage in any activity that could be considered hazardous in any way.</li>
+                    <li>The Client hereby confirms that he or she is in good health to undertake the said trip.</li>
+                    <li>Any Client with a pre-existing medical condition or illness must declare the true nature of such condition at the time of booking and make arrangements for the provision of drugs or other cause treatment which may be required during the tour.</li>
+                    <li>Such a Client would be required to provide a medical statement from a GP to confirm that they are fit for this type of adventure travel. The same applies to specific dietary requirements.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Inoculation</h3>
+                <ul>
+                    <li>The Client must take all necessary inoculations as are required or generally recommended in relation to the countries to be visited.</li>
+                    <li>Professional medical advice should be sought regarding inoculations.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Travel Documentation</h3>
+                <ul>
+                    <li>It is the responsibility of the Client to be in possession of a valid passport, visa permits and vaccination or other medical certificates as may be required for the whole of the tour.</li>
+                    <li>The Company does not accept responsibility for changes in regulations for visas or any particular requirements for visas.</li>
+                    <li>The Company cannot be held responsible for the failure of the Client to obtain the necessary visas.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Complaints</h3>
+                <ul>
+                    <li>If you are unhappy about any aspect of the travel arrangements we have made on your behalf, please inform us immediately.</li>
+                    <li>We will do everything possible to resolve the problem on the spot, since it may prove difficult to take any effective action upon your return.</li>
+                    <li>If however this matter cannot be resolved, please email or write to us within 30 days of end of services as it will not be possible to accept liability in respect of claims we receive after that.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Claims & Jurisdiction and Law</h3>
+                <ul>
+                    <li>Any dispute arising from the service provided by The Company shall be attempted to be settled through friendly consultation between the parties.</li>
+                    <li>The claiming party shall notify the other party within 30 days of end of services in a dated notice in English language that a dispute has arisen and describe the nature of the dispute.</li>
+                    <li>If no settlement can be reached through consultation then both parties agree to submit to the jurisdiction of the Courts of Kenya.</li>
+                </ul>
+            </div>
+
+            <div class="section-content">
+                <h3 class="section-title">Interpretation</h3>
+                <ul>
+                    <li>Headings are for convenience only and shall not affect the construction of any provision.</li>
+                    <li>Except where context otherwise indicates, words denoting the singular form include the plural and vice versa; words denoting any one gender include all genders; words denoting persons include firms and corporations and vice versa.</li>
+                    <li>You herewith accept the booking conditions on behalf of all members of your party, for whom you are making this arrangement.</li>
+                    <li>You have the responsibility to select a trip appropriate to your abilities and interests. You are responsible for preparing for the trip by studying the itinerary and any pre-departure information and for bringing the appropriate clothing and equipment as advise herein.</li>
+                </ul>
+            </div>
+
+            <div class="footer">
+                <div class="contact-info">
+                    <strong>Jungle Dwellers,</strong><br>
+                    P.O Box 44599 - 00100 Nairobi, Kenya<br>
+                    Email: Sales@jungledwellers.net | Tel: +254 715 572 312<br>
+                    Web: www.jungledwellers.net<br>
+                    <br>
+                    <strong>Terms and conditions:</strong><br>
+                    <a href="https://jungledwellers.net/terms-conditions/" target="_blank" style="color: #2d5016; text-decoration: underline;">https://jungledwellers.net/terms-conditions/</a>
+                </div>
+                <div class="safari-footer">
+                    <img src="bottom image.png" alt="Safari Animal Silhouette" />
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+lhouette" />
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
