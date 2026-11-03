@@ -1,0 +1,23 @@
+[build]
+  # Publish directory - root of vanilla-frontend
+  # publish = "."  # Default is root, so this is optional
+  
+  # Build command (if needed)
+  # command = "npm run build"
+
+[[redirects]]
+  from = "/payment-success"
+  to = "/payment-success.html"
+  status = 200
+
+[[redirects]]
+  from = "/payment-success.html"
+  to = "/payment-success.html"
+  status = 200
+
+# SPA fallback - must be last
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+

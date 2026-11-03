@@ -6,15 +6,29 @@ const invoiceSchema = new mongoose.Schema({
   items: [{
     description: String,
     quantity: Number,
-    price: Number
+    price: Number,
+    serviceFee: { type: Number, default: 0 },
+    // Allow any additional dynamic fields (hotelName, checkin, checkout, airline, etc.)
   }],
   total: { type: Number, required: true },
-  paidAmount: { type: Number, default: 0 }, // <-- ensure this exists
-  status: { type: String, enum: ['Unpaid', 'Paid', 'Overdue'], default: 'Unpaid' },
+  currency: { type: String, default: 'USD', enum: ['USD', 'EUR', 'GBP', 'KES'] },
+  paymentDetails: {
+    accountName: { type: String, default: 'JUNGLE DWELLERS LTD' },
+    accountNumber: { type: String, default: '0254001002' },
+    bankName: { type: String, default: 'DIAMOND TRUST BANK' },
+    swiftCode: { type: String, default: 'DTKEKENA' },
+    currency: { type: String, default: 'USD' },
+    additionalInfo: { type: String, default: '(Please use your name or invoice number as payment reference)' }
+  },
+  paidAmount: { type: Number, default: 0 },
+  paymentLink: String,
+  paymentLinkId: String,
+  paymentDisplayOption: { type: String, enum: ['both', 'link', 'bank'], default: 'both' },
+  status: { type: String, enum: ['Unpaid', 'Partially Paid', 'Paid', 'Overdue'], default: 'Unpaid' },
   dueDate: Date,
   paidAt: Date,
   createdAt: { type: Date, default: Date.now },
-  number: { type: String, unique: true } // Invoice number, e.g. INV-001
-}, { timestamps: true });
+  number: { type: String, unique: true }
+}, { timestamps: true, strict: false });
 
 export default mongoose.models.Invoice || mongoose.model('Invoice', invoiceSchema);

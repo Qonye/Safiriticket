@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safiri Tickets - Invoice Terms & Conditions</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            border: 1px solid #e8e8e8;
+            position: relative;
+            overflow: hidden;
+        }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            opacity: 0.08;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .watermark img {
+            width: 400px;
+            height: auto;
+            filter: grayscale(100%);
+        }
+        .content {
+            position: relative;
+            z-index: 2;
+        }
+        .logo {
+            text-align: left;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #8c241c;
+        }
+        .logo img {
+            height: 70px;
+            width: auto;
+            margin: 0 auto 12px auto;
+            display: block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        .logo h1 {
+            color: #8c241c;
+            font-size: 2em;
+            margin: 0 0 6px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .logo .subtitle {
+            color: #8c241c;
+            font-size: 1.3em;
+            margin-top: 6px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+        h2 {
+            color: #8c241c;
+            font-size: 1.5em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            position: relative;
+            padding-left: 12px;
+        }
+        h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 20px;
+            background: #8c241c;
+            border-radius: 2px;
+        }
+        h3 {
+            color: #8c241c;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+            line-height: 1.5;
+            position: relative;
+        }
+        li::marker {
+            color: #8c241c;
+            font-weight: bold;
+        }
+        .contact-info {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 50px;
+            border-left: 5px solid #8c241c;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .contact-info h3 {
+            color: #8c241c;
+            margin-top: 0;
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        .contact-row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .contact-item {
+            flex: 1;
+            min-width: 200px;
+            margin: 8px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            transition: transform 0.2s ease;
+        }
+        .contact-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.9);
+        }
+        .contact-item strong {
+            color: #8c241c;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #8c241c 0%, #a02d25 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(140, 36, 28, 0.3);
+            transition: all 0.3s ease;
+        }
+        .print-btn:hover {
+            background: linear-gradient(135deg, #6b1a15 0%, #8c241c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(140, 36, 28, 0.4);
+        }
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+            }
+            .container {
+                padding: 20px;
+                border-radius: 8px;
+                max-width: 100%;
+            }
+            .watermark img {
+                width: 250px;
+            }
+            .logo img {
+                height: 50px;
+            }
+            .logo h1 {
+                font-size: 1.6em;
+            }
+            .logo .subtitle {
+                font-size: 1.1em;
+            }
+            h2 {
+                font-size: 1.3em;
+                margin-top: 20px;
+                margin-bottom: 12px;
+                padding-left: 10px;
+            }
+            h2::before {
+                width: 2px;
+                height: 16px;
+            }
+            h3 {
+                font-size: 1.1em;
+                margin-top: 15px;
+                margin-bottom: 10px;
+            }
+            ul {
+                padding-left: 15px;
+            }
+            li {
+                margin: 6px 0;
+                font-size: 0.9em;
+            }
+            .contact-info {
+                padding: 20px;
+                margin-top: 30px;
+            }
+            .contact-info h3 {
+                font-size: 1.3em;
+                margin-bottom: 15px;
+            }
+            .contact-row {
+                flex-direction: column;
+            }
+            .contact-item {
+                margin: 5px 0;
+                padding: 8px;
+            }
+            .print-btn {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+                font-size: 13px;
+            }
+            .container {
+                padding: 15px;
+            }
+            .watermark img {
+                width: 200px;
+            }
+            .logo img {
+                height: 40px;
+            }
+            .logo h1 {
+                font-size: 1.4em;
+            }
+            .logo .subtitle {
+                font-size: 1em;
+            }
+            h2 {
+                font-size: 1.2em;
+                padding-left: 8px;
+            }
+            h3 {
+                font-size: 1em;
+            }
+            li {
+                font-size: 0.85em;
+            }
+            .contact-info {
+                padding: 15px;
+            }
+        }
+        
+        @media print {
+            .print-btn {
+                display: none;
+            }
+            body {
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            .watermark {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Print</button>
+    
+    <div class="container">
+        <div class="watermark">
+            <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Watermark" />
+        </div>
+        
+        <div class="content">
+            <div class="logo">
+                <img src="https://res.cloudinary.com/dvmtxm1qe/image/upload/v1745862400/Safiri_Tickets_Primary_Logo_tg0i0k.png" alt="Safiri Tickets Logo" />
+                <div class="subtitle">Invoice Terms & Conditions</div>
+            </div>
+
+        <h2>1. Payment Terms</h2>
+        <ul>
+            <li><strong>Corporate clients with approved credit facilities:</strong> payment is due within the agreed period stated on the invoice or service agreement.</li>
+            <li><strong>Corporate clients without credit facilities and individual clients:</strong> full payment is due immediately upon receipt of the invoice.</li>
+            <li>Late payments may attract interest at 10% per month until settlement.</li>
+        </ul>
+
+        <h2>2. Currency & Bank Details</h2>
+        <ul>
+            <li>All payments must be made in the currency specified on the invoice and to the bank account indicated.</li>
+            <li>Safiri Tickets will not be held liable for payments made to the wrong account or in a different currency.</li>
+            <li>Any bank charges or currency conversion costs arising from incorrect payment are the responsibility of the client.</li>
+            <li>Failure to pay as instructed may lead to cancellation of bookings, suspension of services, and withdrawal of any credit facilities.</li>
+        </ul>
+
+        <h2>3. Cancellations & Refunds</h2>
+        <ul>
+            <li>All cancellations and refunds are subject to airline, hotel, or supplier rules.</li>
+            <li>Safiri Tickets service fees are strictly non-refundable.</li>
+            <li>Approved refunds are processed in accordance with supplier timelines (which may take up to 6-12 weeks).</li>
+        </ul>
+
+        <h2>4. Liability</h2>
+        <ul>
+            <li>Safiri Tickets acts only as an agent for airlines, hotels, and other travel suppliers.</li>
+            <li>We are not responsible for delays, cancellations, or circumstances beyond our control.</li>
+            <li>Our liability is limited to the service fees charged by Safiri Tickets.</li>
+        </ul>
+
+        <h2>5. Travel Documents</h2>
+        <ul>
+            <li>The client/traveler is responsible for ensuring valid passports, visas, vaccinations, and all other required travel authorizations.</li>
+        </ul>
+
+        <h2>6. Data Protection & Confidentiality</h2>
+        <ul>
+            <li>Client and traveler data is handled in compliance with applicable data protection laws.</li>
+            <li>Information shared with Safiri Tickets is confidential and will only be used for booking, ticketing, and service delivery, unless disclosure is required by law.</li>
+        </ul>
+
+        <h2>7. Indemnity</h2>
+        <ul>
+            <li>The client agrees to indemnify and hold harmless Safiri Tickets, its employees, and agents from any claims, losses, damages, penalties, or expenses arising from:
+                <ul>
+                    <li>Incorrect or incomplete information provided by the client or traveler.</li>
+                    <li>Failure to obtain necessary travel documents, visas, or clearances.</li>
+                    <li>Breach of these Terms & Conditions by the client.</li>
+                    <li>Any actions or omissions of third-party suppliers engaged on the client's behalf.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <div class="contact-info">
+            <h3>Contact Information</h3>
+            <div class="contact-row">
+                <div class="contact-item">
+                    <strong>United Kingdom Office:</strong><br>
+                    +44 7520 602912
+                </div>
+                <div class="contact-item">
+                    <strong>Kenya Office:</strong><br>
+                    +254 116 626268
+                </div>
+            </div>
+            <div class="contact-row">
+                <div class="contact-item">
+                    <strong>Email:</strong><br>
+                    info@safiritickets.com
+                </div>
+                <div class="contact-item">
+                    <strong>Website:</strong><br>
+                    www.safiritickets.com
+                </div>
+            </div>
+            <div class="contact-row">
+                <div class="contact-item">
+                    <strong>United Kingdom Location:</strong><br>
+                    25 Cabot Square, E14 4QZ, London
+                </div>
+                <div class="contact-item">
+                    <strong>Kenya Location:</strong><br>
+                    2nd floor Gallant mall, Parklands Rd, Nairobi
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</body>
+</html>

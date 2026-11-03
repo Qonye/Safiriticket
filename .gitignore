@@ -58,4 +58,7 @@ pids
 
 # TypeScript
 *.tsbuildinfo
-uploads/1744215654169-Borrower_Profile_2025-04-09.pdf
+
+# Uploaded files (keep directory structure but ignore actual uploads)
+uploads/**/*
+!uploads/quotations/.gitkeep

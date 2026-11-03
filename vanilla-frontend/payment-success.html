@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #28a745;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #333;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #be292c;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #a63a2e;
+        }
+        .logo {
+            max-width: 180px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="templates/logo.png" alt="Safiri Tickets" class="logo">
+        <h1>Payment Successful!</h1>
+        <p>Thank you for your payment. Your transaction has been completed successfully.</p>
+        <p>Your invoice has been updated with your payment.</p>
+        <p style="font-size: 0.9em; color: #666;">You may now close this window.</p>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h3 style="color: #555; font-size: 1.2em;">Need Support?</h3>
+            <p style="font-size: 0.95em; color: #555;">
+                If you have any questions about your payment or invoice, please contact us:
+            </p>
+            <p style="font-size: 0.95em; margin-bottom: 5px;">
+                <strong>Email:</strong> <a href="mailto:support@safiritickets.com" style="color: #be292c; text-decoration: none;">support@safiritickets.com</a>
+            </p>
+            <p style="font-size: 0.95em; margin-bottom: 5px;">
+                <strong>Phone:</strong> +254 116 626 268
+            </p>
+            <p style="font-size: 0.95em; margin-bottom: 5px;">
+                <strong>UK:</strong> +44 7520 602 912
+            </p>
+            <p style="font-size: 0.8em; color: #777; margin-top: 15px;">
+                Safiri Tickets Ltd | Kenya: 2nd Floor Gallant Mall, Westlands, Nairobi | United Kingdom: 25 Cabot Square, E14 4QZ, London
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Handle payment success - Pesapal callback
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Pesapal callback parameters
+            const orderTrackingId = urlParams.get('OrderTrackingId');
+            const orderMerchantReference = urlParams.get('OrderMerchantReference');
+            const orderNotificationType = urlParams.get('OrderNotificationType');
+            
+            // Legacy Intasend parameters (for backward compatibility)
+            const trackingId = urlParams.get('tracking_id') || orderTrackingId;
+            const checkoutId = urlParams.get('checkout_id') || orderMerchantReference;
+            
+            console.log('Payment Success Parameters:', {
+                orderTrackingId,
+                orderMerchantReference,
+                orderNotificationType,
+                trackingId,
+                checkoutId,
+                url: window.location.href
+            });
+            
+            // Show success message with transaction details
+            const container = document.querySelector('.container');
+            const detailsDiv = document.createElement('div');
+            detailsDiv.style.marginTop = '20px';
+            detailsDiv.style.padding = '15px';
+            detailsDiv.style.backgroundColor = '#f8f9fa';
+            detailsDiv.style.borderRadius = '5px';
+            detailsDiv.style.fontSize = '0.9em';
+            
+            if (orderTrackingId) {
+                detailsDiv.innerHTML = `
+                    <p><strong>Transaction ID:</strong> ${orderTrackingId}</p>
+                    ${orderMerchantReference ? `<p><strong>Invoice Reference:</strong> ${orderMerchantReference}</p>` : ''}
+                    <p style="color: #666; font-size: 0.85em; margin-top: 10px;">
+                        Your payment is being processed. You will receive confirmation once it's complete.
+                    </p>
+                `;
+            } else if (trackingId) {
+                // Fallback for legacy Intasend format
+                detailsDiv.innerHTML = `
+                    <p><strong>Transaction ID:</strong> ${trackingId}</p>
+                    <p style="color: #666; font-size: 0.85em; margin-top: 10px;">
+                        Your payment is being processed. You will receive confirmation once it's complete.
+                    </p>
+                `;
+            } else {
+                detailsDiv.innerHTML = `
+                    <p style="color: #666; font-size: 0.85em;">
+                        Your payment has been received. You will receive confirmation once it's processed.
+                    </p>
+                `;
+            }
+            
+            container.appendChild(detailsDiv);
+            
+            // Payment completed - customer can close window
+        });
+    </script>
+</body>
+</html>
+
