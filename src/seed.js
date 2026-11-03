@@ -1,28 +1,25 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import User from './models/User.js'; // Import dotenv to load environment variables
 
 const ADMIN_USERS = [
     {
         username: 'joe',
-        password: 'safiri2025', // This should be changed in production
         name: 'Joe Kuniara',
         role: 'superadmin'
     },
     {
         username: 'boniface',
-        password: 'boniface2025',
         name: 'Boniface Karanja',
         role: 'user'
     },
     {
         username: 'yousra',
-        password: 'yousra2025',
         name: 'Yousra Amin',
         role: 'user'
     },{
         username: 'Abigail',
-        password: 'Abigail2025',
         name: 'Abigail Muindi',
         role: 'user'
     },
@@ -30,12 +27,15 @@ const ADMIN_USERS = [
 
 ];
 
+// Passwords come from SEED_USER_PASSWORD, or are generated and printed once at the end.
+const printed = [];
+
 async function seedDatabase() {
     try {
         // Connect to MongoDB
-        const mongoUri = 'mongodb+srv://Martin:0LN98uAumci1EwCc@cluster0.e1hy26f.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+        const mongoUri = process.env.MONGO_URI;
         if (!mongoUri) {
-            throw new Error('MONGO_URI environment variable is not set');
+            throw new Error('MONGO_URI environment variable is not set (run with: node --env-file=.env src/seed.js)');
         }
         await mongoose.connect(mongoUri);
         console.log('Connected to MongoDB');
@@ -46,7 +46,9 @@ async function seedDatabase() {
 
         // Create admin users with hashed passwords
         for (const user of ADMIN_USERS) {
-            const hashedPassword = await bcrypt.hash(user.password, 10);
+            const plain = process.env.SEED_USER_PASSWORD || crypto.randomBytes(9).toString('base64url');
+            printed.push(`${user.username}: ${plain}`);
+            const hashedPassword = await bcrypt.hash(plain, 10);
             await User.create({
                 ...user,
                 password: hashedPassword
@@ -54,6 +56,10 @@ async function seedDatabase() {
         }
 
         console.log('Admin users seeded successfully');
+        if (!process.env.SEED_USER_PASSWORD) {
+            console.log('Generated passwords (shown once, save them now):');
+            console.log(printed.join('\n'));
+        }
         process.exit(0);
     } catch (error) {
         console.error('Error seeding database:', error);
